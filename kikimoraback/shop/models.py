@@ -9,10 +9,14 @@ status_dict ={"NEW": "НОВЫЙ", "IN PROGRESS": "В РАБОТЕ",
 
 class CustomUser(AbstractUser):
     user_id = models.AutoField(primary_key=True)
+    email = models.EmailField(help_text="Ваш email", unique=True)
     user_fio = models.CharField(max_length=200, help_text='Ф.И.О.')
     phone = models.CharField(max_length=9, help_text='Номер телефона')
     bd = models.DateField(default=datetime.now().date(), help_text='Дата рождения')
 # TODO: Система индивидуальных скидок или баллов
+
+    def __str__(self):
+        return f"{self.user_id}, {self.email}, {self.user_fio}, {self.phone}, {self.bd}"
 
 
 class UserAddress(models.Model):
