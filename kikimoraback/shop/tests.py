@@ -14,7 +14,6 @@ class CustomUserTests(TestCase):
         self.assertFalse(user.is_staff)
         self.assertFalse(user.is_superuser)
 
-
     def test_create_superuser(self):
         User = get_user_model()
         admin_user = User.objects.create_superuser(
