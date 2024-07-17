@@ -167,3 +167,4 @@ cython_debug/
 /kikimoraback/shop/migrations
 .idea/dbnavigator.xml
 /.idea
+/kikimoraback/shop/migrations
