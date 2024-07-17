@@ -8,6 +8,7 @@ from .models import CustomUser
 
 class RegistrationForm(forms.ModelForm):
     password = forms.CharField(label='Password', widget=forms.PasswordInput)
+
     class Meta:
         model = CustomUser
         fields = ('email', 'user_fio', 'phone', 'bd', 'password')
