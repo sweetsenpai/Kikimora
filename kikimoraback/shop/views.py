@@ -1,45 +1,37 @@
-from django.shortcuts import render
-
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login as auth_login, logout
 from django.contrib import messages
-from django.contrib.auth.forms import AuthenticationForm
-from django.shortcuts import render
-
+from django.template import loader
+from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView
+from django.views.generic import ListView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.urls import reverse
-
-from .models import Account
-from .forms import RegistrationForm
-
-
-class RegistrationView(CreateView):
-    template_name = 'registration/register.html'
-    form_class = RegistrationForm
-
-    def get_context_data(self, *args, **kwargs):
-        context = super(RegistrationView, self).get_context_data()
-        context['next'] = self.request.GET.get('next')
-        return context
-
-    def get_success_url(self):
-        next_url = self.request.POST.get('next')
-        success_url = reverse('login')
-        if next_url:
-            success_url += '?next={}'.format(next_url)
-
-        return success_url
+from django.db.models import Q
+from .models import CustomUser
 
 
-class ProfileView(UpdateView):
-    model = Account
-    fields = ['user_fio', 'phone', 'bd']
-    template_name = 'registration/profile.html'
+class AdminHomePageView(TemplateView):
+    template_name = 'master/home.html'
+#
+# def apanel_home(TemplateView):
+#
+#     return render(request, template_name='master/home.html')
 
-    def get_success_url(self):
-        return reverse('index')
 
-    def get_object(self):
-        return self.request.user
+def apanel_staff(request):
+    if request.method == "POST":
+        email = request.POST.get('email')
+        fio = request.POST.get('fio')
+        phone = request.POST.get('phone')
+        search_result = {'admins':  CustomUser.objects.filter(Q(email=email) | Q(phone=phone) |Q(user_fio=fio), is_staff=True)}
+        return render(request, template_name='master/staff.html', context=search_result)
+    admins = {'admins': CustomUser.objects.all().filter(is_staff=True).order_by('user_id').values()}
+    return render(request, template_name='master/staff.html', context=admins)
+
+
+def admin_account(request, admin_id):
+    if request.method=="POST":
+        ...
+    admin_data = {'admin': CustomUser.objects.all().filter(user_id=admin_id).values()}
+    return render(request, template_name='master/admin_page.html', context=admin_data)
