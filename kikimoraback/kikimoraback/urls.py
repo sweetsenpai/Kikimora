@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
+# from shop.views import apanel_staff <- Правильный импорт
 # TODO поправить редирект, чтобы небыло поддомена
 urlpatterns = [
     path('admin/', admin.site.urls),

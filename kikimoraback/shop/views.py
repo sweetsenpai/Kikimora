@@ -1,16 +1,37 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login as auth_login, logout
 from django.contrib import messages
-from django.contrib.auth.forms import AuthenticationForm
-from django.shortcuts import render
 from django.template import loader
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView
+from django.views.generic import ListView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.urls import reverse
+from django.db.models import Q
+from .models import CustomUser
 
 
-def apanel_home(request):
+class AdminHomePageView(TemplateView):
+    template_name = 'master/home.html'
+#
+# def apanel_home(TemplateView):
+#
+#     return render(request, template_name='master/home.html')
 
-    return render(request, template_name='test/home.html')
+
+def apanel_staff(request):
+    if request.method == "POST":
+        email = request.POST.get('email')
+        fio = request.POST.get('fio')
+        phone = request.POST.get('phone')
+        search_result = {'admins':  CustomUser.objects.filter(Q(email=email) | Q(phone=phone) |Q(user_fio=fio), is_staff=True)}
+        return render(request, template_name='master/staff.html', context=search_result)
+    admins = {'admins': CustomUser.objects.all().filter(is_staff=True).order_by('user_id').values()}
+    return render(request, template_name='master/staff.html', context=admins)
+
+
+def admin_account(request, admin_id):
+    if request.method=="POST":
+        ...
+    admin_data = {'admin': CustomUser.objects.all().filter(user_id=admin_id).values()}
+    return render(request, template_name='master/admin_page.html', context=admin_data)
