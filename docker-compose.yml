@@ -4,6 +4,8 @@ services:
     build: .
     ports:
     - "8000:8000"
-    command: python kikimoraback/manage.py runserver 0.0.0.0:8000
+    command: bash -c "python kikimoraback/manage.py makemigrations && 
+             python kikimoraback/manage.py migrate && 
+             python kikimoraback/manage.py runserver 0.0.0.0:8000"
     volumes:
     - .:/kikimoraback

@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.core.validators import MaxValueValidator
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.db import models
@@ -96,13 +97,6 @@ class UserAddress(models.Model):
 class OrdersHistory(models.Model):
     order_id = models.AutoField(primary_key=True)
     order_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    # creation_time = models.DateTimeField(default=datetime.now(), help_text='Дата создания', db_index=True)
-    # prefer_delivery_time= models.DateTimeField(default=None, help_text='Дата и время доставка выбранное пользователем')
-    # actual_delivery_time = models.DateTimeField(default=None, help_text=' Фактическая дата и время доставка')
-    # status = models.CharField(choices=status_dict)
-    # text = models.CharField(max_length=1000, blank=True, help_text="Дополнительные пожелания к Вашему заказу")
-    # composition = models.CharField(max_length=1000)
-    # address = models.ForeignKey(UserAddress, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.order_id},{self.order_user}"
@@ -112,6 +106,7 @@ class Category(models.Model):
     category_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200, help_text='Название категории', db_index=True)
     text = models.CharField(max_length=400, help_text='Описание категории', blank=True)
+    discount_precentage = models.IntegerField(validators=[MaxValueValidator(100)], help_text='Процент скидки на категорию', blank=True)
 
     def __str__(self):
         return f"{self.category_id}, {self.name}, {self.text}"
@@ -141,3 +136,11 @@ class Discount(models.Model):
 
     def __str__(self):
         return f"{self.discount_id}, {self.product},{self.percentage}, {self.amount}, {self.description}"
+
+
+class PromoSystem(models.Model):
+
+    promo_id = models.AutoField(primary_key=True)
+    creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    promo_product = models.ForeignKey(Product, on_delete=models.CASCADE)
+#    type = models.CharField(choices=discount_type)

@@ -33,5 +33,10 @@ def apanel_staff(request):
 def admin_account(request, admin_id):
     if request.method=="POST":
         ...
+    print(request)
     admin_data = {'admin': CustomUser.objects.all().filter(user_id=admin_id).values()}
     return render(request, template_name='master/admin_page.html', context=admin_data)
+
+
+class AdminCreate(TemplateView):
+    template_name = 'master/admin_page.html'

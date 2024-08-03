@@ -1,16 +1,21 @@
 {% extends 'master/base.html' %}
 {% block title %} Сотрудники {% endblock %}
-{% block active5 %} active {% endblock active5 %}
+{% block active8 %} active {% endblock active8 %}
 {% block content %}
   <h1 style="margin-top:-5%;margin-bottom:3%;">Сотрудники</h1>
     <form method="post">
       {% csrf_token %}
       <div class="input-group mb-3">
-        <input type="text" class="form-control" placeholder="ФИО" name="fio" id="fio"  aria-describedby="basic-addon2">
+        <input type="text" class="form-control" placeholder="Фамилия" name="surname" id="surname"  aria-describedby="basic-addon2">
+        <input type="text" class="form-control" placeholder="Имя" name="name" id="name"  aria-describedby="basic-addon2">
+        <input type="text" class="form-control" placeholder="Отчество" name="secondname" id="secondname"  aria-describedby="basic-addon2">
         <input type="text" class="form-control" placeholder="email" name="email" id="email" aria-describedby="basic-addon2">
         <input type="text" class="form-control" placeholder="номер телефона"  name="phone" id="phone" aria-describedby="basic-addon2">
         <div class="input-group-append">
-          <button type="submit" class="btn btn-primary" >Найти</button>
+          <button type="submit" style="margin-left:5px; margin-right:5px;" class="btn btn-primary" >Найти</button>
+        </div>
+        <div class="input-group-append">
+          <button onclick="window.location='staff/create_new_admin/';" type="button" class="btn btn-success">Добавить</button>
         </div>
       </div>
     </form>
@@ -28,7 +33,7 @@
             {% for admin in admins %}
               <tr onclick="window.location='staff/{{ admin.user_id }}/';" >
                 <th scope="row">{{ admin.user_id }}</th>
-                <td>{{ admin.user_fio }}<svg style="color:green" class="bi pe-none" width="24" height="24" role="img" aria-label="Dashboard"><use xlink:href="#cool"/></svg></span></td>
+                <td>{{ admin.user_fio }}<svg style="color:green" class="bi pe-none" width="24" height="24" role="img" aria-label="Dashboard"><use xlink:href="#cool"/></svg></td>
                 <td>{{ admin.email }}</td>
                 <td>{{ admin.phone }}</td>
               </tr>
