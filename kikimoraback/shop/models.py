@@ -67,7 +67,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.user_fio.split()[0]
-# TODO: Система индивидуальных скидок или баллов
 
     def __str__(self):
         return f"{self.user_id}, {self.email}, {self.user_fio}, {self.phone}, {self.bd}"
@@ -106,10 +105,15 @@ class Category(models.Model):
     category_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200, help_text='Название категории', db_index=True)
     text = models.CharField(max_length=400, help_text='Описание категории', blank=True)
-    discount_precentage = models.IntegerField(validators=[MaxValueValidator(100)], help_text='Процент скидки на категорию', blank=True)
 
     def __str__(self):
         return f"{self.category_id}, {self.name}, {self.text}"
+
+
+class Subcategory(models.Model):
+    subcategory_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=200, help_text='Название подкатегории', db_index=True)
+    text = models.CharField(max_length=400, help_text='Описание подкатегории', blank=True)
 
 
 class Product(models.Model):
@@ -120,27 +124,61 @@ class Product(models.Model):
     composition = models.CharField(max_length=400, default=None)
     price = models.FloatField(default=0.0, help_text='Цена товара')
     weight = models.FloatField(default=0.0, help_text='Вес товара в киллограммах')
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    subcategory = models.ForeignKey(Subcategory, on_delete=models.CASCADE)
+    bonus = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.product_id}, {self.active}, {self.name}, {self.photo_url}, {self.composition}, {self.price}, {self.weight}, {self.category}"
 
 
-# TODO: Уточнить о системе скидок
+class LimitTimeProduct(models.Model):
+    limittimeproduct_id = models.AutoField(primary_key=True)
+    product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
+    ammount = models.IntegerField()
+    due = models.DateTimeField()
+
+
 class Discount(models.Model):
     discount_id = models.AutoField(primary_key=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    percentage = models.IntegerField(default=0, help_text='Процент скидки')
-    amount = models.IntegerField(default=0, help_text='Сумма скидки')
-    description = models.CharField(max_length=400, default=None)
+    percentage = models.IntegerField(default=0, help_text='Процент скидки', blank=True)
+    amount = models.IntegerField(default=0, help_text='Сумма скидки', blank=True)
+    description = models.CharField(max_length=400, blank=True)
+    min_sum = models.FloatField(default=1, blank=True)
 
     def __str__(self):
         return f"{self.discount_id}, {self.product},{self.percentage}, {self.amount}, {self.description}"
 
 
-class PromoSystem(models.Model):
+class DiscountCategory(models.Model):
+    discountcategory_id = models.AutoField(primary_key=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    due = models.DateTimeField()
 
+
+class DiscountSubcategory(models.Model):
+    discountsubcategory_id = models.AutoField(primary_key=True)
+    subcategory = models.ForeignKey(Subcategory, on_delete=models.CASCADE)
+    due = models.DateTimeField()
+
+
+class DiscountProduct(models.Model):
+    discountproduct_id = models.AutoField(primary_key=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    due = models.DateTimeField()
+
+
+class PromoSystem(models.Model):
     promo_id = models.AutoField(primary_key=True)
     creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    promo_product = models.ForeignKey(Product, on_delete=models.CASCADE)
-#    type = models.CharField(choices=discount_type)
+    promo_product = models.ForeignKey(Product, on_delete=models.CASCADE, blank=True)
+    type = models.CharField(max_length=50)
+    min_sum = models.FloatField(default=1, blank=True)
+    useg = models.IntegerField()
+    one_time = models.BooleanField
+    due = models.DateTimeField()
+
+
+class PromoUser(models.Model):
+    promouser_id = models.AutoField(primary_key=True)
+    code = models.ForeignKey(PromoSystem, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
