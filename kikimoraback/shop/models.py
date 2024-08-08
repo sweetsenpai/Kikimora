@@ -5,9 +5,6 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.db import models
 from datetime import datetime
-status_dict ={"NEW": "НОВЫЙ", "IN PROGRESS": "В РАБОТЕ",
-              "DELIVERY": "ДОСТАВКА", "COMPLETE": "ВЫПОЛНЕН",
-              "DECLINED": "ОТМЕНЕН", "AWAITING PAYMENT": "ОЖИДАЕТ ОПЛАТЫ"}
 
 
 class AccountManager(BaseUserManager):
@@ -52,7 +49,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     user_fio = models.CharField(max_length=200, help_text='Ф.И.О.', db_index=True)
     phone = models.CharField(max_length=12, help_text='Номер телефона', db_index=True)
     bd = models.DateField(default=timezone.now, help_text='Дата рождения')
-    is_staff = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False, help_text='')
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(default=timezone.now)
     last_login = models.DateTimeField(null=True)

@@ -33,7 +33,11 @@
             {% for admin in admins %}
               <tr onclick="window.location='staff/{{ admin.user_id }}/';" >
                 <th scope="row">{{ admin.user_id }}</th>
-                <td>{{ admin.user_fio }}<svg style="color:green" class="bi pe-none" width="24" height="24" role="img" aria-label="Dashboard"><use xlink:href="#cool"/></svg></td>
+                {% if admin.is_superuser %}
+                  <td>{{ admin.user_fio }}<svg style="color:green" class="bi pe-none" width="24" height="24" role="img" aria-label="Dashboard"><use xlink:href="#cool"/></svg></td>
+                {% else %}
+                  <td>{{ admin.user_fio }}</td>
+                {% endif %}
                 <td>{{ admin.email }}</td>
                 <td>{{ admin.phone }}</td>
               </tr>

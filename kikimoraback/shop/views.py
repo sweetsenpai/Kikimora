@@ -9,14 +9,11 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.urls import reverse
 from django.db.models import Q
 from .models import CustomUser
+from .forms import AdminCreationForm
 
 
 class AdminHomePageView(TemplateView):
     template_name = 'master/home.html'
-#
-# def apanel_home(TemplateView):
-#
-#     return render(request, template_name='master/home.html')
 
 
 def apanel_staff(request):
@@ -38,5 +35,14 @@ def admin_account(request, admin_id):
     return render(request, template_name='master/admin_page.html', context=admin_data)
 
 
-class AdminCreate(TemplateView):
-    template_name = 'master/admin_page.html'
+def addadmin(request):
+    if request.method == 'POST':
+        form = AdminCreationForm(request.POST)
+        print(form.data)
+        if form.is_valid():
+            form.save()
+            return redirect('/staff')
+        else:
+            print('ERROR!!!!!!!!!!!!!!!')
+    form = AdminCreationForm(initial={'is_staff': True})
+    return render(request, 'master/test.html', {'form': form})

@@ -163,7 +163,9 @@
     <div style='padding-left:25%' class="row g-1">
       <div class="col-md-5 col-lg-8">
         <h4 class="mb-3">Данные администратора</h4>
-        <form class="needs-validation" novalidate>
+        <form  method="post" class="needs-validation" novalidate>
+          {% csrf_token %}
+          <div class="form-error">{{ form.non_field_errors }}</div>
           <div class="row g-3">
             <div class="col-12">
               <label for="firstName" class="form-label">ФИО</label>
@@ -172,7 +174,10 @@
                 Valid first name is required.
               </div>
             </div>
-
+            {% for f in form %}
+            <p><label class="form-label" for="{{ f.id_for_label }}"> {{f.label}}</label>{{ f }}</p>
+            <div class="form-error">{{ f.errors }}</div>
+            {% endfor %}
 
 
             <div class="col-12">
@@ -204,6 +209,7 @@
           <button class="w-100 btn btn-primary btn-lg" type="submit">Сохранить</button>
           <hr class="my-4">
           <button class="w-100  btn btn-outline-danger btn-lg"  type="submit">Удалить</button>
+          </div>>
         </form>
       </div>
     </div>
