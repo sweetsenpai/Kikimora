@@ -64,5 +64,4 @@ class UserChangeForm(forms.ModelForm):
 class AdminCreationForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ['email', 'user_fio', 'phone', 'is_superuser', 'is_staff']
-        widgets = {'is_staff': forms.HiddenInput}
+        fields = ['email', 'user_fio', 'phone', 'is_superuser']

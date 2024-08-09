@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.db.models import Q
 from .models import CustomUser
 from .forms import AdminCreationForm
+from django.utils.crypto import get_random_string
 
 
 class AdminHomePageView(TemplateView):
@@ -38,11 +39,18 @@ def admin_account(request, admin_id):
 def addadmin(request):
     if request.method == 'POST':
         form = AdminCreationForm(request.POST)
-        print(form.data)
         if form.is_valid():
-            form.save()
+            user_fio = form.cleaned_data['user_fio']
+            email = form.cleaned_data['email']
+            phone = form.cleaned_data['phone']
+            is_superuser = form.cleaned_data['is_superuser']
+            new_user = CustomUser(user_fio=user_fio, email=email,
+                                  phone=phone, is_superuser=is_superuser,
+                                  is_staff=True)
+            new_user.set_password(get_random_string(20))
+            new_user.save()
             return redirect('/staff')
         else:
-            print('ERROR!!!!!!!!!!!!!!!')
-    form = AdminCreationForm(initial={'is_staff': True})
-    return render(request, 'master/test.html', {'form': form})
+            return render(request, 'master/admin_page.html', {'form': form})
+    form = AdminCreationForm()
+    return render(request, 'master/admin_page.html', {'form': form})
