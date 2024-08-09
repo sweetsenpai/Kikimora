@@ -11,9 +11,7 @@ from django.db.models import Q
 from .models import CustomUser
 from .forms import AdminCreationForm
 from django.utils.crypto import get_random_string
-#from .email_sending import send_email
-from django.conf import settings
-from django.core.mail import send_mail
+from .email_sending import new_admin_mail
 
 
 class AdminHomePageView(TemplateView):
@@ -52,27 +50,8 @@ def addadmin(request):
                                   is_staff=True)
             password = get_random_string(20)
             new_user.set_password(password)
-            send_mail('Готов вкалывать?',
-                      f'Привет новый ра..сотрудник!\nД'
-                      f'ля входа в систему тебе нужен логин и пароль.\n '
-                      f'Пароль я дам:{password} ,логин я не дам... \n'
-                      f'Логин это твоя почта она у тебя и так есть.\n'
-                      f'Только прошу, не давай пароль никому кроме себя, а то всем придется не сладко, особенно тебе!',
-                      'settings.EMAIL_HOST_USER',
-                      [new_user.email],
-                      fail_silently=False)
-            # msg = EmailMessage(subject='Welckom', body='Test MSG!!!', from_email=settings.EMAIL_HOST_USER, to=['chcolatemilk00@gmail.com'])
-            # msg.send()
-            # send_mail(
-            #     subject='Test',
-            #     message='Test',
-            #     recipient_list=['chcolatemilk00@gmail.com'],
-            #     fail_silently=False,
-            #     html_message='',
-            #     connection=settings.EMAIL_BACKEND,
-            #     from_email='chcolatemilk00@yandex.ru'
-            # )
             new_user.save()
+            new_admin_mail(password, new_user.email)
             return redirect('/staff')
         else:
             return render(request, 'master/admin_page.html', {'form': form})
