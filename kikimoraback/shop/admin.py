@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import CustomUser, UserAddress, OrdersHistory, Category, Product, Discount, UserBonusSystem
 from .forms import UserCreationForm, UserChangeForm
+from django.conf import settings
+from django.core.mail import send_mail
 
 
 class AccountAdmin(BaseUserAdmin):
