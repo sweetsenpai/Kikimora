@@ -8,16 +8,10 @@
     <meta name="description" content="">
     <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
     <meta name="generator" content="Hugo 0.122.0">
-    <title>Checkout example · Bootstrap v5.3</title>
-
+    <title>Новый орк</title>
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/checkout/">
-
-    
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
-
-<link href="../../static/CSS/bootstrap.min.css" rel="stylesheet">
-
+    <link href="../../static/CSS/bootstrap.min.css" rel="stylesheet">
     <style>
       .bd-placeholder-img {
         font-size: 1.125rem;
@@ -96,10 +90,10 @@
         display: block !important;
       }
     </style>
-
-    
     <!-- Custom styles for this template -->
     <link href="../../static/CSS/checkout.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="../../static/JS/new_admin_confirm.js"></script>
   </head>
   <body class="bg-body-tertiary">
     <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
@@ -129,7 +123,7 @@
     <div style='padding-left:25%' class="row g-1">
       <div class="col-md-5 col-lg-8">
         <h4 class="mb-3">Данные сотрудника</h4>
-        <form  method="post" class="needs-validation" novalidate>
+        <form  method="post"  class="needs-validation" novalidate>
           {% csrf_token %}
           {% if form.errors %}
             <div class="alert alert-danger" role="alert">
@@ -171,7 +165,7 @@
 
           <hr class="my-4">
           </div>
-          <button class="w-100 btn btn-success btn-lg" type="submit">Сохранить</button>
+          <button class="w-100 btn btn-success btn-lg" type="submit" onclick="confirmForm()">Создать</button>
           <hr class="my-4">
           <button type="button" class="w-100 btn btn-primary btn-lg" onclick="window.location='/staff';">Назад</button>
         </form>
