@@ -29,14 +29,6 @@ def apanel_staff(request):
     return render(request, template_name='master/staff.html', context=admins)
 
 
-def admin_account(request, admin_id):
-    if request.method=="POST":
-        CustomUser.objects.all().fileter(user_id=admin_id).delete()
-        return redirect('/staff')
-    admin_data = {'admin': CustomUser.objects.all().filter(user_id=admin_id).values()}
-    return render(request, template_name='master/admin_page.html', context=admin_data)
-
-
 def addadmin(request):
     if request.method == 'POST':
         form = AdminCreationForm(request.POST)
@@ -57,3 +49,14 @@ def addadmin(request):
             return render(request, 'master/admin_creation_page.html', {'form': form})
     form = AdminCreationForm()
     return render(request, 'master/admin_creation_page.html', {'form': form})
+
+
+def admin_account(request, admin_id):
+    if request.method=="POST":
+        ex_admin = CustomUser.objects.get(user_id=admin_id)
+        ex_admin.is_staff = False
+        ex_admin.is_superuser = False
+        ex_admin.save()
+        return JsonResponse({'status': 'success', 'redirect_url': '/staff'})
+    admin_data = {'admin': CustomUser.objects.all().filter(user_id=admin_id).values()}
+    return render(request, template_name='master/admin_page.html', context=admin_data)

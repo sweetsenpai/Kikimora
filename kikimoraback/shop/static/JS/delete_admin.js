@@ -7,20 +7,20 @@ $(document).on('click', '#submit-button', function(event) {
 
     // Создаем диалоговое окно
     $.confirm({
-        title: 'Добавление нового сортрудника!',
-        content: 'Вы уверены, что хотите отправить форму?\nВы даруете кому-то власть которая и не снилась моему отцу!',
-        type: 'green',
+        title: 'Удаление сотрудника',
+        content: 'Вы уверены, что хотите удалить этого сотрудника?\nСомневаюсь, что после удаления мы сможем всё исправить если Вы передумаете!',
+        type: 'red',
         buttons: {
             Создать: {
-                text: 'Создать',
-                btnClass: 'btn-green',
+                text: 'Удалить',
+                btnClass: 'btn-red',
                 action: function() {
                     console.log("Попробовать снова нажать");
 
                     // Ваш AJAX-запрос здесь
                     $.ajax({
                         type: "POST",
-                        url: "/staff/create_new_admin/", // Убедитесь, что вы указываете правильный URL
+//                        url: "/staff//", // Убедитесь, что вы указываете правильный URL
                         data: formElement.serialize() + '&csrfmiddlewaretoken=' + $('input[name="csrfmiddlewaretoken"]').val(),
                         success: function(response) {
                             if (response.status === 'success') {
