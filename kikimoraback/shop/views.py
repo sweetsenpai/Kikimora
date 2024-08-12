@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login as auth_login, logout
 from django.contrib import messages
 from django.template import loader
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView
@@ -31,8 +31,8 @@ def apanel_staff(request):
 
 def admin_account(request, admin_id):
     if request.method=="POST":
-        ...
-    print(request)
+        CustomUser.objects.all().fileter(user_id=admin_id).delete()
+        return redirect('/staff')
     admin_data = {'admin': CustomUser.objects.all().filter(user_id=admin_id).values()}
     return render(request, template_name='master/admin_page.html', context=admin_data)
 
@@ -52,8 +52,8 @@ def addadmin(request):
             new_user.set_password(password)
             new_user.save()
             new_admin_mail(password, new_user.email)
-            return redirect('/staff')
+            return JsonResponse({'status': 'success', 'redirect_url': '/staff'})
         else:
-            return render(request, 'master/admin_page.html', {'form': form})
+            return render(request, 'master/admin_creation_page.html', {'form': form})
     form = AdminCreationForm()
-    return render(request, 'master/admin_page.html', {'form': form})
+    return render(request, 'master/admin_creation_page.html', {'form': form})

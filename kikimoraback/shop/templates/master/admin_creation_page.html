@@ -6,8 +6,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
     <meta name="generator" content="Hugo 0.122.0">
-    <title>Орк </title>
+    <title>Новый орк</title>
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/checkout/">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
     <link href="../../static/CSS/bootstrap.min.css" rel="stylesheet">
@@ -91,10 +92,10 @@
     </style>
     <!-- Custom styles for this template -->
     <link href="../../static/CSS/checkout.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.4/jquery-confirm.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.4/jquery-confirm.min.js"></script>
-    <script src="../../static/JS/delete_confirm_admin.js"></script>
+    <script src="../../static/JS/new_admin_confirm.js"></script>
   </head>
   <body class="bg-body-tertiary">
     <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
@@ -113,52 +114,77 @@
       </symbol>
     </svg>
 
-    {% for data in admin %}
-    <div class="container">
-      <main>
-        <div class="py-5 text-center">
-          <img class="d-block mx-auto mb-4" src="../../static/images/browse-svgrepo-com.svg" alt="" width="72" height="57">
-          <h2>Сотрудник {{data.user_fio}}</h2>
-        </div>
 
-        <div style='padding-left:25%' class="row g-1">
-          <div class="col-md-5 col-lg-8">
-            <form  method="post"  onsubmit="" class="needs-validation" novalidate>
-              {% csrf_token %}
-              <div class="row g-3">
-                <div class="col-12">
-                    <label class="form-label"><b>ФИО</b></label>
-                    <p class="font-weight-normal">{{ data.user_fio }}</p>
-                </div>
-                <hr class="my-4">
-                <div class="col-12">
-                    <label class="form-label"><b>Email</b> <span class="text-body-secondary"></span></label>
-                  <p class="font-weight-normal">{{ data.email }}</p>
-                </div>
-                <hr class="my-4">
-                <div class="col-12">
-                    <label  class="form-label"><b>Номер телефона</b></label>
-                  <p class="font-weight-normal">{{ data.phone }}</p>
-                </div>
-              <hr class="my-4">
-              </div>
-              <button class="w-100 btn btn-danger btn-lg" type="button">Удалить</button>
-              <hr class="my-4">
-              <button type="button" class="w-100 btn btn-primary btn-lg" onclick="window.location='/staff';">Назад</button>
-            </form>
-          </div>
-        </div>
-      </main>
-    {% endfor %}
-      <footer class="my-5 pt-5 text-body-secondary text-center text-small">
-        <p class="mb-1">&copy; 2024 Kikimora</p>
-        <ul class="list-inline">
-          <li class="list-inline-item"><a href="#">Privacy</a></li>
-          <li class="list-inline-item"><a href="#">Terms</a></li>
-          <li class="list-inline-item"><a href="#">Support</a></li>
-        </ul>
-      </footer>
+<div class="container">
+  <main>
+    <div class="py-5 text-center">
+      <img class="d-block mx-auto mb-4" src="../../static/images/browse-svgrepo-com.svg" alt="" width="72" height="57">
+      <h2>Добавление сотрудника</h2>
     </div>
-    <script src="../../static/JS/bootstrap.bundle.min.js"></script>
-    </body>
+
+    <div style='padding-left:25%' class="row g-1">
+      <div class="col-md-5 col-lg-8">
+        <h4 class="mb-3">Данные сотрудника</h4>
+        <form  method="post"  class="needs-validation" novalidate>
+          {% csrf_token %}
+          {% if form.errors %}
+            <div class="alert alert-danger" role="alert">
+              {{ form.errors }}
+            </div>
+          {% endif %}
+          <div class="row g-3">
+            <div class="col-12">
+              <label for="firstName" class="form-label">ФИО</label>
+              <input type="text" class="form-control" id="firstName" name="user_fio" placeholder="Иванов Иван Иванович" value="" required>
+              <div class="invalid-feedback">
+                Необходимо ввести ФИО
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label for="email" class="form-label">Email <span class="text-body-secondary"></span></label>
+              <input type="email" class="form-control" name="email" id="email" placeholder="you@example.com" required>
+              <div class="invalid-feedback">
+                Необходимо ввести email
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label for="address" class="form-label">Номер телефона</label>
+              <input type="tel" name="phone" class="form-control" id="address" placeholder="+79111234455" required>
+              <div class="invalid-feedback">
+                Необходимо ввести валидный номер телефона
+              </div>
+            </div>
+
+
+          <hr class="my-4">
+          <label for="address" class="form-label">Сделать суперадмином?</label>
+          <div class="form-check">
+            <input type="checkbox" name="is_superuser" class="form-check-input" id="save-info">
+            <label class="form-check-label" for="save-info">Superadmin</label>
+          </div>
+
+          <hr class="my-4">
+          </div>
+          <button class="w-100 btn btn-success btn-lg" id="submit-button" >Создать</button>
+          <hr class="my-4">
+          <button type="button" class="w-100 btn btn-primary btn-lg" onclick="window.location='/staff';">Назад</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="my-5 pt-5 text-body-secondary text-center text-small">
+    <p class="mb-1">&copy; 2024 Kikimora</p>
+    <ul class="list-inline">
+      <li class="list-inline-item"><a href="#">Privacy</a></li>
+      <li class="list-inline-item"><a href="#">Terms</a></li>
+      <li class="list-inline-item"><a href="#">Support</a></li>
+    </ul>
+  </footer>
+</div>
+<script src="../../static/JS/bootstrap.bundle.min.js"></script>
+
+    <script src="../../static/JS/checkout.js"></script></body>
 </html>
