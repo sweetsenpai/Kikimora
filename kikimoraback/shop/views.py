@@ -11,7 +11,7 @@ from django.db.models import Q
 from .models import CustomUser
 from .forms import AdminCreationForm
 from django.utils.crypto import get_random_string
-from .email_sending import new_admin_mail
+from .tasks import new_admin_mail
 
 
 class AdminHomePageView(TemplateView):
@@ -44,10 +44,13 @@ def addadmin(request):
             password = get_random_string(20)
             new_user.set_password(password)
             new_user.save()
-            new_admin_mail(password, new_user.email)
+            new_admin_mail.delay(password, new_user.email)
             return JsonResponse({'status': 'success', 'redirect_url': '/staff'})
         else:
-            return render(request, 'master/admin_creation_page.html', {'form': form})
+            errors = {}
+            for field, error_list in form.errors.items():
+                errors[field] = error_list[0]
+            return JsonResponse({'status': 'error', 'errors': errors})
     form = AdminCreationForm()
     return render(request, 'master/admin_creation_page.html', {'form': form})
 

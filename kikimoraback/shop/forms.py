@@ -1,7 +1,8 @@
 # accounts/forms.py
 from django import forms
 from django.contrib.auth.models import Group
-from django.contrib.auth.forms import ReadOnlyPasswordHashField
+from django.contrib.auth.forms import ReadOnlyPasswordHashField, ValidationError
+import re
 
 from .models import CustomUser
 
@@ -55,9 +56,6 @@ class UserChangeForm(forms.ModelForm):
         fields = ('email', 'user_fio', 'phone', 'bd', 'password', 'is_staff', 'is_superuser')
 
     def clean_password(self):
-        # Regardless of what the user provides, return the initial value.
-        # This is done here, rather than on the field, because the
-        # field does not have access to the initial value
         return self.initial["password"]
 
 
@@ -65,3 +63,17 @@ class AdminCreationForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ['email', 'user_fio', 'phone', 'is_superuser']
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if CustomUser.objects.filter(email=email).exists():
+            raise ValidationError("Данный email уже существует в базе данных.")
+        return email
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if not re.match(r'^\+?[1-9]\d{1,14}$', phone):
+            raise ValidationError("Введите корректный номер телефона.")
+        if CustomUser.objects.filter(phone=phone).exists():
+            raise ValidationError("Данный номер телефона уже в базе данных.")
+        return phone

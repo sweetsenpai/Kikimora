@@ -7,8 +7,8 @@ $(document).on('click', '#submit-button', function(event) {
 
     // Создаем диалоговое окно
     $.confirm({
-        title: 'Добавление нового сортрудника!',
-        content: 'Вы уверены, что хотите отправить форму?\nВы даруете кому-то власть которая и не снилась моему отцу!',
+        title: 'Добавление нового сотрудника!',
+        content: 'Вы уверены, что хотите отправить форму?',
         type: 'green',
         buttons: {
             Создать: {
@@ -20,17 +20,34 @@ $(document).on('click', '#submit-button', function(event) {
                     // Ваш AJAX-запрос здесь
                     $.ajax({
                         type: "POST",
-                        url: "/staff/create_new_admin/", // Убедитесь, что вы указываете правильный URL
+                        url: "/staff/create_new_admin/",
                         data: formElement.serialize() + '&csrfmiddlewaretoken=' + $('input[name="csrfmiddlewaretoken"]').val(),
                         success: function(response) {
+                            console.log("Ответ от сервера:", response);
                             if (response.status === 'success') {
-                                // Перенаправляем пользователя на страницу staff
                                 window.location.href = response.redirect_url;
                             } else {
-                                // Обрабатываем ошибки валидации
                                 console.error("Ошибка:", response.errors);
-                                // Вы можете отображать ошибки на странице здесь
-                        }},
+
+                                // Очищаем предыдущие ошибки
+                                $('#errorContainer').html('');
+
+                                const errors = response.errors;
+                                let hasErrors = false; // Флаг, указывающий на наличие ошибок
+
+                                for (const field in errors) {
+                                    $('#errorContainer').append(`<p>${field}: ${errors[field]}</p>`);
+                                    hasErrors = true; // Устанавливаем флаг, если есть хотя бы одна ошибка
+                                }
+
+                                // Показать или скрыть #errorContainer в зависимости от наличия ошибок
+                                if (hasErrors) {
+                                    $('#errorContainer').show(); // Показываем контейнер
+                                } else {
+                                    $('#errorContainer').hide(); // Скрываем контейнер
+                                }
+                            }
+                        } ,
                         error: function(xhr, status, error) {
                             console.error("Ошибка:", error);
                         }

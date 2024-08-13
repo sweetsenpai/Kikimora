@@ -125,13 +125,9 @@
     <div style='padding-left:25%' class="row g-1">
       <div class="col-md-5 col-lg-8">
         <h4 class="mb-3">Данные сотрудника</h4>
+        <div id="errorContainer" class="alert alert-danger" role="alert" style="display: none;"></div>
         <form  method="post"  class="needs-validation" novalidate>
           {% csrf_token %}
-          {% if form.errors %}
-            <div class="alert alert-danger" role="alert">
-              {{ form.errors }}
-            </div>
-          {% endif %}
           <div class="row g-3">
             <div class="col-12">
               <label for="firstName" class="form-label">ФИО</label>
