@@ -23,7 +23,8 @@ def apanel_staff(request):
         email = request.POST.get('email')
         fio = request.POST.get('fio')
         phone = request.POST.get('phone')
-        search_result = {'admins':  CustomUser.objects.filter(Q(email=email) | Q(phone=phone) |Q(user_fio=fio), is_staff=True)}
+        search_query = Q(email=email) | Q(phone=phone) | Q(user_fio=fio)
+        search_result = {'admins':  CustomUser.objects.filter(search_query, is_staff=True)}
         return render(request, template_name='master/staff.html', context=search_result)
     admins = {'admins': CustomUser.objects.all().filter(is_staff=True).order_by('user_id').values()}
     return render(request, template_name='master/staff.html', context=admins)
@@ -53,7 +54,7 @@ def addadmin(request):
 
 def admin_account(request, admin_id):
     if request.method=="POST":
-        ex_admin = CustomUser.objects.get(user_id=admin_id)
+        ex_admin = CustomUser.objects.get_object_or_404(user_id=admin_id)
         ex_admin.is_staff = False
         ex_admin.is_superuser = False
         ex_admin.save()
