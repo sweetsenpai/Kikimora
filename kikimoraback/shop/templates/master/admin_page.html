@@ -113,12 +113,12 @@
       </symbol>
     </svg>
 
-    {% for data in admin %}
+
     <div class="container">
       <main>
         <div class="py-5 text-center">
           <img class="d-block mx-auto mb-4" src="../../static/images/browse-svgrepo-com.svg" alt="" width="72" height="57">
-          <h2>Сотрудник {{data.user_fio}}</h2>
+          <h2>Сотрудник {{admin.user_fio}}</h2>
         </div>
 
         <div style='padding-left:25%' class="row g-1">
@@ -128,17 +128,17 @@
               <div class="row g-3">
                 <div class="col-12">
                     <label class="form-label"><b>ФИО</b></label>
-                    <p class="font-weight-normal">{{ data.user_fio }}</p>
+                    <p class="font-weight-normal">{{ admin.user_fio }}</p>
                 </div>
                 <hr class="my-4">
                 <div class="col-12">
                     <label class="form-label"><b>Email</b> <span class="text-body-secondary"></span></label>
-                  <p class="font-weight-normal">{{ data.email }}</p>
+                  <p class="font-weight-normal">{{ admin.email }}</p>
                 </div>
                 <hr class="my-4">
                 <div class="col-12">
                     <label  class="form-label"><b>Номер телефона</b></label>
-                  <p class="font-weight-normal">{{ data.phone }}</p>
+                  <p class="font-weight-normal">{{ admin.phone }}</p>
                 </div>
               <hr class="my-4">
               </div>
@@ -149,7 +149,7 @@
           </div>
         </div>
       </main>
-    {% endfor %}
+
       <footer class="my-5 pt-5 text-body-secondary text-center text-small">
         <p class="mb-1">&copy; 2024 Kikimora</p>
         <ul class="list-inline">

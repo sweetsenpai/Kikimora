@@ -1,0 +1,45 @@
+{% extends 'master/base.html' %}
+{% block title %}Товары{% endblock %}
+{% block active2 %} active {% endblock active2 %}
+{% block content %}
+<h1 style="margin-top:-5%;margin-bottom:3%;">Товары</h1>
+    {% if form.errors %}
+      <div id="errorContainer" class="alert alert-danger" role="alert">{{ form.errors }}</div>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="input-group mb-3">
+        <input type="text" class="form-control" placeholder="Название категории" name="name" id="name"  aria-describedby="basic-addon2">
+        <input type="text" class="form-control" placeholder="Описание категории(опционально)" name="text" id="text"  aria-describedby="basic-addon2">
+        <div class="input-group-append">
+          <button type="submit" style="margin-left:5px; margin-right:5px;" class="btn btn-primary" >Добавить</button>
+        </div>
+      </div>
+    </form>
+      <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Категория</th>
+                <th scope="col">Текст</th>
+                <th scope="col">Настройки видимости</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for category in categories %}
+            <tr>
+              <th scope="row">{{ category.category_id }}</th>
+              <td>{{ category.name }}</td>
+              <td>{{ category.text }}</td>
+              {% if category.visibility %}
+                <td><button type="button"  class="btn btn-warning" onclick="window.location='change_visability/{{ category.category_id }}/">Убрать из выдачи</button></td>
+              {% else %}
+              <td><button type="button" class="btn btn-primary" onclick="window.location='change_visability/{{ category.category_id }}/">Вернуть в выдачу</button></td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+      </div>
+{% endblock %}

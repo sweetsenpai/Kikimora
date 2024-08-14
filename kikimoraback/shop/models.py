@@ -100,8 +100,9 @@ class OrdersHistory(models.Model):
 
 class Category(models.Model):
     category_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=200, help_text='Название категории', db_index=True)
+    name = models.CharField(max_length=200, help_text='Название категории', db_index=True, unique=True)
     text = models.CharField(max_length=400, help_text='Описание категории', blank=True)
+    visibility = models.BooleanField(default=True, help_text='Указывает видимость категории')
 
     def __str__(self):
         return f"{self.category_id}, {self.name}, {self.text}"

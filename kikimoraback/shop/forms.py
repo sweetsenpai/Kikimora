@@ -3,8 +3,7 @@ from django import forms
 from django.contrib.auth.models import Group
 from django.contrib.auth.forms import ReadOnlyPasswordHashField, ValidationError
 import re
-
-from .models import CustomUser
+from .models import *
 
 
 class RegistrationForm(forms.ModelForm):
@@ -77,3 +76,21 @@ class AdminCreationForm(forms.ModelForm):
         if CustomUser.objects.filter(phone=phone).exists():
             raise ValidationError("Данный номер телефона уже в базе данных.")
         return phone
+
+
+class CategoryCreationForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ['name', 'text']
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if not name:
+            raise ValidationError("Поле имя категории не может быть пустым")
+        if Category.objects.filter(name=name).exists():
+            raise ValidationError("Категория с таким названием уже существует, зачем вам ещё одна?")
+        return name
+
+    def clean_text(self):
+        text = self.cleaned_data.get('text')
+        return text
