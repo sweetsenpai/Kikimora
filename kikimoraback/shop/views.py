@@ -94,3 +94,18 @@ def toggle_visibility(request, category_id):
     category.visibility = not category.visibility
     category.save()
     return redirect('admin_category_view')
+
+
+class AdminSubcategoryListView(ListView):
+    model = Subcategory
+    template_name = 'master/subcategory.html'
+    context_object_name = 'subcategories'
+
+    def get_queryset(self):
+        self.category = get_object_or_404(Category, pk=self.kwargs['category_id'])
+        return Subcategory.objects.filter(category=self.category, visibility=True).order_by('subcategory_id')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['category'] = self.category
+        return context

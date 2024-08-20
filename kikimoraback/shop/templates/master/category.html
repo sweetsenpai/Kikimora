@@ -1,5 +1,6 @@
 {% extends 'master/base.html' %}
 {% block title %}Товары{% endblock %}
+
 {% block active2 %} active {% endblock active2 %}
 {% block content %}
 <h1 style="margin-top:-5%;margin-bottom:3%;">Товары</h1>
@@ -29,9 +30,9 @@
             <tbody>
             {% for category in categories %}
             <tr>
-              <th scope="row">{{ category.category_id }}</th>
-              <td>{{ category.name }}</td>
-              <td>{{ category.text }}</td>
+              <th scope="row" onclick="window.location='category/{{category.category_id}}/subcategories/';">{{ category.category_id }}</th>
+              <td onclick="window.location='category/{{category.category_id}}/subcategories/';">{{ category.name }}</td>
+              <td onclick="window.location='category/{{category.category_id}}/subcategories/';">{{ category.text }}</td>
               {% if category.visibility %}
                 <td><button type="button" class="btn btn-warning" onclick="window.location='change_visability/{{ category.category_id }}'">Убрать из выдачи</button></td>
               {% else %}

@@ -1,8 +1,9 @@
 <!doctype html>
 <html lang="en" data-bs-theme="auto">
+{% load static %}
   <head>
-    <script src="../../static/JS/color-modes.js"></script>
-    <link rel="icon" type="image/x-icon" href="../../static/images/browse-svgrepo-com.svg">
+    <script src="{% static 'JS/color-modes.js' %}"></script>
+    <link rel="icon" type="image/x-icon" href="{% static 'images/browse-svgrepo-com.svg' %}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
@@ -11,7 +12,7 @@
     <title>Новый орк</title>
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/checkout/">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
-    <link href="../../static/CSS/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'CSS/bootstrap.min.css' %}" rel="stylesheet">
     <style>
       .bd-placeholder-img {
         font-size: 1.125rem;
@@ -91,11 +92,11 @@
       }
     </style>
     <!-- Custom styles for this template -->
-    <link href="../../static/CSS/checkout.css" rel="stylesheet">
+    <link href="{% static 'CSS/checkout.css' %}" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.4/jquery-confirm.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.4/jquery-confirm.min.js"></script>
-    <script src="../../static/JS/new_admin_confirm.js"></script>
+    <script src="{% static 'JS/new_admin_confirm.js' %}"></script>
   </head>
   <body class="bg-body-tertiary">
     <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
@@ -118,7 +119,7 @@
 <div class="container">
   <main>
     <div class="py-5 text-center">
-      <img class="d-block mx-auto mb-4" src="../../static/images/browse-svgrepo-com.svg" alt="" width="72" height="57">
+      <img class="d-block mx-auto mb-4" src="{% static 'images/browse-svgrepo-com.svg' %}" alt="" width="72" height="57">
       <h2>Добавление сотрудника</h2>
     </div>
 
@@ -180,7 +181,6 @@
     </ul>
   </footer>
 </div>
-<script src="../../static/JS/bootstrap.bundle.min.js"></script>
-
-    <script src="../../static/JS/checkout.js"></script></body>
+    <script src="{% static 'JS/bootstrap.bundle.min.js'%}"></script>
+    <script src="{% static 'JS/checkout.js'%}"></script></body>
 </html>

@@ -1,0 +1,32 @@
+{% extends 'master/base.html' %}
+{% block title %}Товары{% endblock %}
+{% block active2 %} active {% endblock active2 %}
+{% block content %}
+<h1 style="margin-top:-5%;margin-bottom:3%;">Товары</h1>
+      <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Подкатегория</th>
+                <th scope="col">Текст</th>
+                <th scope="col">Настройки видимости</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for subcategory in subcategories %}
+            <tr>
+              <th scope="row">{{ subcategory.category_id }}</th>
+              <td>{{ subcategory.name }}</td>
+              <td>{{ subcategory.text }}</td>
+              {% if subcategory.visibility %}
+                <td><button type="button" class="btn btn-warning" onclick="window.location='change_visability/{{ subcategory.subcategory_id }}'">Убрать из выдачи</button></td>
+              {% else %}
+                <td><button type="button" class="btn btn-primary" onclick="window.location='change_visability/{{ subcategory.subcategory_id }}'">Вернуть в выдачу</button></td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+      </div>
+{% endblock %}

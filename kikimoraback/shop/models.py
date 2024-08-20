@@ -112,6 +112,11 @@ class Subcategory(models.Model):
     subcategory_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200, help_text='Название подкатегории', db_index=True)
     text = models.CharField(max_length=400, help_text='Описание подкатегории', blank=True)
+    visibility = models.BooleanField(default=True, help_text='Указывает видимость категории')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subcategories', help_text='Основная категория')
+
+    def __str__(self):
+        return f"{self.subcategory_id}, {self.name}, {self.text}, {self.category.name}"
 
 
 class Product(models.Model):
@@ -124,6 +129,7 @@ class Product(models.Model):
     weight = models.FloatField(default=0.0, help_text='Вес товара в киллограммах')
     subcategory = models.ForeignKey(Subcategory, on_delete=models.CASCADE)
     bonus = models.IntegerField(default=0)
+    visibility = models.BooleanField(default=True, help_text='Указывает видимость категории')
 
     def __str__(self):
         return f"{self.product_id}, {self.active}, {self.name}, {self.photo_url}, {self.composition}, {self.price}, {self.weight}, {self.category}"

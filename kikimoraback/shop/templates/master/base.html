@@ -1,19 +1,18 @@
 <!doctype html>
 <html lang="en" data-bs-theme="light">
+  {% load static %}
   <head>
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <title>{% block title %}{% endblock title %}</title>
-    <link rel="icon" type="image/x-icon" href="../../static/images/browse-svgrepo-com.svg">
+    <link rel="icon" type="image/x-icon" href="{% static 'images/browse-svgrepo-com.svg' %}">
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/sidebars/">
-
-    
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
 
-    <link href="../../static/CSS/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'CSS/bootstrap.min.css' %}" rel="stylesheet">
 
     <style>
       .bd-placeholder-img {
@@ -96,7 +95,7 @@
 
     
     <!-- Custom styles for this template -->
-    <link href="../../static/CSS/sidebars.css" rel="stylesheet">
+    <link href="{% static 'CSS/sidebars.css' %}" rel="stylesheet">
   </head>
   <body >
     <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
@@ -166,7 +165,7 @@
         </a>
       </li>
       <li>
-        <a href="/products" class="nav-link {% block active2 %}{% endblock active2 %} py-3 border-bottom rounded-0" title="Товары" data-bs-toggle="tooltip" data-bs-placement="right">
+        <a href="/categories" class="nav-link {% block active2 %}{% endblock active2 %} py-3 border-bottom rounded-0" title="Товары" data-bs-toggle="tooltip" data-bs-placement="right">
           <svg class="bi pe-none" width="24" height="24" role="img" aria-label="Dashboard"><use xlink:href="#boxes"/></svg>
         </a>
       </li>
