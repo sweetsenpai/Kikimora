@@ -178,7 +178,7 @@ class PromoSystem(models.Model):
     type = models.CharField(max_length=50)
     min_sum = models.FloatField(default=1, blank=True)
     useg = models.IntegerField()
-    one_time = models.BooleanField
+    one_time = models.BooleanField()
     due = models.DateTimeField()
 
 

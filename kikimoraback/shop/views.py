@@ -50,8 +50,7 @@ class AdminCreateView(FormView):
         password = get_random_string(20)
         new_user.set_password(password)
         new_user.save()
-        # TODO uncoment code below
-        # new_admin_mail.delay(password, new_user.email)
+        new_admin_mail.delay(password, new_user.email)
         return JsonResponse({'status': 'success', 'redirect_url': self.success_url})
 
     def form_invalid(self, form):
@@ -103,7 +102,7 @@ class AdminSubcategoryListView(ListView):
 
     def get_queryset(self):
         self.category = get_object_or_404(Category, pk=self.kwargs['category_id'])
-        return Subcategory.objects.filter(category=self.category, visibility=True).order_by('subcategory_id')
+        return Subcategory.objects.filter(category=self.category).order_by('subcategory_id')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
