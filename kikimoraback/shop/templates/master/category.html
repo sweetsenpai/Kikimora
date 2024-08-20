@@ -33,10 +33,9 @@
               <td>{{ category.name }}</td>
               <td>{{ category.text }}</td>
               {% if category.visibility %}
-                <td><button type="button"  class="btn btn-warning" onclick="window.location='change_visability/{{ category.category_id }}/">Убрать из выдачи</button></td>
+                <td><button type="button" class="btn btn-warning" onclick="window.location='change_visability/{{ category.category_id }}'">Убрать из выдачи</button></td>
               {% else %}
-              <td><button type="button" class="btn btn-primary" onclick="window.location='change_visability/{{ category.category_id }}/">Вернуть в выдачу</button></td>
-              {% endif %}
+                <td><button type="button" class="btn btn-primary" onclick="window.location='change_visability/{{ category.category_id }}'">Вернуть в выдачу</button></td>              {% endif %}
             </tr>
             {% endfor %}
             </tbody>

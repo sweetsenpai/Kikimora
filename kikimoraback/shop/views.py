@@ -86,5 +86,11 @@ class AdminCategoryView(ListView):
             form.save()
             return redirect('admin_category_view')
         else:
-            print(form.errors)
             return render(request, template_name=self.template_name, context={'categories': self.get_queryset(), 'form': form})
+
+
+def toggle_visibility(request, category_id):
+    category = get_object_or_404(Category, category_id=category_id)
+    category.visibility = not category.visibility
+    category.save()
+    return redirect('admin_category_view')
