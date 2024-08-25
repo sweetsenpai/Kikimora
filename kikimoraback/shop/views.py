@@ -12,6 +12,7 @@ from .models import *
 from .forms import *
 from django.utils.crypto import get_random_string
 from .tasks import new_admin_mail
+from django.core.cache import cache
 
 
 class AdminHomePageView(TemplateView):
@@ -23,7 +24,12 @@ class StaffListView(ListView):
     context_object_name = 'admins'
 
     def get_queryset(self):
-        return CustomUser.objects.filter(is_staff=True).order_by('user_id').values()
+        cache_key = 'staff_list'
+        staff_list = cache.get(cache_key)
+        if not staff_list:
+            staff_list = CustomUser.objects.filter(is_staff=True).order_by('user_id').values()
+            cache.set(cache_key, staff_list, timeout=60*15)
+        return staff_list
 
     def post(self, request, *args, **kwargs):
         email = request.POST.get('email')
@@ -77,7 +83,12 @@ class AdminCategoryView(ListView):
     form_class = CategoryCreationForm
 
     def get_queryset(self):
-        return Category.objects.all().order_by('category_id')
+        cache_key = 'categories_list'
+        categories_list = cache.get(cache_key)
+        if not categories_list:
+            categories_list = Category.objects.all().order_by('category_id')
+            cache.set(cache_key, categories_list, timeout=60*15)
+        return categories_list
 
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST)
@@ -108,3 +119,16 @@ class AdminSubcategoryListView(ListView):
         context = super().get_context_data(**kwargs)
         context['category'] = self.category
         return context
+
+
+def toggle_visibility_subcat(request, subcategory_id):
+    if request.method == 'POST':
+        subcategory = get_object_or_404(Subcategory, pk=subcategory_id)
+        subcategory.visibility = not subcategory.visibility
+        subcategory.save()
+        return JsonResponse({'visibility': subcategory.visibility})
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+class AdminProdactListView(ListView):
+    ...
