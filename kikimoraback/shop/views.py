@@ -131,4 +131,15 @@ def toggle_visibility_subcat(request, subcategory_id):
 
 
 class AdminProdactListView(ListView):
-    ...
+    model = Product
+    template_name = 'master/products.html'
+    context_object_name = 'products'
+
+    def get_queryset(self):
+        self.subcategory = get_object_or_404(Subcategory, pk=self.kwargs['subcategory_id'])
+        return Product.objects.filter(subcategory=self.subcategory).order_by('product_id')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['subcategory'] = self.subcategory
+        return context

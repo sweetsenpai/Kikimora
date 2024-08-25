@@ -3,7 +3,7 @@
 {% block active2 %} active {% endblock active2 %}
 {% block content %}
 {% load static %}
-<h1 style="margin-top:-5%;margin-bottom:3%;">Товары</h1>
+<h1 style="margin-top:-5%;margin-bottom:3%;">{{ category.name }}</h1>
 <div class="table-responsive">
     <table class="table table-hover">
         <thead>
@@ -17,11 +17,12 @@
         <tbody>
         {% for subcategory in subcategories %}
         <tr id="subcategory-{{ subcategory.subcategory_id }}">
-            <th scope="row">{{ subcategory.subcategory_id }}</th>
-            <td>{{ subcategory.name }}</td>
-            <td>{{ subcategory.text }}</td>
+            <th scope="row" onclick="window.location='{{subcategory.subcategory_id }}';">{{ subcategory.subcategory_id }}</th>
+            <td onclick="window.location='{{subcategory.subcategory_id }}';">{{ subcategory.name }}</td>
+            <td onclick="window.location='{{subcategory.subcategory_id }}';">{{ subcategory.text }}</td>
             <td>
                 <button type="button" class="btn {% if subcategory.visibility %}btn-warning{% else %}btn-primary{% endif %}"
+                        style="color:{% if subcategory.visibility %}#C7253E{% else %} white {% endif %}"
                         onclick="toggleVisibilitySubcat({{ subcategory.subcategory_id }})">
                     {% if subcategory.visibility %}
                         Убрать из выдачи

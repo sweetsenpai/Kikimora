@@ -3,7 +3,7 @@
 
 {% block active2 %} active {% endblock active2 %}
 {% block content %}
-<h1 style="margin-top:-5%;margin-bottom:3%;">Товары</h1>
+<h1 style="margin-top:-5%;margin-bottom:3%;">Категории</h1>
     {% if form.errors %}
       <div id="errorContainer" class="alert alert-danger" role="alert">{{ form.errors }}</div>
     {% endif %}
@@ -34,9 +34,10 @@
               <td onclick="window.location='category/{{category.category_id}}/subcategories/';">{{ category.name }}</td>
               <td onclick="window.location='category/{{category.category_id}}/subcategories/';">{{ category.text }}</td>
               {% if category.visibility %}
-                <td><button type="button" class="btn btn-warning" onclick="window.location='change_visability/{{ category.category_id }}'">Убрать из выдачи</button></td>
+                <td><button type="button" class="btn btn-warning" style="color:#C7253E;" onclick="window.location='change_visability/{{ category.category_id }}'">Убрать из выдачи</button></td>
               {% else %}
-                <td><button type="button" class="btn btn-primary" onclick="window.location='change_visability/{{ category.category_id }}'">Вернуть в выдачу</button></td>              {% endif %}
+                <td><button type="button" class="btn btn-primary" onclick="window.location='change_visability/{{ category.category_id }}'">Вернуть в выдачу</button></td>
+              {% endif %}
             </tr>
             {% endfor %}
             </tbody>
