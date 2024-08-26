@@ -1,12 +1,12 @@
-function toggleVisibilitySubcat(subcategory_id) {
+function toggleVisibilityProduct(product_id) {
     $.ajax({
-        url: window.location.origin + `/change_visibility_subcat/${subcategory_id}/`,
+        url: window.location.origin + `/change_visibility_product/${product_id}/`,
         type: 'POST',
         data: {
             'csrfmiddlewaretoken': getCookie('csrftoken'),
         },
         success: function (response) {
-            var row = $("#subcategory-" + subcategory_id);
+            var row = $("#product-" + product_id);
             var button = row.find('button');
 
             if (response.visibility) {

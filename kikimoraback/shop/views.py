@@ -143,3 +143,12 @@ class AdminProdactListView(ListView):
         context = super().get_context_data(**kwargs)
         context['subcategory'] = self.subcategory
         return context
+
+
+def toggle_visibility_product(request, product_id):
+    if request.method == 'POST':
+        product = get_object_or_404(Product, pk=product_id)
+        product.visibility = not product.visibility
+        product.save()
+        return JsonResponse({'visibility': product.visibility})
+    return JsonResponse({'error': 'Invalid request'}, status=400)

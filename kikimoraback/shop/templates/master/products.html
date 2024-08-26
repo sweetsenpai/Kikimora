@@ -17,14 +17,15 @@
         </thead>
         <tbody>
         {% for product in products %}
-        <tr id="product-{{ product.subcategory_id }}">
+        <tr id="product-{{ product.product_id }}">
             <th scope="row">{{ product.product_id }}</th>
             <td>{{ product.name }}</td>
             <td><img class="rounded mx-auto d-block" src="{{ product.photo_url }}" style="width: 100px;"></td>
             <td>{{ product.price }} ₽</td>
             <td>
                 <button type="button" class="btn {% if product.visibility %}btn-warning{% else %}btn-primary{% endif %}"
-                        style="color:{% if product.visibility %}#C7253E{% else %} white {% endif %}">
+                        style="color:{% if product.visibility %}#C7253E{% else %} white {% endif %}"
+                        onclick="toggleVisibilityProduct({{ product.product_id }})">
                     {% if product.visibility %}
                     Убрать из выдачи
                     {% else %}
@@ -39,4 +40,5 @@
 </div>
 <script src="{% static 'JS/jquery-3.7.1.min.js' %}"></script>
 <script src="{% static 'JS/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'JS/visibility_toggle_product.js' %}"></script>
 {% endblock %}

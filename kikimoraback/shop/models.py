@@ -121,18 +121,17 @@ class Subcategory(models.Model):
 
 class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
-    active = models.BooleanField(help_text='Продукт доступен в продаже')
     name = models.CharField(max_length=200, help_text='Название товара', db_index=True)
     photo_url = models.CharField(max_length=100, default=None)
-    composition = models.CharField(max_length=400, default=None)
+    description = models.CharField(max_length=400, default=None, null=True)
     price = models.FloatField(default=0.0, help_text='Цена товара')
     weight = models.FloatField(default=0.0, help_text='Вес товара в киллограммах')
     subcategory = models.ForeignKey(Subcategory, on_delete=models.CASCADE)
     bonus = models.IntegerField(default=0)
-    visibility = models.BooleanField(default=True, help_text='Указывает видимость категории')
+    visibility = models.BooleanField(default=True, help_text='Указывает видимость в выдаче')
 
     def __str__(self):
-        return f"{self.product_id}, {self.active}, {self.name}, {self.photo_url}, {self.composition}, {self.price}, {self.weight}, {self.category}"
+        return f"{self.product_id}, {self.visibility}, {self.name}, {self.photo_url}, {self.description}, {self.price}, {self.weight}, {self.subcategory}"
 
 
 class LimitTimeProduct(models.Model):
