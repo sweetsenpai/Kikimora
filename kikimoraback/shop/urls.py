@@ -17,6 +17,8 @@ urlpatterns = [
 
     path('category/<int:category_id>/subcategories/<int:subcategory_id>', views.AdminProdactListView.as_view(),
          name='prodact_list'),
-    path('change_visibility_product/<int:product_id>/', views.toggle_visibility_product, name='change_visibility_product')
+    path('change_visibility_product/<int:product_id>/', views.toggle_visibility_product, name='change_visibility_product'),
+    path('product/<int:product_id>', views.ProductUpdateForm.as_view, name='product_update')
 
 ]
+

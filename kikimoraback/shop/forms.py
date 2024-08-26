@@ -94,3 +94,9 @@ class CategoryCreationForm(forms.ModelForm):
     def clean_text(self):
         text = self.cleaned_data.get('text')
         return text
+
+
+class ProductUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = ['name', 'photo_url', 'description', 'price', 'weight', 'subcategory', 'bonus', 'visibility']

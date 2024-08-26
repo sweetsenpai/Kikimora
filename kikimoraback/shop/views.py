@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login as auth_login, logout
 from django.contrib import messages
 from django.template import loader
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, TemplateView, FormView
 from django.views.generic.edit import CreateView, UpdateView
@@ -144,6 +144,23 @@ class AdminProdactListView(ListView):
         context['subcategory'] = self.subcategory
         return context
 
+    def post(self, request, **kwargs):
+        subcategory_id = self.kwargs.get('subcategory_id')
+        self.subcategory = get_object_or_404(Subcategory, pk=subcategory_id)
+
+        name = request.POST.get('name')
+        if not name:
+            products = Product.objects.filter(subcategory=self.subcategory).order_by('product_id')
+        else:
+            products = Product.objects.filter(name=name).order_by('product_id')
+
+        context = {
+            'products': products,
+            'subcategory': self.subcategory
+        }
+
+        return render(request, self.template_name, context)
+
 
 def toggle_visibility_product(request, product_id):
     if request.method == 'POST':
@@ -152,3 +169,16 @@ def toggle_visibility_product(request, product_id):
         product.save()
         return JsonResponse({'visibility': product.visibility})
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+class ProductUpdateForm(FormView):
+    template_name = 'master/product_form.html'
+    form_class = ProductUpdateForm
+    # success_url = reverse_lazy('staff')
+
+    def form_valid(self, form):
+        return
+
+    def form_invalid(self, form):
+        errors = {field: error_list[0] for field, error_list in form.errors.items()}
+        return JsonResponse({'status': 'error', 'errors': errors})
