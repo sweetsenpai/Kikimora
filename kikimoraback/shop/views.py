@@ -171,14 +171,15 @@ def toggle_visibility_product(request, product_id):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
-class ProductUpdateForm(FormView):
+class ProductUpdateView(UpdateView):
+    model = Product
+    fields = ['name', 'photo_url', 'description', 'price', 'weight', 'bonus', 'visibility']
     template_name = 'master/product_form.html'
-    form_class = ProductUpdateForm
-    # success_url = reverse_lazy('staff')
+    context_object_name = 'product'
 
-    def form_valid(self, form):
-        return
+    # def get_success_url(self, **kwargs):
+    #     print(self)
+    #     return reverse('product_update', kwargs={'product_id': self.kwargs.get('product_id')})
 
-    def form_invalid(self, form):
-        errors = {field: error_list[0] for field, error_list in form.errors.items()}
-        return JsonResponse({'status': 'error', 'errors': errors})
+    def get_object(self, queryset=None):
+        return Product.objects.get(product_id=self.kwargs.get('product_id'))
