@@ -173,13 +173,28 @@ def toggle_visibility_product(request, product_id):
 
 class ProductUpdateView(UpdateView):
     model = Product
-    fields = ['name', 'photo_url', 'description', 'price', 'weight', 'bonus', 'visibility']
+    form_class = ProductForm
     template_name = 'master/product_form.html'
     context_object_name = 'product'
 
-    # def get_success_url(self, **kwargs):
-    #     print(self)
-    #     return reverse('product_update', kwargs={'product_id': self.kwargs.get('product_id')})
-
     def get_object(self, queryset=None):
         return Product.objects.get(product_id=self.kwargs.get('product_id'))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = Product.objects.get(product_id=self.kwargs.get('product_id'))
+        context['category_id'] = product.subcategory.category.category_id
+        context['subcategory_id'] = product.subcategory.subcategory_id
+        return context
+
+    def form_valid(self, form):
+        product = self.get_object()
+        for field in form.cleaned_data:
+            new_value = form.cleaned_data.get(field)
+            if new_value:
+                setattr(product, field, new_value)
+        product.save()
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('product_update', kwargs={'product_id': self.object.product_id})

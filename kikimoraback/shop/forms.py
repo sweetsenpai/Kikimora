@@ -96,7 +96,20 @@ class CategoryCreationForm(forms.ModelForm):
         return text
 
 
-class ProductUpdateForm(forms.ModelForm):
+class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['name', 'photo_url', 'description', 'price', 'weight', 'subcategory', 'bonus', 'visibility']
+        fields = ['name', 'photo_url', 'description', 'price', 'weight', 'bonus', 'visibility']
+        error_messages = {
+            'weight': {
+                'required': "Поле вес не может быть пустым!",
+                'invalid': "Введите корректное значение веса.",
+            },
+            'price': {
+                'required': "Поле цена не может быть пустым!",
+                'invalid': "Введите корректное значение цены.",
+            },
+            'name': {
+                'required': "Поле названия не может быть пустым!",
+            },
+        }

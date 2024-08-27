@@ -59,11 +59,24 @@
           Нажмите на соответствующую кнопку, чтобы перейти к редактированию.</p>
         </div>
         <div class="mx-auto">
-          <form class="needs-validation" novalidate>
+        <form id="product-form" class="needs-validation" method="post" action="{% url 'product_update' product.product_id %}">
+            {% csrf_token %}
+            {% if form.errors %}
+                <div id="errorContainer" class="alert alert-danger" role="alert">
+                    <ul>
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+                </div>
+            {% endif %}
             <div class="col-12">
               <label class="form-label"><b>Наименование позиции</b></label>
               <div class="input-group has-validation">
-                {{ product.name }}
+                <span id="name-display">{{ product.name }}</span>
+                <input id="name-input" type="text" name="name" class="form-control d-none" placeholder="{{ product.name }}">
               </div>
             </div>
             <hr>
@@ -71,7 +84,8 @@
             <div class="col-12">
               <label class="form-label"><b>Изображение</b></label>
               <div class="input-group has-validation">
-                <img src="{{ product.photo_url }}" class="rounded mx-auto d-block"  width="100">
+                <img id="photo-display" src="{{ product.photo_url }}" class="rounded mx-auto d-block" width="72">
+                <input id="photo-input" type="text" name="photo_url" class="form-control d-none" placeholder="{{ product.photo_url }}">
               </div>
             </div>
             <hr>
@@ -79,7 +93,8 @@
             <div class="col-12">
               <label class="form-label"><b>Описание</b></label>
               <div class="input-group has-validation">
-                {{ product.description }}
+                <span id="description-display">{{ product.description }}</span>
+                <textarea id="description-input" name="description" class="form-control d-none" placeholder="{{ product.description }}"></textarea>
               </div>
             </div>
             <hr>
@@ -88,14 +103,22 @@
               <div class="col-sm-6">
                 <label class="form-label"><b>Цена</b></label>
                 <div class="input-group has-validation">
-                  {{ product.price }} <h5>₽</h5>
+                  <span id="price-display">{{ product.price }} ₽</span>
+                  <div class="input-group-prepend">
+                    <span class="input-group-text d-none" id="basic-addon2">₽</span>
+                  </div>
+                  <input id="price-input" type="number" name="price" class="form-control d-none" placeholder="{{ product.price }}">
                 </div>
               </div>
 
               <div class="col-sm-6">
                 <label class="form-label"><b>Колличество бонусов</b></label>
                 <div class="input-group has-validation">
-                  {{ product.bonus }}✡
+                  <span id="bonus-display">{{ product.bonus }}✡</span>
+                  <div class="input-group-prepend">
+                    <span class="input-group-text d-none" id="basic-addon3">✡</span>
+                  </div>
+                  <input id="bonus-input" type="number" name="bonus" class="form-control d-none" placeholder="{{ product.bonus }}">
                 </div>
               </div>
             </div>
@@ -104,7 +127,11 @@
             <div class="col-12">
               <label class="form-label"><b>Вес</b></label>
               <div class="input-group has-validation">
-                {{ product.weight }} КГ
+                <span id="weight-display">{{ product.weight }} КГ</span>
+                  <div class="input-group-prepend">
+                    <span class="input-group-text d-none" id="basic-addon1">КГ</span>
+                  </div>
+                <input id="weight-input" step="any" type="number" name="weight" class="form-control d-none" placeholder="{{ product.weight }}">
               </div>
             </div>
             <hr>
@@ -112,13 +139,20 @@
             <div class="col-12">
               <label class="form-label"><b>Видимость</b></label>
               <div class="input-group has-validation">
-                {{ product.visibility|yesno:"Отображается на сайте,Не отображается на сайте" }}
+                <span id="visibility-display">{{ product.visibility|yesno:"Отображается на сайте,Не отображается на сайте" }}</span>
+                <select id="visibility-input" name="visibility" class="form-select d-none">
+                  <option value="True" {% if product.visibility %}selected{% endif %}>Отображается на сайте</option>
+                  <option value="False" {% if not product.visibility %}selected{% endif %}>Не отображается на сайте</option>
+                </select>
               </div>
             </div>
-            <hr>
+            <hr class="my-2">
 
-            <button class="w-100 btn btn-success btn-lg" id="submit-button">Изменить</button>
-            <button type="button" class="w-100 btn btn-primary btn-lg">Назад</button>
+            <button type="button" class="w-100 btn btn-success btn-lg" id="edit-button" onclick="toggleEditMode()">Изменить</button>
+            <button type="submit" class="w-100 btn btn-success btn-lg d-none" id="save-button">Сохранить</button>
+            <hr class="my-2">
+            <button type="button" class="w-100 btn btn-primary btn-lg" onclick="window.location='/category/{{product.subcategory.category.category_id}}/subcategories/{{product.subcategory.subcategory_id}}';">Назад</button>
+
           </form>
         </div>
       </main>
@@ -127,5 +161,6 @@
     <script src="{% static 'JS/bootstrap.bundle.min.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/@docsearch/js@3"></script>
     <script src="{% static 'JS/checkout.js' %}"></script>
+    <script src="{% static 'JS/product_toggle.js' %}"></script>
   </body>
 </html>
