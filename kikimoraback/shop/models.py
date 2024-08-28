@@ -1,10 +1,11 @@
+import django.utils.timezone
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, User
 from django.core.validators import MaxValueValidator
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.db import models
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class AccountManager(BaseUserManager):
@@ -89,15 +90,6 @@ class UserAddress(models.Model):
         return f"{self.address_id}, {self.address_user}, {self.street}, {self.building}, {self.apartment}"
 
 
-# Возможно нужно удалить эту таблицу и полностью заменить на mongodb
-class OrdersHistory(models.Model):
-    order_id = models.AutoField(primary_key=True)
-    order_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"{self.order_id},{self.order_user}"
-
-
 class Category(models.Model):
     category_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200, help_text='Название категории', db_index=True, unique=True)
@@ -142,32 +134,31 @@ class LimitTimeProduct(models.Model):
 
 
 class Discount(models.Model):
+    DISCOUNT_TYPE_CHOICES = [
+        ('percentage', 'Процентная'),
+        ('amount', 'Фиксированная'),
+    ]
+
     discount_id = models.AutoField(primary_key=True)
-    percentage = models.IntegerField(default=0, help_text='Процент скидки', blank=True)
-    amount = models.IntegerField(default=0, help_text='Сумма скидки', blank=True)
+    discount_type = models.CharField(max_length=15, choices=DISCOUNT_TYPE_CHOICES, default='percentage')
+    value = models.FloatField(help_text='Процент скидки или сумма скидки', default=0)
     description = models.CharField(max_length=400, blank=True)
-    min_sum = models.FloatField(default=1, blank=True)
+    min_sum = models.FloatField(blank=True, null=True)
+    start = models.DateTimeField(default=django.utils.timezone.now())
+    end = models.DateTimeField(default=django.utils.timezone.now())
+    category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.CASCADE)
+    subcategory = models.ForeignKey(Subcategory, null=True, blank=True, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.discount_id}, {self.product},{self.percentage}, {self.amount}, {self.description}"
+        return f"{self.discount_id} - {self.value} ({self.get_discount_type_display()})"
 
-
-class DiscountCategory(models.Model):
-    discountcategory_id = models.AutoField(primary_key=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    due = models.DateTimeField()
-
-
-class DiscountSubcategory(models.Model):
-    discountsubcategory_id = models.AutoField(primary_key=True)
-    subcategory = models.ForeignKey(Subcategory, on_delete=models.CASCADE)
-    due = models.DateTimeField()
-
-
-class DiscountProduct(models.Model):
-    discountproduct_id = models.AutoField(primary_key=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    due = models.DateTimeField()
+    def apply_discount(self, price):
+        if self.discount_type == 'percentage':
+            return price - (price * (self.value / 100))
+        elif self.discount_type == 'amount':
+            return max(0, price - self.value)
+        return price
 
 
 class PromoSystem(models.Model):
@@ -176,8 +167,9 @@ class PromoSystem(models.Model):
     promo_product = models.ForeignKey(Product, on_delete=models.CASCADE, blank=True)
     type = models.CharField(max_length=50)
     min_sum = models.FloatField(default=1, blank=True)
-    useg = models.IntegerField()
+    useg = models.IntegerField(default=0)
     one_time = models.BooleanField()
+    start = models.DateTimeField(default=timezone.now())
     due = models.DateTimeField()
 
 

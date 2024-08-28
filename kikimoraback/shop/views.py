@@ -198,3 +198,24 @@ class ProductUpdateView(UpdateView):
 
     def get_success_url(self):
         return reverse('product_update', kwargs={'product_id': self.object.product_id})
+
+
+class AdminDiscountListView(ListView):
+    model = Discount
+    template_name = 'master/discounts.html'
+    context_object_name = 'discounts'
+
+    def get_queryset(self):
+        return Discount.objects.all().order_by('-discount_id')
+
+
+class AdminNewDiscount(FormView):
+    form_class=DiscountForm
+    template_name = 'master/new_discount.html'
+    success_url = reverse_lazy('discounts')
+
+    def form_valid(self, form):
+        return
+
+    def form_invalid(self, form):
+        return

@@ -18,7 +18,9 @@ urlpatterns = [
     path('category/<int:category_id>/subcategories/<int:subcategory_id>', views.AdminProdactListView.as_view(),
          name='prodact_list'),
     path('change_visibility_product/<int:product_id>/', views.toggle_visibility_product, name='change_visibility_product'),
-    path('product/<int:product_id>', views.ProductUpdateView.as_view(), name='product_update')
+    path('product/<int:product_id>', views.ProductUpdateView.as_view(), name='product_update'),
 
+    path('discounts', views.AdminDiscountListView.as_view(), name='discounts'),
+    path('discounts/new_discount', views.AdminNewDiscount.as_view(), name='new_discount')
 ]
 

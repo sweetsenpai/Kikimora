@@ -52,7 +52,9 @@ class UserChangeForm(forms.ModelForm):
 
     class Meta:
         model = CustomUser
-        fields = ('email', 'user_fio', 'phone', 'bd', 'password', 'is_staff', 'is_superuser')
+        fields = ('email', 'user_fio', 'phone',
+                  'bd', 'password', 'is_staff',
+                  'is_superuser')
 
     def clean_password(self):
         return self.initial["password"]
@@ -99,7 +101,9 @@ class CategoryCreationForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['name', 'photo_url', 'description', 'price', 'weight', 'bonus', 'visibility']
+        fields = ('name', 'photo_url', 'description',
+                  'price', 'weight', 'bonus',
+                  'visibility')
         error_messages = {
             'weight': {
                 'required': "Поле вес не может быть пустым!",
@@ -113,3 +117,11 @@ class ProductForm(forms.ModelForm):
                 'required': "Поле названия не может быть пустым!",
             },
         }
+
+
+class DiscountForm(forms.ModelForm):
+    class Meta:
+        model = Discount
+        fields = ('discount_type', 'value', 'description',
+                  'min_sum', 'start', 'end',
+                  'category', 'subcategory', 'product')
