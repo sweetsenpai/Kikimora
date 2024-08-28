@@ -1,19 +1,18 @@
 <!doctype html>
 <html lang="en" data-bs-theme="light">
+  {% load static %}
   <head>
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <title>{% block title %}{% endblock title %}</title>
-    <link rel="icon" type="image/x-icon" href="../../static/images/browse-svgrepo-com.svg">
+    <link rel="icon" type="image/x-icon" href="{% static 'images/browse-svgrepo-com.svg' %}">
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/sidebars/">
-
-    
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
 
-<link href="../../static/CSS/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'CSS/bootstrap.min.css' %}" rel="stylesheet">
 
     <style>
       .bd-placeholder-img {
@@ -96,7 +95,7 @@
 
     
     <!-- Custom styles for this template -->
-    <link href="../../static/CSS/sidebars.css" rel="stylesheet">
+    <link href="{% static 'CSS/sidebars.css' %}" rel="stylesheet">
   </head>
   <body >
     <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
@@ -140,8 +139,19 @@
     <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-1 0A7 7 0 1 0 1 8a7 7 0 0 0 14 0"/>
 <!--    <path d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01zm.287 5.984-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.793l2.646-2.647a.5.5 0 0 1 .708.708"/>-->
   </symbol>
+  <symbol id="time-product" viewBox="0 0 16 16">
+  <path d="M8.5 5.5a.5.5 0 0 0-1 0v3.362l-1.429 2.38a.5.5 0 1 0 .858.515l1.5-2.5A.5.5 0 0 0 8.5 9z"/>
+  <path d="M6.5 0a.5.5 0 0 0 0 1H7v1.07a7.001 7.001 0 0 0-3.273 12.474l-.602.602a.5.5 0 0 0 .707.708l.746-.746A6.97 6.97 0 0 0 8 16a6.97 6.97 0 0 0 3.422-.892l.746.746a.5.5 0 0 0 .707-.708l-.601-.602A7.001 7.001 0 0 0 9 2.07V1h.5a.5.5 0 0 0 0-1zm1.038 3.018a6 6 0 0 1 .924 0 6 6 0 1 1-.924 0M0 3.5c0 .753.333 1.429.86 1.887A8.04 8.04 0 0 1 4.387 1.86 2.5 2.5 0 0 0 0 3.5M13.5 1c-.753 0-1.429.333-1.887.86a8.04 8.04 0 0 1 3.527 3.527A2.5 2.5 0 0 0 13.5 1"/>
+  </symbol>
+  <symbol id="promo" viewBox="0 0 16 16">
+  <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.56.56 0 0 0-.163-.505L1.71 6.745l4.052-.576a.53.53 0 0 0 .393-.288L8 2.223l1.847 3.658a.53.53 0 0 0 .393.288l4.052.575-2.906 2.77a.56.56 0 0 0-.163.506l.694 3.957-3.686-1.894a.5.5 0 0 0-.461 0z"/>
+  </symbol>
+  <symbol id="discount" viewBox="0 0 16 16">
+  <path d="M5.5 9.511c.076.954.83 1.697 2.182 1.785V12h.6v-.709c1.4-.098 2.218-.846 2.218-1.932 0-.987-.626-1.496-1.745-1.76l-.473-.112V5.57c.6.068.982.396 1.074.85h1.052c-.076-.919-.864-1.638-2.126-1.716V4h-.6v.719c-1.195.117-2.01.836-2.01 1.853 0 .9.606 1.472 1.613 1.707l.397.098v2.034c-.615-.093-1.022-.43-1.114-.9zm2.177-2.166c-.59-.137-.91-.416-.91-.836 0-.47.345-.822.915-.925v1.76h-.005zm.692 1.193c.717.166 1.048.435 1.048.91 0 .542-.412.914-1.135.982V8.518z"/>
+  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+  <path d="M8 13.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11m0 .5A6 6 0 1 0 8 2a6 6 0 0 0 0 12"/>
+  </symbol>
 </svg>
-
 <main class="d-flex flex-nowrap">
 
 
@@ -155,7 +165,7 @@
         </a>
       </li>
       <li>
-        <a href="/products" class="nav-link {% block active2 %}{% endblock active2 %} py-3 border-bottom rounded-0" title="Товары" data-bs-toggle="tooltip" data-bs-placement="right">
+        <a href="/categories" class="nav-link {% block active2 %}{% endblock active2 %} py-3 border-bottom rounded-0" title="Товары" data-bs-toggle="tooltip" data-bs-placement="right">
           <svg class="bi pe-none" width="24" height="24" role="img" aria-label="Dashboard"><use xlink:href="#boxes"/></svg>
         </a>
       </li>
@@ -165,12 +175,27 @@
         </a>
       </li>
       <li>
-        <a href="/money" class="nav-link {% block active4 %}{% endblock active4 %} py-3 border-bottom rounded-0" title="Деньги" data-bs-toggle="tooltip" data-bs-placement="right">
+        <a href="" class="nav-link {% block active4 %}{% endblock active4 %} py-3 border-bottom rounded-0" title="Товар дня" data-bs-toggle="tooltip" data-bs-placement="right">
+          <svg class="bi pe-none" width="24" height="24" role="img" aria-label="Dashboard"><use xlink:href="#time-product"/></svg>
+        </a>
+      </li>
+      <li>
+        <a href="" class="nav-link {% block active5 %}{% endblock active5 %} py-3 border-bottom rounded-0" title="Промо" data-bs-toggle="tooltip" data-bs-placement="right">
+          <svg class="bi pe-none" width="24" height="24" role="img" aria-label="Dashboard"><use xlink:href="#promo"/></svg>
+        </a>
+      </li>
+      <li>
+        <a href="/discounts" class="nav-link {% block active6 %}{% endblock active6 %} py-3 border-bottom rounded-0" title="Скидки" data-bs-toggle="tooltip" data-bs-placement="right">
+          <svg class="bi pe-none" width="24" height="24" role="img" aria-label="Dashboard"><use xlink:href="#discount"/></svg>
+        </a>
+      </li>
+      <li>
+        <a href="/money" class="nav-link {% block active7 %}{% endblock active7 %} py-3 border-bottom rounded-0" title="Деньги" data-bs-toggle="tooltip" data-bs-placement="right">
           <svg class="bi pe-none" width="24" height="24" role="img" aria-label="Деньги"><use xlink:href="#money"/></svg>
         </a>
       </li>
       <li>
-        <a href="/staff" class="nav-link py-3 {% block active5 %}{% endblock active5 %} border-bottom rounded-0" title="Сотрудники" data-bs-toggle="tooltip" data-bs-placement="right">
+        <a href="/staff" class="nav-link py-3 {% block active8 %}{% endblock active8 %} border-bottom rounded-0" title="Сотрудники" data-bs-toggle="tooltip" data-bs-placement="right">
           <svg class="bi pe-none" width="24" height="24" role="img" aria-label="Customers" color="#FF1493"><use xlink:href="#people-circle"/></svg>
         </a>
       </li>
@@ -192,9 +217,9 @@
 
   <div class="b-example-divider b-example-vr" style=" width:10%"></div>
 </main>
-<script src="../../static/JS/bootstrap.bundle.min.js"></script>
+<script src="{% static 'JS/bootstrap.bundle.min.js' %}"></script>
 
-    <script src="../../static/JS/sidebars.js"></script>
+    <script src="{% static 'JS/sidebars.js' %}"></script>
 
   </body>
 </html>

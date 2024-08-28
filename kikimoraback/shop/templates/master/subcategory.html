@@ -1,0 +1,44 @@
+{% extends 'master/base.html' %}
+{% block title %}Товары{% endblock %}
+{% block active2 %} active {% endblock active2 %}
+{% block content %}
+{% load static %}
+<h1 style="margin-top:-5%;margin-bottom:3%;">{{ category.name }}</h1>
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Подкатегория</th>
+                <th scope="col">Текст</th>
+                <th scope="col">Настройки видимости</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for subcategory in subcategories %}
+        <tr id="subcategory-{{ subcategory.subcategory_id }}">
+            <th scope="row" onclick="window.location='{{subcategory.subcategory_id }}';">{{ subcategory.subcategory_id }}</th>
+            <td onclick="window.location='{{subcategory.subcategory_id }}';">{{ subcategory.name }}</td>
+            <td onclick="window.location='{{subcategory.subcategory_id }}';">{{ subcategory.text }}</td>
+            <td>
+                <button type="button" class="btn {% if subcategory.visibility %}btn-warning{% else %}btn-primary{% endif %}"
+                        style="color:{% if subcategory.visibility %}#C7253E{% else %} white {% endif %}"
+                        onclick="toggleVisibilitySubcat({{ subcategory.subcategory_id }})">
+                    {% if subcategory.visibility %}
+                        Убрать из выдачи
+                    {% else %}
+                        Вернуть в выдачу
+                    {% endif %}
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<script src="{% static 'JS/jquery-3.7.1.min.js' %}"></script>
+<!-- Подключение Bootstrap -->
+<script src="{% static 'JS/bootstrap.bundle.min.js' %}"></script>
+<!-- Подключаем внешний JS-файл -->
+<script src="{% static 'JS/visibility_toggle_subcat.js' %}"></script>
+{% endblock %}

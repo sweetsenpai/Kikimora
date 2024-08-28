@@ -1,9 +1,9 @@
 # accounts/forms.py
 from django import forms
 from django.contrib.auth.models import Group
-from django.contrib.auth.forms import ReadOnlyPasswordHashField
-
-from .models import CustomUser
+from django.contrib.auth.forms import ReadOnlyPasswordHashField, ValidationError
+import re
+from .models import *
 
 
 class RegistrationForm(forms.ModelForm):
@@ -52,12 +52,76 @@ class UserChangeForm(forms.ModelForm):
 
     class Meta:
         model = CustomUser
-        fields = ('email', 'user_fio', 'phone', 'bd', 'password', 'is_staff', 'is_superuser')
+        fields = ('email', 'user_fio', 'phone',
+                  'bd', 'password', 'is_staff',
+                  'is_superuser')
 
     def clean_password(self):
-        # Regardless of what the user provides, return the initial value.
-        # This is done here, rather than on the field, because the
-        # field does not have access to the initial value
         return self.initial["password"]
 
 
+class AdminCreationForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ['email', 'user_fio', 'phone', 'is_superuser']
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if CustomUser.objects.filter(email=email).exists():
+            raise ValidationError("Данный email уже существует в базе данных.")
+        return email
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if not re.match(r'^\+?[1-9]\d{1,14}$', phone):
+            raise ValidationError("Введите корректный номер телефона.")
+        if CustomUser.objects.filter(phone=phone).exists():
+            raise ValidationError("Данный номер телефона уже в базе данных.")
+        return phone
+
+
+class CategoryCreationForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ['name', 'text']
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if not name:
+            raise ValidationError("Поле имя категории не может быть пустым")
+        if Category.objects.filter(name=name).exists():
+            raise ValidationError("Категория с таким названием уже существует, зачем вам ещё одна?")
+        return name
+
+    def clean_text(self):
+        text = self.cleaned_data.get('text')
+        return text
+
+
+class ProductForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = ('name', 'photo_url', 'description',
+                  'price', 'weight', 'bonus',
+                  'visibility')
+        error_messages = {
+            'weight': {
+                'required': "Поле вес не может быть пустым!",
+                'invalid': "Введите корректное значение веса.",
+            },
+            'price': {
+                'required': "Поле цена не может быть пустым!",
+                'invalid': "Введите корректное значение цены.",
+            },
+            'name': {
+                'required': "Поле названия не может быть пустым!",
+            },
+        }
+
+
+class DiscountForm(forms.ModelForm):
+    class Meta:
+        model = Discount
+        fields = ('discount_type', 'value', 'description',
+                  'min_sum', 'start', 'end',
+                  'category', 'subcategory', 'product')

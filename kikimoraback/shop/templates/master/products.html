@@ -2,5 +2,52 @@
 {% block title %} Товары {% endblock %}
 {% block active2 %} active {% endblock active2 %}
 {% block content %}
-    Test
+{% load static %}
+<h1 style="margin-top:-5%;margin-bottom:3%;">{{ subcategory.name }}</h1>
+<form method="post">
+      {% csrf_token %}
+      <div class="input-group mb-3">
+        <input type="text" class="form-control" placeholder="введите название позиции для поиска" name="name" id="name"  aria-describedby="basic-addon2">
+        <div class="input-group-append">
+          <button type="submit" style="margin-left:5px; margin-right:5px;" class="btn btn-info">Поиск</button>
+        </div>
+      </div>
+    </form>
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Название</th>
+                <th scope="col">Изображение</th>
+                <th scope="col">Цена</th>
+                <th scope="col">Настройки видимости</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for product in products %}
+        <tr id="product-{{ product.product_id }}">
+            <th scope="row">{{ product.product_id }}</th>
+            <td onclick="window.location='/product/{{product.product_id }}';">{{ product.name }}</td>
+            <td onclick="window.location='/product/{{product.product_id }}';"><img class="rounded mx-auto d-block" src="{{ product.photo_url }}" style="width: 100px;"></td>
+            <td onclick="window.location='/product/{{product.product_id }}';">{{ product.price }} ₽</td>
+            <td>
+                <button type="button" class="btn {% if product.visibility %}btn-warning{% else %}btn-primary{% endif %}"
+                        style="color:{% if product.visibility %}#C7253E{% else %} white {% endif %}"
+                        onclick="toggleVisibilityProduct({{ product.product_id }})">
+                    {% if product.visibility %}
+                    Убрать из выдачи
+                    {% else %}
+                        Вернуть в выдачу
+                    {% endif %}
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<script src="{% static 'JS/jquery-3.7.1.min.js' %}"></script>
+<script src="{% static 'JS/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'JS/visibility_toggle_product.js' %}"></script>
 {% endblock %}
