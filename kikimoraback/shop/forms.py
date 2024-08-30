@@ -125,3 +125,16 @@ class DiscountForm(forms.ModelForm):
         fields = ('discount_type', 'value', 'description',
                   'min_sum', 'start', 'end',
                   'category', 'subcategory', 'product')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        subcategory = cleaned_data.get('subcategory')
+        product = cleaned_data.get('product')
+
+        if product is not None:
+            cleaned_data['category'] = None
+            cleaned_data['subcategory'] = None
+        if subcategory is not None and product is None:
+            cleaned_data['category'] = None
+
+        return cleaned_data

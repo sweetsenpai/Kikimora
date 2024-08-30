@@ -87,11 +87,11 @@
           <h4 class="mb-3">Начало и окончание скидки</h4>
             <div class="col-sm-6">
               <label for="start_datetime" class="form-label">Начало скидки:</label>
-              <input type="text" id="start_datetime"  class="form-control" >
+              <input type="text" id="start_datetime"  name="start" class="form-control" >
             </div>
             <div class="col-sm-6">
               <label for="end_datetime" class="form-label">Окончание скидки:</label>
-              <input type="text" id="end_datetime" class="form-control" >
+              <input type="text" id="end_datetime" name="end" class="form-control" >
             </div>
           </div>
 
@@ -100,37 +100,28 @@
               <h4 class="mb-3">К чему применить скидку?</h4>
               <div class="col-md-5">
                 <label for="category" class="form-label">Категория</label>
-                <select class="form-select" id="category"  name="category" required="">
-                  <option value="">Выбирите...</option>
-                  <option>Категории</option>
+                <select class="form-select" id="category" name="category" required="">
+                  <option value="">Выберите...</option>
                 </select>
                 <div class="invalid-feedback">
-                  Пожалуйста, выбирите категорию
+                  Пожалуйста, выберите категорию
                 </div>
               </div>
 
               <div class="col-md-4">
                 <label for="subcategory" class="form-label">Подкатегория</label>
                 <select class="form-select" id="subcategory" name="subcategory">
-                  <option value="">Выбирите...</option>
-                  <option>United States</option>
+                  <option value="">Выберите...</option>
                 </select>
               </div>
 
               <div class="col-md-3">
                 <label for="product" class="form-label">Позиция</label>
                 <select class="form-select" id="product" name="product">
-                  <option value="">Выбирите....</option>
-                  <option>United States</option>
+                  <option value="">Выберите....</option>
                 </select>
               </div>
-            </div>
-            <hr>
-            <div class="col-12">
-              <label class="form-label"><b>Описание</b></label>
-              <div class="input-group has-validation">
-                <textarea id="description-input" name="description" class="form-control" placeholder="Описание для скидки, если оно нужно..."></textarea>
-              </div>
+              <hr>
             </div>
 
             <hr>
@@ -147,6 +138,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js"></script>
     <script src="{% static 'js/datetime_picker.js' %}"></script>
+    <script src="{% static 'JS/dynamic_fields_discount.js' %}"></script>
 
   </body>
 </html>

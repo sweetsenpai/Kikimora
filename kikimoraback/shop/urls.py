@@ -3,6 +3,10 @@ from . import views
 
 
 urlpatterns = [
+    path('api/categories/', views.CategoryList.as_view(), name='category-list'),
+    path('api/subcategories/', views.SubcategoryList.as_view(), name='subcategory-list'),
+    path('api/products/', views.ProductList.as_view(), name='product-list'),
+
     path('apanel', views.AdminHomePageView.as_view(), name='admin_home'),
 
     path('staff', views.StaffListView.as_view(), name='staff'),

@@ -13,6 +13,30 @@ from .forms import *
 from django.utils.crypto import get_random_string
 from .tasks import new_admin_mail
 from django.core.cache import cache
+from rest_framework import generics
+from .serializers import CategorySerializer, SubcategorySerializer, ProductSerializer
+
+
+class CategoryList(generics.ListAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+
+class SubcategoryList(generics.ListAPIView):
+    serializer_class = SubcategorySerializer
+
+    def get_queryset(self):
+        print(self.request)
+        category_id = self.request.query_params.get('category')
+        return Subcategory.objects.filter(category=category_id)
+
+
+class ProductList(generics.ListAPIView):
+    serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        subcategory_id = self.request.query_params.get('subcategory')
+        return Product.objects.filter(subcategory=subcategory_id)
 
 
 class AdminHomePageView(TemplateView):
@@ -210,12 +234,14 @@ class AdminDiscountListView(ListView):
 
 
 class AdminNewDiscount(FormView):
-    form_class=DiscountForm
+    form_class = DiscountForm
     template_name = 'master/new_discount.html'
     success_url = reverse_lazy('discounts')
 
     def form_valid(self, form):
-        return
+        form.save()
+        return super().form_valid(form)
 
     def form_invalid(self, form):
-        return
+        print(form.errors)
+        return super().form_invalid(form)
