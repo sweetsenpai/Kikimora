@@ -1,4 +1,4 @@
-version: "3.9"
+version: '3.9'
 services:
   django:
     build:
@@ -6,16 +6,13 @@ services:
       dockerfile: Dockerfile
     container_name: django
     ports:
-    - "8000:8000"
-    command: bash -c "python manage.py makemigrations && 
-             python manage.py migrate &&
-             gunicorn kikimoraback.wsgi:application --bind 0.0.0.0:8000"
+      - "8000:8000"
+    command: bash -c "python manage.py makemigrations && python manage.py migrate && gunicorn kikimoraback.wsgi:application --bind 0.0.0.0:8000"
     volumes:
-    - .:/kikimoraback
+      - .:/kikimoraback
     environment:
       - DEBUG=1
       - CELERY_BROKER=redis://redis:6379/0
-
     depends_on:
       - redis
 
@@ -23,6 +20,16 @@ services:
     build:
       context: .
     command: celery -A kikimoraback worker -l INFO
+    volumes:
+      - .:/kikimoraback
+    depends_on:
+      - django
+      - redis
+
+  celery-beat:
+    build:
+      context: .
+    command: celery -A kikimoraback beat -l INFO
     volumes:
       - .:/kikimoraback
     depends_on:

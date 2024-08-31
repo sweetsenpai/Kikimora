@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from celery.schedules import crontab
+
 load_dotenv()
 
 
@@ -41,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'django_celery_beat',
     'shop.apps.ShopConfig'
 ]
 
@@ -163,3 +166,14 @@ AUTH_USER_MODEL = "shop.CustomUser"
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+# Celery Beat
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# Периодический запуск задач (планировщик)
+CELERY_BEAT_SCHEDULE = {
+    'deactivate-expired-discounts': {
+        'task': 'shop.tasks.deactivate_expired_discounts',
+        'schedule': crontab(minute='*/5'),
+    },
+}

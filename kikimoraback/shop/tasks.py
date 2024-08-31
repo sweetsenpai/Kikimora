@@ -1,8 +1,8 @@
-# from __future__ import absolute_import, unicode_literals
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import send_mail
-
+from .models import Discount
+from django.utils import timezone
 
 @shared_task
 def new_admin_mail(password, email):
@@ -15,3 +15,9 @@ def new_admin_mail(password, email):
                           'settings.EMAIL_HOST_USER',
                           [email],
                           fail_silently=False)
+
+
+@shared_task
+def deactivate_expired_discounts():
+    now = timezone.now()
+    Discount.objects.filter(end__lte=now, active=True).update(active=False)
