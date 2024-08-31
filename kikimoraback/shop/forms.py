@@ -130,11 +130,23 @@ class DiscountForm(forms.ModelForm):
         cleaned_data = super().clean()
         subcategory = cleaned_data.get('subcategory')
         product = cleaned_data.get('product')
+        discount_type = cleaned_data.get('discount_type')
+        value = cleaned_data.get('value')
+        start = cleaned_data.get('start')
+        end = cleaned_data.get('end')
+
+        if discount_type == 'percentage' and value > 100:
+            raise ValidationError({'value': 'Процент скидки не может быть больше 100!'})
+
+        if start >= end:
+            raise ValidationError({'start': 'Начало скидки не может быть равно или больше окончания, это просто не имеет смысла:/'})
 
         if product is not None:
             cleaned_data['category'] = None
             cleaned_data['subcategory'] = None
+
         if subcategory is not None and product is None:
             cleaned_data['category'] = None
 
         return cleaned_data
+

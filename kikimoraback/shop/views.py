@@ -13,8 +13,11 @@ from .forms import *
 from django.utils.crypto import get_random_string
 from .tasks import new_admin_mail
 from django.core.cache import cache
-from rest_framework import generics
+from rest_framework import generics, status
+from rest_framework.views import APIView
 from .serializers import CategorySerializer, SubcategorySerializer, ProductSerializer
+from rest_framework.response import Response
+from django.utils import timezone
 
 
 class CategoryList(generics.ListAPIView):
@@ -37,6 +40,17 @@ class ProductList(generics.ListAPIView):
     def get_queryset(self):
         subcategory_id = self.request.query_params.get('subcategory')
         return Product.objects.filter(subcategory=subcategory_id)
+
+
+class StopDiscountView(APIView):
+    def post(self, request, discount_id, format=None):
+        try:
+            discount = Discount.objects.get(pk=discount_id)
+            discount.end = timezone.now()
+            discount.save()
+            return Response({'status': 'success'}, status=status.HTTP_200_OK)
+        except Discount.DoesNotExist:
+            return Response({'status': 'error', 'message': 'Discount not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class AdminHomePageView(TemplateView):
@@ -232,6 +246,11 @@ class AdminDiscountListView(ListView):
     def get_queryset(self):
         return Discount.objects.all().order_by('-discount_id')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['current_time'] = timezone.now()
+        return context
+
 
 class AdminNewDiscount(FormView):
     form_class = DiscountForm
@@ -243,5 +262,13 @@ class AdminNewDiscount(FormView):
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        print(form.errors)
         return super().form_invalid(form)
+
+
+def delete_discount(request, discount_id):
+    template_name = 'master/old_discount.html'
+    discount = get_object_or_404(Discount, pk=discount_id)
+    if request.method == 'POST':
+        discount.delete()
+        return JsonResponse({'status': 'success'})
+    return render(request, template_name=template_name, context={'discount': discount})
