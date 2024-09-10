@@ -28,6 +28,8 @@ urlpatterns = [
     # DISCOUNT
     path('discounts', views.AdminDiscountListView.as_view(), name='discounts'),
     path('discounts/new_discount', views.AdminNewDiscount.as_view(), name='new_discount'),
-    path('discounts/<int:discount_id>', views.delete_discount, name='delete_discount')
+    path('discounts/<int:discount_id>', views.delete_discount, name='delete_discount'),
+    # PROMOCODS
+    path('promocods', views.AdminPromocodeListView.as_view(), name='promocods'),
 ]
 

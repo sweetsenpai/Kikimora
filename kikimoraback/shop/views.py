@@ -272,3 +272,12 @@ def delete_discount(request, discount_id):
         discount.delete()
         return JsonResponse({'status': 'success'})
     return render(request, template_name=template_name, context={'discount': discount})
+
+
+class AdminPromocodeListView(ListView):
+    model = PromoSystem
+    template_name = 'master/promocods.html'
+    context_object_name = 'promocodes'
+
+    def get_queryset(self):
+        return PromoSystem.objects.all().order_by('-promo_id')
