@@ -7,6 +7,7 @@ urlpatterns = [
     path('api/categories/', views.CategoryList.as_view(), name='category-list'),
     path('api/subcategories/', views.SubcategoryList.as_view(), name='subcategory-list'),
     path('api/products/', views.ProductList.as_view(), name='product-list'),
+    path('api/autocomplete/product/', views.ProductAutocompleteView.as_view(), name='product-autocomplete-api'),
     path('api/discounts/stop/<int:discount_id>/', views.StopDiscountView.as_view(), name='stop_discount_api'),
     # HOME
     path('apanel', views.AdminHomePageView.as_view(), name='admin_home'),
@@ -31,5 +32,7 @@ urlpatterns = [
     path('discounts/<int:discount_id>', views.delete_discount, name='delete_discount'),
     # PROMOCODS
     path('promocods', views.AdminPromocodeListView.as_view(), name='promocods'),
+    path('promocods/new_promocode', views.AdminNewPromo.as_view(), name='new_promo'),
+    path('promocods/<int:promo_id>', views.delete_promo, name='promocods'),
 ]
 

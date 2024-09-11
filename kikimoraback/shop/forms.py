@@ -134,10 +134,11 @@ class DiscountForm(forms.ModelForm):
         value = cleaned_data.get('value')
         start = cleaned_data.get('start')
         end = cleaned_data.get('end')
-
-        if discount_type == 'percentage' and value > 100:
-            raise ValidationError({'value': 'Процент скидки не может быть больше 100!'})
-
+        try:
+            if discount_type == 'percentage' and value > 100:
+                raise ValidationError({'value': 'Процент скидки не может быть больше 100!'})
+        except TypeError:
+                raise ValidationError({'value': 'Размер скидки не может быть равен 0!'})
         if start >= end:
             raise ValidationError({'start': 'Начало скидки не может быть равно или больше окончания, это просто не имеет смысла:/'})
 
@@ -150,3 +151,10 @@ class DiscountForm(forms.ModelForm):
 
         return cleaned_data
 
+
+class PromocodeForm(forms.ModelForm):
+    class Meta:
+        model = PromoSystem
+        fields = ('description', 'code', 'promo_product',
+                  'type', 'min_sum', 'amount',
+                  'one_time', 'start', 'end')

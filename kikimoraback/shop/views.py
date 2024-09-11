@@ -42,6 +42,14 @@ class ProductList(generics.ListAPIView):
         return Product.objects.filter(subcategory=subcategory_id)
 
 
+class ProductAutocompleteView(APIView):
+    def get(self, request, *args, **kwargs):
+        query = request.query_params.get('term', '')
+        products = Product.objects.filter(name__icontains=query)[:10]
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
+
+
 class StopDiscountView(APIView):
     def post(self, request, discount_id, format=None):
         try:
@@ -281,3 +289,25 @@ class AdminPromocodeListView(ListView):
 
     def get_queryset(self):
         return PromoSystem.objects.all().order_by('-promo_id')
+
+
+class AdminNewPromo(FormView):
+    template_name = 'master/new_promocode.html'
+    success_url = reverse_lazy('promocods')
+    form_class = PromocodeForm
+
+    def form_valid(self, form):
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        print(form.errors)
+        return super().form_invalid(form)
+
+
+def delete_promo(request, promo_id):
+    template_name = 'master/old_promo.html'
+    promo = get_object_or_404(PromoSystem, pk=promo_id)
+    if request.method == 'POST':
+        promo.delete()
+        return JsonResponse({'status': 'success'})
+    return render(request, template_name=template_name, context={'promo': promo})

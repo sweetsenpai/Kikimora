@@ -142,7 +142,7 @@ class Discount(models.Model):
     discount_id = models.AutoField(primary_key=True)
     discount_type = models.CharField(max_length=15, choices=DISCOUNT_TYPE_CHOICES, default='percentage')
     value = models.FloatField(help_text='Процент скидки или сумма скидки', default=0)
-    min_sum = models.FloatField(default=1, blank=True)
+    min_sum = models.FloatField(blank=True, null=True)
     description = models.CharField(max_length=400, blank=True)
     start = models.DateTimeField(default=django.utils.timezone.now())
     end = models.DateTimeField(default=django.utils.timezone.now())
@@ -156,7 +156,7 @@ class Discount(models.Model):
 
     def apply_discount(self, price):
         if self.discount_type == 'percentage':
-            return price - (price * (self.value / 100))
+            return round(price - (price * (self.value / 100)))
         elif self.discount_type == 'amount':
             return max(0, price - self.value)
         return price
@@ -170,7 +170,6 @@ class PromoSystem(models.Model):
     ]
 
     promo_id = models.AutoField(primary_key=True)
-    creator = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
     description = models.CharField(max_length=400, blank=True, null=True)
 
     # Промокод, не более 10 символов, уникальный
@@ -193,9 +192,7 @@ class PromoSystem(models.Model):
     min_sum = models.FloatField(default=1, validators=[MinValueValidator(0)], blank=True, null=True)
 
     # Для фиксированной скидки или процента (если используется скидка)
-    discount_amount = models.FloatField(default=0, blank=True, null=True)
-    discount_percent = models.FloatField(default=0, blank=True, null=True,
-                                         validators=[MinValueValidator(0), MaxValueValidator(100)])
+    amount = models.FloatField(blank=True, null=True)
 
     # Ограничения на использование
     usage_count = models.IntegerField(default=0)  # Количество использований
@@ -243,3 +240,8 @@ class PromoSystem(models.Model):
         # Ограничение: итоговая сумма не должна опускаться ниже 10% от исходной суммы
         min_allowed_total = original_total * 0.1
         return max(cart_total, min_allowed_total)
+
+
+class PromoCodeUseg(models.Model):
+    promo_id = models.ForeignKey('PromoSystem', on_delete=models.CASCADE)
+    user_id = models.ForeignKey('CustomUser', on_delete=models.CASCADE)

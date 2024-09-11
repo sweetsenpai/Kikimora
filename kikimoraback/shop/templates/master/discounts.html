@@ -16,7 +16,6 @@
                 <th scope="col">Связана с</th>
                 <th scope="col">Старт</th>
                 <th scope="col">Финиш</th>
-                <th scope="col">Остановить скидку</th>
             </tr>
         </thead>
         <tbody>
@@ -38,11 +37,11 @@
                 {% endif %}
                 <td onclick="window.location='discounts/{{ discount.discount_id }}';">{{ discount.start }}</td>
                 <td onclick="window.location='discounts/{{ discount.discount_id }}';">{{ discount.end }}</td>
-                <td>
-                {% if discount.end > current_time %}
-                    <button type="button" class="btn btn-warning stop-discount" data-discount-id="{{ discount.discount_id }}">Остановить</button>
-                {% endif %}
-                </td>
+<!--                <td>-->
+<!--                {% if discount.end > current_time %}-->
+<!--                    <button type="button" class="btn btn-warning stop-discount" data-discount-id="{{ discount.discount_id }}">Остановить</button>-->
+<!--                {% endif %}-->
+<!--                </td>-->
             </tr>
             {% endfor %}
         </tbody>
@@ -50,5 +49,5 @@
 </div>
 
       <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-      <script src="{% static 'JS/discount_stop.js' %}"></script>
+<!--      <script src="{% static 'JS/discount_stop.js' %}"></script>-->
 {% endblock %}
