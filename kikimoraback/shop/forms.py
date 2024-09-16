@@ -156,5 +156,5 @@ class PromocodeForm(forms.ModelForm):
     class Meta:
         model = PromoSystem
         fields = ('description', 'code', 'promo_product',
-                  'type', 'min_sum', 'amount',
+                  'type', 'min_sum', 'amount', 'procentage',
                   'one_time', 'start', 'end')

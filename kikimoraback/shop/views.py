@@ -297,10 +297,10 @@ class AdminNewPromo(FormView):
     form_class = PromocodeForm
 
     def form_valid(self, form):
+        form.save()
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        print(form.errors)
         return super().form_invalid(form)
 
 
@@ -309,5 +309,5 @@ def delete_promo(request, promo_id):
     promo = get_object_or_404(PromoSystem, pk=promo_id)
     if request.method == 'POST':
         promo.delete()
-        return JsonResponse({'status': 'success'})
+        return redirect('promocods')
     return render(request, template_name=template_name, context={'promo': promo})

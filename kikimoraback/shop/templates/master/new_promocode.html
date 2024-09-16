@@ -1,9 +1,10 @@
+<!doctype html>
 <html lang="en">
   {% load static %}
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Новый промокод</title>
+    <title>Создание нового промокода</title>
 
     <!-- Подключение jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -40,6 +41,7 @@
         <div class="mx-auto">
           <form id="promocode-form" class="needs-validation" method="post" action="">
             {% csrf_token %}
+
             {% if form.errors %}
                 <div id="errorContainer" class="alert alert-danger" role="alert">
                     <ul>
@@ -51,19 +53,20 @@
             </ul>
                 </div>
             {% endif %}
+
             <div class="col-12">
               <h4 class="mb-3">Тип промокода</h4>
               <div class="my-3">
                 <div class="form-check">
-                  <input id="cart_discount" name="type" type="radio" class="form-check-input" value="cart_discount" required="">
+                  <input id="cart_discount" name="type" type="radio" class="form-check-input" value="cart_discount" required>
                   <label class="form-check-label" for="cart_discount">Скидка на весь заказ</label>
                 </div>
                 <div class="form-check">
-                  <input id="product_discount" name="type" type="radio" class="form-check-input" required="" value="product_discount">
+                  <input id="product_discount" name="type" type="radio" class="form-check-input" value="product_discount" required>
                   <label class="form-check-label" for="product_discount">Скидка на товар</label>
                 </div>
                 <div class="form-check">
-                  <input id="delivery" name="type" type="radio" class="form-check-input" required="" value="delivery">
+                  <input id="delivery" name="type" type="radio" class="form-check-input" value="delivery" required>
                   <label class="form-check-label" for="delivery">Бесплатная доставка</label>
                 </div>
               </div>
@@ -73,67 +76,77 @@
               <h4 class="mb-3">Одноразовый</h4>
               <div class="my-3">
                 <div class="form-check">
-                  <input id="one_time_yes" name="one_time" type="radio" class="form-check-input" required="" value="True">
+                  <input id="one_time_yes" name="one_time" type="radio" class="form-check-input" value="True" required>
                   <label class="form-check-label" for="one_time_yes">Да</label>
                 </div>
                 <div class="form-check">
-                  <input id="one_time_no" name="one_time" type="radio" class="form-check-input" required="" value="False">
+                  <input id="one_time_no" name="one_time" type="radio" class="form-check-input" value="False" required>
                   <label class="form-check-label" for="one_time_no">Нет</label>
                 </div>
               </div>
             </div>
 
             <hr>
-            <div class="col-12" id="discount-fields" style="display: none;">
-              <h4 class="mb-3">Размер скидки</h4>
-              <div class="input-group has-validation">
-                <span class="input-group-text" id="basic-addon3">₽/%</span>
-                <input type="number" step="0.1" min="1" class="form-control" id="value" name="amount" placeholder="Укажите сумму или процент скидки без знака %, в зависимости от выбора на предыдущем шаге.">
-              </div>
-              <div class="invalid-feedback">
-                Пожалуйста, укажите значение скидки.
-              </div>
 
+            <div id="discount-fields" style="display: none;">
+              <div class="col-12">
+                <h4 class="mb-3">Размер скидки</h4>
+                <div class="input-group has-validation">
+                  <span class="input-group-text" id="basic-addon3">₽</span>
+                  <input type="number" class="form-control" id="amount" name="amount" placeholder="Укажите сумму скидки, если требуется.">
+                  <div class="invalid-feedback">
+                    Пожалуйста, укажите значение скидки.
+                  </div>
+                </div>
+              </div>
               <hr>
-              <h4 class="mb-3">Минимальная сумма</h4><span class="text-body-secondary">Опционально, желательно указывать если скидка на конкретную сумму.</span>
-              <div class="input-group has-validation">
-                <span class="input-group-text">₽</span>
-                <input type="number" step="10" min="1" class="form-control" id="min_sum" name="min_sum" placeholder="Укажите минимальную сумму .">
+              <div class="col-12">
+                <h4 class="mb-3">Процент скидки</h4>
+                <div class="input-group has-validation">
+                  <span class="input-group-text" id="basic-addon3">%</span>
+                  <input type="number" class="form-control" id="percentage" name="percentage" placeholder="Укажите процент скидки, если требуется.">
+                  <div class="invalid-feedback">
+                    Пожалуйста, укажите процент скидки.
+                  </div>
+                </div>
               </div>
-              <div class="invalid-feedback">
-                Пожалуйста, укажите значение скидки.
+              <hr>
+              <div class="col-12">
+                <h4 class="mb-3">Минимальная сумма</h4>
+                <span class="text-body-secondary">Опционально, желательно указывать, если скидка на конкретную сумму.</span>
+                <div class="input-group">
+                  <span class="input-group-text">₽</span>
+                  <input type="number" class="form-control" id="min_sum" name="min_sum" placeholder="Укажите минимальную сумму.">
+                </div>
               </div>
             </div>
-
-          <hr>
-          <div class="row g-3">
-          <h4 class="mb-3">Начало и окончание действия промокода</h4>
-            <div class="col-sm-6">
-              <label for="start_datetime" class="form-label">Начало скидки:</label>
-              <input type="text" id="start_datetime"  name="start" class="form-control" >
-            </div>
-            <div class="col-sm-6">
-              <label for="end_datetime" class="form-label">Окончание скидки:</label>
-              <input type="text" id="end_datetime" name="end" class="form-control" >
-            </div>
-          </div>
-
             <hr>
-            <div class="row g-3" id="product-fields" style="display: none;">
+            <div class="row g-3">
+            <h4 class="mb-3">Начало и окончание действия промокода</h4>
+              <div class="col-sm-6">
+                <label for="start_datetime" class="form-label">Начало скидки:</label>
+                <input type="text" id="start_datetime"  name="start" class="form-control" >
+              </div>
+              <div class="col-sm-6">
+                <label for="end_datetime" class="form-label">Окончание скидки:</label>
+                <input type="text" id="end_datetime" name="end" class="form-control" >
+              </div>
+            </div>
+            <hr>
+            <div id="product-fields" style="display: none;">
               <h4 class="mb-3">К чему применить скидку?</h4>
               <div class="col-md-3">
                 <label for="product" class="form-label">Позиция</label>
                 <input type="text" class="form-control" id="product" name="product" placeholder="Начните вводить название позиции...">
                 <input type="hidden" id="promo_product" name="promo_product">
               </div>
-              <hr>
             </div>
 
             <hr>
             <div class="col-12">
               <h4 class="mb-3">Промокод</h4>
               <div class="input-group has-validation">
-                  <input type="text" class="form-control" id="code" name="code" maxlength="10" placeholder="Введите промокод из 10 символов максимум. Используйте только буквы и цифры.">
+                <input type="text" class="form-control" id="code" name="code" maxlength="10" placeholder="Введите промокод из 10 символов максимум. Используйте только буквы и цифры.">
               </div>
             </div>
             <button type="submit" class="w-100 btn btn-success btn-lg" id="save-button">Сохранить</button>

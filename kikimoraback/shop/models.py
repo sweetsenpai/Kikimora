@@ -161,6 +161,8 @@ class Discount(models.Model):
             return max(0, price - self.value)
         return price
 
+# TODO: решить проблему с процентами и фиксированой скидкой, не забыть  изменить форму
+
 
 class PromoSystem(models.Model):
     PROMO_TYPE_CHOICES = [
@@ -193,7 +195,7 @@ class PromoSystem(models.Model):
 
     # Для фиксированной скидки или процента (если используется скидка)
     amount = models.FloatField(blank=True, null=True)
-
+    procentage = models.FloatField(blank=True, null=True)
     # Ограничения на использование
     usage_count = models.IntegerField(default=0)  # Количество использований
     one_time = models.BooleanField(default=False)  # Промокод на одноразовое использование
@@ -207,7 +209,7 @@ class PromoSystem(models.Model):
         now = timezone.now()
         return self.start <= now <= self.end
 
-    def apply_discount(self, cart_total, product=None):
+    def apply_promo(self, cart_total, product=None):
         """
         Применяет скидку к товару или корзине в зависимости от типа промокода.
         Общая стоимость заказа не может быть снижена ниже 10% от изначальной.

@@ -4,18 +4,20 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Промокд</title>
+    <title>Промокод</title>
 
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/checkout/">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
     <link href="{% static 'CSS/bootstrap.min.css' %}" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="{% static 'images/browse-svgrepo-com.svg' %}">
+
     <!-- Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <!-- Flatpickr JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+
     <!-- Custom styles for this template -->
     <link href="{% static 'CSS/checkout.css' %}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
@@ -31,74 +33,81 @@
       <main class="form-container">
         <div class="py-3 text-center">
           <img class="d-block mx-auto mb-3" src="{% static 'images/browse-svgrepo-com.svg' %}" alt="" width="80">
-          <h2>Создание новой скидки</h2>
+          <h2>Промокод: {{ promo.code }}</h2>
         </div>
         <div class="mx-auto">
-          <form id="product-form" class="needs-validation" method="post" action="">
+          <form id="product-form" class="needs-validation" method="post">
             {% csrf_token %}
             <div class="col-12">
-              <h4 class="mb-3">Тип скидки</h4>
+              <h4 class="mb-3">Тип промокода</h4>
               <div class="input-group has-validation">
-                <span id="name-display">{{ discount.get_discount_type_display }}</span>
+                <span id="name-display">{{ promo.get_type_display }}</span>
               </div>
             </div>
-
+            {% if promo.amount %}
             <hr>
             <div class="col-12">
               <h4 class="mb-3">Размер скидки</h4>
               <div class="input-group has-validation">
-                {% if discount.discount_type == 'percentage'  %}
-                  <span >{{ discount.value }}%</span>
-                {% else %}
-                  <span >{{ discount.value }}₽</span>
-                {% endif %}
+                  <span>{{ promo.amount }}₽</span>
+              </div>
             </div>
-            {% if discount.min_sum %}
+            {% endif %}
+
+            {% if promo.procentage %}
+            <hr>
+            <div class="col-12">
+              <h4 class="mb-3">Размер скидки</h4>
+              <div class="input-group has-validation">
+                  <span>{{ promo.procentage }}₽</span>
+              </div>
+            </div>
+            {% endif %}
+            <hr>
+              <div class="col-12">
+                <h4 class="mb-3">Одноразовый:{% if promo.one_time %}Да{% else %}Нет{% endif %}</h4>
+              </div>
+
+            {% if promo.min_sum %}
               <hr>
               <div class="col-12">
                 <h4 class="mb-3">Минимальная сумма</h4>
                 <div class="input-group has-validation">
-                  <span >{{ discount.min_sum }}₽</span>
+                  <span>{{ promo.min_sum }}₽</span>
                 </div>
               </div>
             {% endif %}
-          <hr>
-          <div class="row g-3">
-          <h4 class="mb-3">Начало и окончание скидки</h4>
-            <div class="col-sm-6">
-              <label>Начало скидки: {{discount.start}}</label>
-            </div>
-            <div class="col-sm-6">
-              <label >Окончание скидки: {{discount.end}}</label>
-            </div>
-          </div>
 
+            <hr>
+            <div class="row g-3">
+              <h4 class="mb-3">Начало и окончание скидки</h4>
+              <div class="col-sm-6">
+                <label>Начало скидки: {{ promo.start }}</label>
+              </div>
+              <div class="col-sm-6">
+                <label>Окончание скидки: {{ promo.end }}</label>
+              </div>
+            </div>
+
+            {% if promo.promo_product %}
             <hr>
             <div class="row g-3">
               <h4 class="mb-3">К чему применить скидку?</h4>
-              {% if discount.category %}
                 <div class="input-group has-validation">
-                  <span>Категория: {{ discount.category }}</span>
+                  <span>Позиция: {{ promo.promo_product.name }}</span>
                 </div>
-              </div>
-              {% elif discount.subcategory %}
-                <div class="input-group has-validation">
-                  <span> Подкатегория: {{ discount.category }}</span>
-                </div>
-              {% else %}
-                <div class="input-group has-validation">
-                    <span> Позиция: {{ discount.product.name }}</span>
-                </div>
-              {% endif %}
             </div>
+              {% endif %}
 
+            {% if promo.description %}
             <hr>
             <div class="row g-3">
               <h4 class="mb-3">Описание</h4>
-              <span>{{ discount.description }}</span>
+              <span>{{ promo.description }}</span>
             </div>
+            {% endif %}
             <hr>
-            <button class="w-100 btn btn-danger btn-lg" type="button" id="submit-button">Удалить</button>
+            <button class="w-100 btn btn-danger btn-lg" type="submit">Удалить</button>
             <hr class="my-2">
             <button type="button" class="w-100 btn btn-primary btn-lg" onclick="window.location='/discounts';">Назад</button>
           </form>
