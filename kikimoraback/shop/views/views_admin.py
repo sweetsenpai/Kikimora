@@ -8,57 +8,12 @@ from django.views.generic import ListView, TemplateView, FormView
 from django.views.generic.edit import CreateView, UpdateView
 from django.urls import reverse, reverse_lazy
 from django.db.models import Q
-from .models import *
-from .forms import *
+from ..models import *
+from ..forms import *
+from ..tasks import new_admin_mail
 from django.utils.crypto import get_random_string
-from .tasks import new_admin_mail
 from django.core.cache import cache
-from rest_framework import generics, status
-from rest_framework.views import APIView
-from .serializers import CategorySerializer, SubcategorySerializer, ProductSerializer
-from rest_framework.response import Response
 from django.utils import timezone
-
-
-class CategoryList(generics.ListAPIView):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-
-
-class SubcategoryList(generics.ListAPIView):
-    serializer_class = SubcategorySerializer
-
-    def get_queryset(self):
-        print(self.request)
-        category_id = self.request.query_params.get('category')
-        return Subcategory.objects.filter(category=category_id)
-
-
-class ProductList(generics.ListAPIView):
-    serializer_class = ProductSerializer
-
-    def get_queryset(self):
-        subcategory_id = self.request.query_params.get('subcategory')
-        return Product.objects.filter(subcategory=subcategory_id)
-
-
-class ProductAutocompleteView(APIView):
-    def get(self, request, *args, **kwargs):
-        query = request.query_params.get('term', '')
-        products = Product.objects.filter(name__icontains=query)[:10]
-        serializer = ProductSerializer(products, many=True)
-        return Response(serializer.data)
-
-
-class StopDiscountView(APIView):
-    def post(self, request, discount_id, format=None):
-        try:
-            discount = Discount.objects.get(pk=discount_id)
-            discount.end = timezone.now()
-            discount.save()
-            return Response({'status': 'success'}, status=status.HTTP_200_OK)
-        except Discount.DoesNotExist:
-            return Response({'status': 'error', 'message': 'Discount not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class AdminHomePageView(TemplateView):
@@ -311,3 +266,46 @@ def delete_promo(request, promo_id):
         promo.delete()
         return redirect('promocods')
     return render(request, template_name=template_name, context={'promo': promo})
+
+
+class AdminLimitTimeProduct(ListView):
+    template_name = 'master/limit_time_products.html'
+    context_object_name = 'limit_products'
+    model = LimitTimeProduct
+
+    def get_queryset(self):
+        return LimitTimeProduct.objects.all().order_by('-limittimeproduct_id')
+
+
+class AdminLimitTimeProductForm(FormView):
+    template_name = 'master/limit_time_product_form.html'
+    form_class = LimiteTimeProductForm
+    success_url = reverse_lazy('day_products')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product_id = self.kwargs['product_id']
+        product = Product.objects.get(product_id=product_id)  # Получаем товар
+
+        # Добавляем товар в контекст
+        context['product'] = product
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        product_id = self.kwargs['product_id']
+        product = Product.objects.get(product_id=product_id)
+
+        # Передаем данные о товаре в форму, если нужно
+        kwargs['initial'] = {
+            'product_id': product.product_id,
+        }
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.product_id = Product.objects.get(product_id=self.kwargs['product_id'])
+        form.save()
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        return super().form_invalid(form)

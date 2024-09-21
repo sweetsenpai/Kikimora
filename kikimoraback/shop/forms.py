@@ -158,3 +158,29 @@ class PromocodeForm(forms.ModelForm):
         fields = ('description', 'code', 'promo_product',
                   'type', 'min_sum', 'amount', 'procentage',
                   'one_time', 'start', 'end')
+
+
+class LimiteTimeProductForm(forms.ModelForm):
+    class Meta:
+        model = LimitTimeProduct
+        fields = ('ammount', 'price', 'due')
+        error_messages = {
+            'ammount': {
+                'required': "Поле количество не может быть пустым!",
+            },
+            'price': {
+                'required': "Поле цена не может быть пустым!",
+            },
+            'due': {
+                'required': "Поле окончания не может быть пустым!",
+            },
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        ammount = cleaned_data.get('ammount')
+        price = cleaned_data.get('price')
+        if ammount <= 0:
+            raise ValidationError({'ammount': 'Поле количества не может быть меньше или равно нулю!'})
+        if price <=0:
+            raise ValidationError({'price': 'Поле цены не может быть меньше или равно нулю!'})

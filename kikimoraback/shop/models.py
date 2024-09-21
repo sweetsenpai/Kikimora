@@ -129,6 +129,7 @@ class Product(models.Model):
 class LimitTimeProduct(models.Model):
     limittimeproduct_id = models.AutoField(primary_key=True)
     product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
+    price = models.FloatField()
     ammount = models.IntegerField()
     due = models.DateTimeField()
 

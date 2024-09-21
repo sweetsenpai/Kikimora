@@ -116,6 +116,8 @@
             <button type="button" class="w-100 btn btn-success btn-lg" id="edit-button" onclick="toggleEditMode()">Изменить</button>
             <button type="submit" class="w-100 btn btn-success btn-lg d-none" id="save-button">Сохранить</button>
             <hr class="my-2">
+            <button type="button" class="w-100 btn btn-info btn-lg" style="color:white" onclick="window.location='/day_products/{{product.product_id}}';">Добавить в товар дня</button>
+            <hr class="my-2">
             <button type="button" class="w-100 btn btn-primary btn-lg" onclick="window.location='/category/{{product.subcategory.category.category_id}}/subcategories/{{product.subcategory.subcategory_id}}';">Назад</button>
 
           </form>

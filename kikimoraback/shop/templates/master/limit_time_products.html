@@ -1,0 +1,38 @@
+{% extends 'master/base.html' %}
+{% block title %}Товары дня{% endblock %}
+
+{% block active4 %} active {% endblock active4 %}
+{% block content %}
+{% load static %}
+<h1 style="margin-top:-5%;margin-bottom:3%;">Товары дня</h1>
+
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Товар</th>
+                <th scope="col">Цена</th>
+                <th scope="col">Кол-во</th>
+                <th scope="col">Дата окончания</th>
+                <th scope="col">Удалить</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in limit_products %}
+            <tr>
+                <th scope="row">{{ product.limittimeproduct_id }}</th>
+                <td >{{ product.product_id.name }}</td>
+                <td >{{ product.price }}</td>
+                <td >{{ product.ammount }}</td>
+                <td >{{ product.due|date:"d.m H:m" }}</td>
+                <td ><button type="button" value="{{ product.limittimeproduct_id }}" class="btn btn-danger delete-day-product">Удалить</button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{% static 'JS/delete_day_product.js' %}"></script>
+{% endblock %}

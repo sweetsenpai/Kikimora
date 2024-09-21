@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Subcategory, Product, Discount
+from .models import Category, Subcategory, Product, Discount, LimitTimeProduct
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -25,3 +25,9 @@ class DiscountSerializer(serializers.ModelSerializer):
         model = Discount
         fields = ['discount_id', 'discount_type', 'value', 'description', 'min_sum', 'start', 'end', 'category',
                   'subcategory', 'product']
+
+
+class LimitTimeProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LimitTimeProduct
+        fields = ['limittimeproduct_id', 'product_id', 'price', 'ammount', 'due']
