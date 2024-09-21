@@ -1,7 +1,7 @@
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import send_mail
-from .models import Discount
+from .models import Discount, LimitTimeProduct
 from django.utils import timezone
 
 @shared_task
@@ -21,3 +21,13 @@ def new_admin_mail(password, email):
 def deactivate_expired_discounts():
     now = timezone.now()
     Discount.objects.filter(end__lte=now, active=True).update(active=False)
+
+
+@shared_task
+def delete_limite_time_product(limittimeproduct_id):
+    try:
+        day_product = LimitTimeProduct.objects.get(pk=limittimeproduct_id)
+        day_product.delete()
+        return f'Товар дня id:{limittimeproduct_id} успешно удален.'
+    except LimitTimeProduct.DoesNotExist:
+        return f'Товар дня id:{limittimeproduct_id} не существует в БД.'

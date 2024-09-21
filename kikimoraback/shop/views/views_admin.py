@@ -10,7 +10,7 @@ from django.urls import reverse, reverse_lazy
 from django.db.models import Q
 from ..models import *
 from ..forms import *
-from ..tasks import new_admin_mail
+from ..tasks import new_admin_mail, delete_limite_time_product
 from django.utils.crypto import get_random_string
 from django.core.cache import cache
 from django.utils import timezone
@@ -304,7 +304,10 @@ class AdminLimitTimeProductForm(FormView):
 
     def form_valid(self, form):
         form.instance.product_id = Product.objects.get(product_id=self.kwargs['product_id'])
-        form.save()
+        limit_time_product = form.save()
+        due_time = limit_time_product.due
+        if due_time:
+            delete_limite_time_product.apply_async((limit_time_product.limittimeproduct_id,), eta=due_time)
         return super().form_valid(form)
 
     def form_invalid(self, form):

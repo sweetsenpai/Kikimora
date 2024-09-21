@@ -25,7 +25,7 @@
                 <td >{{ product.product_id.name }}</td>
                 <td >{{ product.price }}</td>
                 <td >{{ product.ammount }}</td>
-                <td >{{ product.due|date:"d.m H:m" }}</td>
+                <td >{{ product.due}}</td>
                 <td ><button type="button" value="{{ product.limittimeproduct_id }}" class="btn btn-danger delete-day-product">Удалить</button></td>
             </tr>
             {% endfor %}
