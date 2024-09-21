@@ -1,5 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
+from celery.result import AsyncResult
 from ..models import *
 from rest_framework import generics, status
 from ..serializers import CategorySerializer, SubcategorySerializer, ProductSerializer, LimitTimeProductSerializer
@@ -51,6 +52,9 @@ class DeleteDayProduct(APIView):
     def delete(self, request, limittimeproduct_id, format=None):
         try:
             day_product = LimitTimeProduct.objects.get(pk=limittimeproduct_id)
+            if day_product.task_id:
+                AsyncResult(day_product.task_id).revoke(terminate=True)
+
             day_product.delete()
             return Response({'status': 'success'}, status=status.HTTP_200_OK)
         except LimitTimeProduct.DoesNotExist:

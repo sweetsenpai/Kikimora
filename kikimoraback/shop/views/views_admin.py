@@ -308,6 +308,8 @@ class AdminLimitTimeProductForm(FormView):
         due_time = limit_time_product.due
         if due_time:
             delete_limite_time_product.apply_async((limit_time_product.limittimeproduct_id,), eta=due_time)
+        limit_time_product.task_id = delete_limite_time_product.apply_async((limit_time_product.limittimeproduct_id,), eta=due_time).id
+        limit_time_product.save()
         return super().form_valid(form)
 
     def form_invalid(self, form):

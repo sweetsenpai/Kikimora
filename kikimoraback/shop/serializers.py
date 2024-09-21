@@ -30,4 +30,4 @@ class DiscountSerializer(serializers.ModelSerializer):
 class LimitTimeProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = LimitTimeProduct
-        fields = ['limittimeproduct_id', 'product_id', 'price', 'ammount', 'due']
+        fields = ['limittimeproduct_id', 'product_id', 'price', 'ammount', 'due', 'task_id']

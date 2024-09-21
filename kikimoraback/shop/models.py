@@ -132,7 +132,7 @@ class LimitTimeProduct(models.Model):
     price = models.FloatField()
     ammount = models.IntegerField()
     due = models.DateTimeField()
-
+    task_id = models.CharField(max_length=255, null=True, blank=True)
 
 class Discount(models.Model):
     DISCOUNT_TYPE_CHOICES = [
