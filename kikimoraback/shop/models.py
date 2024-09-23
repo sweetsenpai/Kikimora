@@ -134,6 +134,7 @@ class LimitTimeProduct(models.Model):
     due = models.DateTimeField()
     task_id = models.CharField(max_length=255, null=True, blank=True)
 
+
 class Discount(models.Model):
     DISCOUNT_TYPE_CHOICES = [
         ('percentage', 'Процентная'),
@@ -150,7 +151,9 @@ class Discount(models.Model):
     category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.CASCADE)
     subcategory = models.ForeignKey(Subcategory, null=True, blank=True, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, null=True, blank=True, on_delete=models.CASCADE)
-    active = models.BooleanField(default=True)
+    active = models.BooleanField()
+    task_id_start = models.CharField(max_length=255, null=True, blank=True)
+    task_id_end = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"{self.discount_id} - {self.value} ({self.get_discount_type_display()})"
@@ -204,6 +207,9 @@ class PromoSystem(models.Model):
     # Время действия промокода
     start = models.DateTimeField(default=timezone.now)
     end = models.DateTimeField()
+    task_id_start = models.CharField(max_length=255, null=True, blank=True)
+    task_id_end = models.CharField(max_length=255, null=True, blank=True)
+    active = models.BooleanField(default=True)
 
     def is_active(self):
         # Проверка на активность промокода по дате

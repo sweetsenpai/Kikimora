@@ -1,8 +1,9 @@
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import send_mail
-from .models import Discount, LimitTimeProduct
+from .models import Discount, LimitTimeProduct, PromoSystem
 from django.utils import timezone
+
 
 @shared_task
 def new_admin_mail(password, email):
@@ -18,16 +19,50 @@ def new_admin_mail(password, email):
 
 
 @shared_task
-def deactivate_expired_discounts():
-    now = timezone.now()
-    Discount.objects.filter(end__lte=now, active=True).update(active=False)
+def deactivate_expired_discount(discount_id):
+    discount = Discount.objects.filter(discount_id=discount_id).first()
+    if not discount:
+        return f'Скидки с указаным id:{discount_id} не существует в БД.'
+    discount.active = False
+    discount.save()
+    return f'Скдка с id {discount_id} удалена.'
 
 
 @shared_task
-def delete_limite_time_product(limittimeproduct_id):
-    try:
-        day_product = LimitTimeProduct.objects.get(pk=limittimeproduct_id)
-        day_product.delete()
-        return f'Товар дня id:{limittimeproduct_id} успешно удален.'
-    except LimitTimeProduct.DoesNotExist:
-        return f'Товар дня id:{limittimeproduct_id} не существует в БД.'
+def activate_discount(discount_id):
+    discount = Discount.objects.filter(discount_id=discount_id).first()
+    if not discount:
+        return f'Скидки с указаным id:{discount_id} не существует в БД.'
+    discount.active = True
+    discount.save()
+    return f'Скдка с id {discount_id} активирована.'
+
+
+@shared_task
+def deactivate_expired_promo(promo_id):
+    promo = PromoSystem.objects.filter(promo_id=promo_id).first()
+    if not promo:
+        return f'Промокод с id {promo_id} не существует в БД.'
+    promo.active = False
+    promo.save()
+    return f'Промокод с id {promo_id} теперь не активен.'
+
+
+@shared_task
+def activate_promo(promo_id):
+    promo = PromoSystem.objects.filter(promo_id=promo_id).first()
+    if not promo:
+        return f'Промокод с id {promo_id} не существует в БД.'
+    promo.active = False
+    promo.save()
+    return f'Промокод с id {promo_id} теперь активен.'
+
+
+@shared_task
+def delete_limite_time_product(product_id):
+    product = LimitTimeProduct.objects.filter(id=product_id).first()
+    if not product:
+        return f'Товар дня id:{product_id} не существует в БД.'
+
+    product.delete()
+    return f'Товар дня id:{product_id} удалён.'

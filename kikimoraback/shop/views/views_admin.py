@@ -10,10 +10,11 @@ from django.urls import reverse, reverse_lazy
 from django.db.models import Q
 from ..models import *
 from ..forms import *
-from ..tasks import new_admin_mail, delete_limite_time_product
+from ..tasks import new_admin_mail, delete_limite_time_product, deactivate_expired_discount, deactivate_expired_promo, activate_promo, activate_discount
 from django.utils.crypto import get_random_string
 from django.core.cache import cache
 from django.utils import timezone
+from celery.result import AsyncResult
 
 
 class AdminHomePageView(TemplateView):
@@ -221,7 +222,16 @@ class AdminNewDiscount(FormView):
     success_url = reverse_lazy('discounts')
 
     def form_valid(self, form):
-        form.save()
+        if form.instance.start.date() == datetime.now():
+            form.instance.active = True
+            discount = form.save()
+            discount.task_id_end = deactivate_expired_discount.apply_async((discount.discount_id,), eta=discount.end)
+        else:
+            form.instance.active = False
+            discount = form.save()
+            discount.task_id_start = activate_discount.apply_async((discount.discount_id,), eta=discount.start)
+            discount.task_id_end = deactivate_expired_discount.apply_async((discount.discount_id,), eta=discount.end)
+        discount.save()
         return super().form_valid(form)
 
     def form_invalid(self, form):
@@ -252,7 +262,16 @@ class AdminNewPromo(FormView):
     form_class = PromocodeForm
 
     def form_valid(self, form):
-        form.save()
+        if form.instance.start.date() == datetime.now():
+            form.instance.active = True
+            promo = form.save()
+            promo.task_id_end = deactivate_expired_promo.apply_async((promo.promo_id,), eta=promo.end)
+        else:
+            form.instance.active = False
+            promo = form.save()
+            promo.task_id_start = activate_promo.apply_async((promo.promo_id,), eta=promo.start)
+            promo.task_id_end = deactivate_expired_promo.apply_async((promo.promo_id,), eta=promo.end)
+        promo.save()
         return super().form_valid(form)
 
     def form_invalid(self, form):
@@ -263,6 +282,9 @@ def delete_promo(request, promo_id):
     template_name = 'master/old_promo.html'
     promo = get_object_or_404(PromoSystem, pk=promo_id)
     if request.method == 'POST':
+        if promo.task_id_start:
+            AsyncResult(id=promo.task_id_start).revoke(terminate=True)
+        AsyncResult(id=promo.task_id_end).revoke(terminate=True)
         promo.delete()
         return redirect('promocods')
     return render(request, template_name=template_name, context={'promo': promo})
@@ -306,9 +328,8 @@ class AdminLimitTimeProductForm(FormView):
         form.instance.product_id = Product.objects.get(product_id=self.kwargs['product_id'])
         limit_time_product = form.save()
         due_time = limit_time_product.due
-        if due_time:
-            delete_limite_time_product.apply_async((limit_time_product.limittimeproduct_id,), eta=due_time)
-        limit_time_product.task_id = delete_limite_time_product.apply_async((limit_time_product.limittimeproduct_id,), eta=due_time).id
+        task = delete_limite_time_product.apply_async((limit_time_product.limittimeproduct_id,), eta=due_time)
+        limit_time_product.task_id = task.id
         limit_time_product.save()
         return super().form_valid(form)
 

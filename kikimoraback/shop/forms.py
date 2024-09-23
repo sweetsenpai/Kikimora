@@ -180,7 +180,13 @@ class LimiteTimeProductForm(forms.ModelForm):
         cleaned_data = super().clean()
         ammount = cleaned_data.get('ammount')
         price = cleaned_data.get('price')
-        if ammount <= 0:
-            raise ValidationError({'ammount': 'Поле количества не может быть меньше или равно нулю!'})
-        if price <=0:
-            raise ValidationError({'price': 'Поле цены не может быть меньше или равно нулю!'})
+        try:
+            if ammount <= 0:
+                raise ValidationError({'ammount': 'Поле количества не может быть меньше или равно нулю!'})
+        except TypeError:
+            raise ValidationError({'ammount': 'Поле количества не может быть пустым!'})
+        try:
+            if price <=0:
+                raise ValidationError({'price': 'Поле цены не может быть меньше или равно нулю!'})
+        except TypeError:
+            raise  ValidationError({'price': 'Поле цены не может быть пустым!'})

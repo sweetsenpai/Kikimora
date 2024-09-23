@@ -41,6 +41,9 @@ class StopDiscountView(APIView):
     def post(self, request, discount_id, format=None):
         try:
             discount = Discount.objects.get(pk=discount_id)
+            if discount.task_id_start:
+                AsyncResult(id=discount.task_id_start).revoke(terminate=True)
+            AsyncResult(id=discount.task_id_end).revoke(terminate=True)
             discount.end = timezone.now()
             discount.save()
             return Response({'status': 'success'}, status=status.HTTP_200_OK)
@@ -53,8 +56,8 @@ class DeleteDayProduct(APIView):
         try:
             day_product = LimitTimeProduct.objects.get(pk=limittimeproduct_id)
             if day_product.task_id:
-                AsyncResult(day_product.task_id).revoke(terminate=True)
-
+                AsyncResult(id=day_product.task_id).revoke(terminate=True)
+                print(f'Задача удалена! info:{day_product.task_id}')
             day_product.delete()
             return Response({'status': 'success'}, status=status.HTTP_200_OK)
         except LimitTimeProduct.DoesNotExist:
