@@ -92,20 +92,15 @@ class AdminCategoryView(ListView):
             cache.set(cache_key, categories_list, timeout=60*15)
         return categories_list
 
-    def post(self, request, *args, **kwargs):
-        form = self.form_class(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('admin_category_view')
-        else:
-            return render(request, template_name=self.template_name, context={'categories': self.get_queryset(), 'form': form})
 
-
-def toggle_visibility(request, category_id):
-    category = get_object_or_404(Category, category_id=category_id)
-    category.visibility = not category.visibility
-    category.save()
-    return redirect('admin_category_view')
+def toggle_visibility_category(request, category_id):
+    if request.method == 'POST':
+        category = get_object_or_404(Category, pk=category_id)
+        category.visibility = not category.visibility
+        category.save()
+        cache.delete('categories_list')
+        return JsonResponse({'visibility': category.visibility})
+    return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
 class AdminSubcategoryListView(ListView):

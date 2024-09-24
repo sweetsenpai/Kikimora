@@ -16,7 +16,6 @@ class SubcategoryList(generics.ListAPIView):
     serializer_class = SubcategorySerializer
 
     def get_queryset(self):
-        print(self.request)
         category_id = self.request.query_params.get('category')
         return Subcategory.objects.filter(category=category_id)
 

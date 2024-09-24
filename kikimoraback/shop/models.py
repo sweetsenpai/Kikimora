@@ -184,7 +184,10 @@ class PromoSystem(models.Model):
         unique=True,
         validators=[
             MaxLengthValidator(10),
-            RegexValidator(regex='^[A-Za-z0-9]*$', message="Промокод должен состоять только из букв и цифр.")
+            RegexValidator(
+                regex='^[A-Za-zА-Яа-я0-9]*$',
+                message="Промокод должен состоять только из букв и цифр."
+            )
         ]
     )
 

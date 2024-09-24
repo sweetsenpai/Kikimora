@@ -18,7 +18,7 @@ urlpatterns = [
     path('staff/create_new_admin/', views_admin.AdminCreateView.as_view(), name='admin_create'),
     # CATEGORY
     path('categories', views_admin.AdminCategoryView.as_view(), name='admin_category_view'),
-    path('change_visability/<int:category_id>/', views_admin.toggle_visibility, name='toggle_visibility'),
+    path('change_visability_category/<int:category_id>/', views_admin.toggle_visibility_category, name='change_visability_category'),
     # SUBCATEGORY
     path('category/<int:category_id>/subcategories/', views_admin.AdminSubcategoryListView.as_view(), name='subcategory_list'),
     path('change_visibility_subcat/<int:subcategory_id>/', views_admin.toggle_visibility_subcat, name='change_visibility_subcat'),

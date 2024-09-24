@@ -1,22 +1,12 @@
 {% extends 'master/base.html' %}
 {% block title %}Товары{% endblock %}
-
+{% load static %}
 {% block active2 %} active {% endblock active2 %}
 {% block content %}
 <h1 style="margin-top:-5%;margin-bottom:3%;">Категории</h1>
     {% if form.errors %}
       <div id="errorContainer" class="alert alert-danger" role="alert">{{ form.errors }}</div>
     {% endif %}
-    <form method="post">
-      {% csrf_token %}
-      <div class="input-group mb-3">
-        <input type="text" class="form-control" placeholder="Название категории" name="name" id="name"  aria-describedby="basic-addon2">
-        <input type="text" class="form-control" placeholder="Описание категории(опционально)" name="text" id="text"  aria-describedby="basic-addon2">
-        <div class="input-group-append">
-          <button type="submit" style="margin-left:5px; margin-right:5px;" class="btn btn-primary" >Добавить</button>
-        </div>
-      </div>
-    </form>
       <div class="table-responsive">
           <table class="table table-hover">
             <thead>
@@ -29,18 +19,30 @@
             </thead>
             <tbody>
             {% for category in categories %}
-            <tr>
+            <tr id="category-{{ category.category_id }}">
               <th scope="row" onclick="window.location='category/{{category.category_id}}/subcategories/';">{{ category.category_id }}</th>
               <td onclick="window.location='category/{{category.category_id}}/subcategories/';">{{ category.name }}</td>
               <td onclick="window.location='category/{{category.category_id}}/subcategories/';">{{ category.text }}</td>
-              {% if category.visibility %}
-                <td><button type="button" class="btn btn-warning" style="color:#C7253E;" onclick="window.location='change_visability/{{ category.category_id }}'">Убрать из выдачи</button></td>
-              {% else %}
-                <td><button type="button" class="btn btn-primary" onclick="window.location='change_visability/{{ category.category_id }}'">Вернуть в выдачу</button></td>
-              {% endif %}
+              <td>
+                <button type="button" class="btn {% if category.visibility %}btn-warning{% else %}btn-primary{% endif %}"
+                        style="color:{% if category.visibility %}#C7253E{% else %} white {% endif %}"
+                        id="button-{{ category.category_id }}"
+                        onclick="toggleVisibilityCategory({{ category.category_id }})">
+                    {% if category.visibility %}
+                        Убрать из выдачи
+                    {% else %}
+                        Вернуть в выдачу
+                    {% endif %}
+                </button>
+              </td>
             </tr>
             {% endfor %}
             </tbody>
           </table>
       </div>
+<script src="{% static 'JS/jquery-3.7.1.min.js' %}"></script>
+<!-- Подключение Bootstrap -->
+<script src="{% static 'JS/bootstrap.bundle.min.js' %}"></script>
+<!-- Подключаем внешний JS-файл -->
+<script src="{% static 'JS/visibility_toggle_category.js' %}"></script>
 {% endblock %}
