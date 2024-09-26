@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import views_admin, views_api
-
+from django.contrib.auth.views import LoginView, LogoutView
 
 urlpatterns = [
     # API
@@ -12,6 +12,8 @@ urlpatterns = [
     path('api/delete_day_product/<int:limittimeproduct_id>/', views_api.DeleteDayProduct.as_view(), name='delete_day_product'),
     # HOME
     path('apanel', views_admin.AdminHomePageView.as_view(), name='admin_home'),
+    path('apanel/login', views_admin.AdminLogin.as_view(), name='admin_login'),
+    path('apanel/logout', LogoutView.as_view(next_page='admin_login'), name='admin_logout'),
     # STAFF
     path('staff', views_admin.StaffListView.as_view(), name='staff'),
     path('staff/<int:admin_id>/', views_admin.admin_account, name='admin_account'),

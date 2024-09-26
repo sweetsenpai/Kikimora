@@ -198,7 +198,10 @@
       <ul class="dropdown-menu text-small shadow">
         <li><a class="dropdown-item" href="#">Профиль</a></li>
         <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item" href="#">Выход</a></li>
+        <form action="{% url 'admin_logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-item">Выход</button>
+        </form>
       </ul>
     </div>
   </div>

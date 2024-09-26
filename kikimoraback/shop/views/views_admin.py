@@ -1,27 +1,76 @@
+from abc import ABC
+
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login as auth_login, logout
+
+from django.contrib.auth import authenticate, login
 from django.contrib import messages
-from django.template import loader
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import user_passes_test, login_required
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.views import LoginView
+
 from django.views.generic import ListView, TemplateView, FormView
 from django.views.generic.edit import CreateView, UpdateView
+
+from django.utils import timezone
+
+
+from django.template import loader
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
+
 from django.urls import reverse, reverse_lazy
 from django.db.models import Q
+
+from django.core.cache import cache
+
 from ..models import *
 from ..forms import *
 from ..tasks import new_admin_mail, delete_limite_time_product, deactivate_expired_discount, deactivate_expired_promo, activate_promo, activate_discount
-from django.utils.crypto import get_random_string
-from django.core.cache import cache
-from django.utils import timezone
+
 from celery.result import AsyncResult
 
 
-class AdminHomePageView(TemplateView):
+def is_staff_or_superuser(user):
+    return user.is_authenticated and (user.is_staff or user.is_superuser)
+
+
+class StaffCheckRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_authenticated and (self.request.user.is_superuser or self.request.user.is_staff)
+
+    def handle_no_permission(self):
+        return redirect('admin_login')
+
+
+class AdminLogin(LoginView):
+    template_name='master/login.html'
+    redirect_authenticated_user = True
+
+    def post(self, request, *args, **kwargs):
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        remember_me = request.POST.get('remember_me', False)
+
+        user = authenticate(request, username=email, password=password)
+        if user is not None:
+            # Проверяем, является ли пользователь сотрудником или суперпользователем
+            if user.is_staff or user.is_superuser:
+                login(request, user)
+                if not remember_me:
+                    # Устанавливаем сессию на один день
+                    request.session.set_expiry(0)
+                return HttpResponseRedirect(reverse_lazy('admin_home'))
+            else:
+                messages.error(request, "У вас нет доступа к административной панели.")
+        else:
+            messages.error(request, "Неправильный email или пароль.")
+        return render(request, self.template_name)
+
+
+class AdminHomePageView(StaffCheckRequiredMixin, TemplateView):
     template_name = 'master/home.html'
 
 
-class StaffListView(ListView):
+class StaffListView(StaffCheckRequiredMixin, ListView):
     template_name = 'master/staff.html'
     context_object_name = 'admins'
 
@@ -42,7 +91,7 @@ class StaffListView(ListView):
         return self.render_to_response(self.get_context_data(object_list=self.object_list))
 
 
-class AdminCreateView(FormView):
+class AdminCreateView(StaffCheckRequiredMixin, FormView):
     template_name = 'master/admin_creation_page.html'
     form_class = AdminCreationForm
     success_url = reverse_lazy('staff')
@@ -66,6 +115,7 @@ class AdminCreateView(FormView):
         return JsonResponse({'status': 'error', 'errors': errors})
 
 
+@user_passes_test(is_staff_or_superuser)
 def admin_account(request, admin_id):
     if request.method=="POST":
 
@@ -79,7 +129,7 @@ def admin_account(request, admin_id):
     return render(request, template_name='master/admin_page.html', context=admin_data)
 
 
-class AdminCategoryView(ListView):
+class AdminCategoryView(StaffCheckRequiredMixin, ListView):
     template_name = 'master/category.html'
     context_object_name = 'categories'
     form_class = CategoryCreationForm
@@ -93,6 +143,7 @@ class AdminCategoryView(ListView):
         return categories_list
 
 
+@user_passes_test(is_staff_or_superuser)
 def toggle_visibility_category(request, category_id):
     if request.method == 'POST':
         category = get_object_or_404(Category, pk=category_id)
@@ -103,7 +154,7 @@ def toggle_visibility_category(request, category_id):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
-class AdminSubcategoryListView(ListView):
+class AdminSubcategoryListView(StaffCheckRequiredMixin, ListView):
     model = Subcategory
     template_name = 'master/subcategory.html'
     context_object_name = 'subcategories'
@@ -118,6 +169,7 @@ class AdminSubcategoryListView(ListView):
         return context
 
 
+@user_passes_test(is_staff_or_superuser)
 def toggle_visibility_subcat(request, subcategory_id):
     if request.method == 'POST':
         subcategory = get_object_or_404(Subcategory, pk=subcategory_id)
@@ -127,7 +179,7 @@ def toggle_visibility_subcat(request, subcategory_id):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
-class AdminProdactListView(ListView):
+class AdminProdactListView(StaffCheckRequiredMixin, ListView):
     model = Product
     template_name = 'master/products.html'
     context_object_name = 'products'
@@ -159,6 +211,7 @@ class AdminProdactListView(ListView):
         return render(request, self.template_name, context)
 
 
+@user_passes_test(is_staff_or_superuser)
 def toggle_visibility_product(request, product_id):
     if request.method == 'POST':
         product = get_object_or_404(Product, pk=product_id)
@@ -168,7 +221,7 @@ def toggle_visibility_product(request, product_id):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
-class ProductUpdateView(UpdateView):
+class ProductUpdateView(StaffCheckRequiredMixin, UpdateView):
     model = Product
     form_class = ProductForm
     template_name = 'master/product_form.html'
@@ -197,7 +250,7 @@ class ProductUpdateView(UpdateView):
         return reverse('product_update', kwargs={'product_id': self.object.product_id})
 
 
-class AdminDiscountListView(ListView):
+class AdminDiscountListView(StaffCheckRequiredMixin, ListView):
     model = Discount
     template_name = 'master/discounts.html'
     context_object_name = 'discounts'
@@ -211,7 +264,7 @@ class AdminDiscountListView(ListView):
         return context
 
 
-class AdminNewDiscount(FormView):
+class AdminNewDiscount(StaffCheckRequiredMixin, FormView):
     form_class = DiscountForm
     template_name = 'master/new_discount.html'
     success_url = reverse_lazy('discounts')
@@ -233,6 +286,7 @@ class AdminNewDiscount(FormView):
         return super().form_invalid(form)
 
 
+@user_passes_test(is_staff_or_superuser)
 def delete_discount(request, discount_id):
     template_name = 'master/old_discount.html'
     discount = get_object_or_404(Discount, pk=discount_id)
@@ -242,7 +296,7 @@ def delete_discount(request, discount_id):
     return render(request, template_name=template_name, context={'discount': discount})
 
 
-class AdminPromocodeListView(ListView):
+class AdminPromocodeListView(StaffCheckRequiredMixin, ListView):
     model = PromoSystem
     template_name = 'master/promocods.html'
     context_object_name = 'promocodes'
@@ -251,7 +305,7 @@ class AdminPromocodeListView(ListView):
         return PromoSystem.objects.all().order_by('-promo_id')
 
 
-class AdminNewPromo(FormView):
+class AdminNewPromo(StaffCheckRequiredMixin, FormView):
     template_name = 'master/new_promocode.html'
     success_url = reverse_lazy('promocods')
     form_class = PromocodeForm
@@ -273,6 +327,7 @@ class AdminNewPromo(FormView):
         return super().form_invalid(form)
 
 
+@user_passes_test(is_staff_or_superuser)
 def delete_promo(request, promo_id):
     template_name = 'master/old_promo.html'
     promo = get_object_or_404(PromoSystem, pk=promo_id)
@@ -285,7 +340,7 @@ def delete_promo(request, promo_id):
     return render(request, template_name=template_name, context={'promo': promo})
 
 
-class AdminLimitTimeProduct(ListView):
+class AdminLimitTimeProduct(StaffCheckRequiredMixin, ListView):
     template_name = 'master/limit_time_products.html'
     context_object_name = 'limit_products'
     model = LimitTimeProduct
@@ -294,7 +349,7 @@ class AdminLimitTimeProduct(ListView):
         return LimitTimeProduct.objects.all().order_by('-limittimeproduct_id')
 
 
-class AdminLimitTimeProductForm(FormView):
+class AdminLimitTimeProductForm(StaffCheckRequiredMixin, FormView):
     template_name = 'master/limit_time_product_form.html'
     form_class = LimiteTimeProductForm
     success_url = reverse_lazy('day_products')
