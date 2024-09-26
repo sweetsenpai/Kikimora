@@ -1,0 +1,38 @@
+{% extends 'master/base.html' %}
+{% block title %}Промокоды{% endblock %}
+
+{% block active5 %} active {% endblock active5 %}
+{% block content %}
+{% load static %}
+<h1 style="margin-top:-5%;margin-bottom:3%;">Промокоды</h1>
+<button type="button" class="btn btn-success" style="margin-top:-4%;" onclick="window.location='promocods/new_promocode';">Создать новый промокод</button>
+
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Товар</th>
+                <th scope="col">Тип промокода</th>
+                <th scope="col">Дата начала</th>
+                <th scope="col">Дата окончания</th>
+                <th scope="col">Использований</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for promocode in promocodes %}
+            <tr>
+                <th scope="row">{{ promocode.promo_id }}</th>
+                <td onclick="window.location='promocods/{{ promocode.promo_id }}';">{{ promocode.code }}</td>
+                <td onclick="window.location='promocods/{{ promocode.promo_id }}';">{{ promocode.get_type_display }}</td>
+                <td onclick="window.location='promocods/{{ promocode.promo_id }}';">{{ promocode.start|date:"d.m.Y H:i" }}</td>
+                <td onclick="window.location='promocods/{{ promocode.promo_id }}';">{{ promocode.end|date:"d.m.Y H:i" }}</td>
+                <td onclick="window.location='promocods/{{ promocode.promo_id }}';">{{ promocode.usage_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{% endblock %}
