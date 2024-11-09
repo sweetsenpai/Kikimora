@@ -1,5 +1,8 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
+from rest_framework import viewsets
+from rest_framework.response import Response
+from rest_framework.decorators import action
 from celery.result import AsyncResult
 from ..models import *
 from rest_framework import generics, status
@@ -26,6 +29,23 @@ class ProductList(generics.ListAPIView):
     def get_queryset(self):
         subcategory_id = self.request.query_params.get('subcategory')
         return Product.objects.filter(subcategory=subcategory_id)
+
+
+class ProductViewSet(viewsets.ViewSet):
+    serializer_class = ProductSerializer
+
+    @action(detail=False, methods=['get'], url_path='subcategory/(?P<subcategory_id>[^/.]+)')
+    def by_subcategory(self, request, subcategory_id=None):
+        products = Product.objects.filter(subcategory_id=subcategory_id)
+        serializer = self.serializer_class(products, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='category/(?P<category_id>[^/.]+)')
+    def by_category(self, request, category_id=None):
+        subcategories = Subcategory.objects.filter(category_id=category_id)
+        products = Product.objects.filter(subcategory__in=subcategories)
+        serializer = self.serializer_class(products, many=True)
+        return Response(serializer.data)
 
 
 class ProductAutocompleteView(APIView):

@@ -2,22 +2,26 @@ from rest_framework import serializers
 from .models import Category, Subcategory, Product, Discount, LimitTimeProduct
 
 
-class CategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Category
-        fields = ['category_id', 'name']
-
-
-class SubcategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Subcategory
-        fields = ['subcategory_id', 'name']
-
-
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['product_id', 'name']
+        fields = ['product_id', 'name', 'description', 'price', 'photo_url', 'subcategory']
+
+
+class SubcategorySerializer(serializers.ModelSerializer):
+    products = ProductSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Subcategory
+        fields = ['subcategory_id', 'name', 'category', 'products']
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    subcategories = SubcategorySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Category
+        fields = ['category_id', 'name', 'subcategories']
 
 
 class DiscountSerializer(serializers.ModelSerializer):

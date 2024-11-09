@@ -2,11 +2,16 @@ from django.urls import path
 from .views import views_admin, views_api
 from django.contrib.auth.views import LoginView, LogoutView
 
+product_by_subcategory = views_api.ProductViewSet.as_view({'get': 'by_subcategory'})
+product_by_category =  views_api.ProductViewSet.as_view({'get': 'by_category'})
+
 urlpatterns = [
     # API
     path('api/categories/', views_api.CategoryList.as_view(), name='category-list'),
     path('api/subcategories/', views_api.SubcategoryList.as_view(), name='subcategory-list'),
     path('api/products/', views_api.ProductList.as_view(), name='product-list'),
+    path('api/products/subcategory/<int:subcategory_id>/', product_by_subcategory, name='products-by-subcategory'),
+    path('api/products/category/<int:category_id>/', product_by_category, name='products-by-category'),
     path('api/autocomplete/product/', views_api.ProductAutocompleteView.as_view(), name='product-autocomplete-api'),
     path('api/discounts/stop/<int:discount_id>/', views_api.StopDiscountView.as_view(), name='stop_discount_api'),
     path('api/delete_day_product/<int:limittimeproduct_id>/', views_api.DeleteDayProduct.as_view(), name='delete_day_product'),
