@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from celery.result import AsyncResult
 from ..models import *
 from rest_framework import generics, status
-from ..serializers import CategorySerializer, SubcategorySerializer, ProductSerializer, LimitTimeProductSerializer
+from ..serializers import *
 from rest_framework.response import Response
 
 
@@ -56,6 +56,11 @@ class ProductAutocompleteView(APIView):
         return Response(serializer.data)
 
 
+class DiscountProductActiveList(generics.ListAPIView):
+    queryset = Discount.objects.filter(active=True)
+    serializer_class=DiscountSerializer
+
+
 class StopDiscountView(APIView):
     def post(self, request, discount_id, format=None):
         try:
@@ -81,3 +86,8 @@ class DeleteDayProduct(APIView):
             return Response({'status': 'success'}, status=status.HTTP_200_OK)
         except LimitTimeProduct.DoesNotExist:
             return Response({'status': 'error', 'message': 'Day Product not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class LimitProduct(generics.ListAPIView):
+    queryset = LimitTimeProduct.objects.all()
+    serializer_class=LimitTimeProductSerializer

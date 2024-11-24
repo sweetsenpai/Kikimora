@@ -25,6 +25,10 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class DiscountSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only=True)
+    subcategory = SubcategorySerializer(read_only=True)
+    product = ProductSerializer(read_only=True)
+
     class Meta:
         model = Discount
         fields = ['discount_id', 'discount_type', 'value', 'description', 'min_sum', 'start', 'end', 'category',
@@ -32,6 +36,8 @@ class DiscountSerializer(serializers.ModelSerializer):
 
 
 class LimitTimeProductSerializer(serializers.ModelSerializer):
+    product_id = ProductSerializer(read_only=True)
+
     class Meta:
         model = LimitTimeProduct
-        fields = ['limittimeproduct_id', 'product_id', 'price', 'ammount', 'due', 'task_id']
+        fields = ['limittimeproduct_id', 'price', 'ammount', 'due', 'task_id', 'product_id']

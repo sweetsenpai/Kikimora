@@ -3,7 +3,7 @@ from .views import views_admin, views_api
 from django.contrib.auth.views import LoginView, LogoutView
 
 product_by_subcategory = views_api.ProductViewSet.as_view({'get': 'by_subcategory'})
-product_by_category =  views_api.ProductViewSet.as_view({'get': 'by_category'})
+product_by_category = views_api.ProductViewSet.as_view({'get': 'by_category'})
 
 urlpatterns = [
     # API
@@ -13,7 +13,9 @@ urlpatterns = [
     path('api/products/subcategory/<int:subcategory_id>/', product_by_subcategory, name='products-by-subcategory'),
     path('api/products/category/<int:category_id>/', product_by_category, name='products-by-category'),
     path('api/autocomplete/product/', views_api.ProductAutocompleteView.as_view(), name='product-autocomplete-api'),
+    path('api/discount', views_api.DiscountProductActiveList.as_view(), name='api-discount'),
     path('api/discounts/stop/<int:discount_id>/', views_api.StopDiscountView.as_view(), name='stop_discount_api'),
+    path('api/limitproduct', views_api.LimitProduct.as_view(), name='api-limitproduct'),
     path('api/delete_day_product/<int:limittimeproduct_id>/', views_api.DeleteDayProduct.as_view(), name='delete_day_product'),
     # HOME
     path('apanel', views_admin.AdminHomePageView.as_view(), name='admin_home'),
