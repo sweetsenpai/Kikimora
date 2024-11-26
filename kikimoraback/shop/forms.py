@@ -101,9 +101,7 @@ class CategoryCreationForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ('name', 'photo_url', 'description',
-                  'price', 'weight', 'bonus',
-                  'visibility')
+        fields = ('name', 'description', 'price', 'weight', 'bonus', 'visibility')
         error_messages = {
             'weight': {
                 'required': "Поле вес не может быть пустым!",

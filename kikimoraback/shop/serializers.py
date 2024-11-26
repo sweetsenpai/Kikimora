@@ -1,11 +1,19 @@
 from rest_framework import serializers
-from .models import Category, Subcategory, Product, Discount, LimitTimeProduct
+from .models import *
+
+
+class ProductPhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductPhoto
+        fields = ['photo_id', 'product', 'photo_url', 'is_main', 'photo_description']
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    photos = ProductPhotoSerializer(many=True, read_only=True)
+
     class Meta:
         model = Product
-        fields = ['product_id', 'name', 'description', 'price', 'photo_url', 'subcategory']
+        fields = ['product_id', 'name', 'description', 'price', 'photos', 'subcategory']
 
 
 class SubcategorySerializer(serializers.ModelSerializer):
@@ -41,3 +49,5 @@ class LimitTimeProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = LimitTimeProduct
         fields = ['limittimeproduct_id', 'price', 'ammount', 'due', 'task_id', 'product_id']
+
+

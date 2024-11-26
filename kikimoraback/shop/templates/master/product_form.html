@@ -49,8 +49,11 @@
             <div class="col-12">
               <label class="form-label"><b>Изображение</b></label>
               <div class="input-group has-validation">
-                <img id="photo-display" src="{{ product.photo_url }}" class="rounded mx-auto d-block" width="72">
-                <input id="photo-input" type="text" name="photo_url" class="form-control d-none" placeholder="{{ product.photo_url }}">
+                {% if first_photo %}
+                  <img id="photo-display" src="{{ first_photo.photo_url }}" class="rounded mx-auto d-block" width="200">
+                {% else %}
+                  <p>No image available</p>
+                {% endif %}
               </div>
             </div>
             <hr>

@@ -221,7 +221,7 @@ def toggle_visibility_product(request, product_id):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
-class ProductUpdateView(StaffCheckRequiredMixin, UpdateView):
+class ProductUpdateView(UpdateView):
     model = Product
     form_class = ProductForm
     template_name = 'master/product_form.html'
@@ -232,9 +232,11 @@ class ProductUpdateView(StaffCheckRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        product = Product.objects.get(product_id=self.kwargs.get('product_id'))
+        product = self.get_object()
         context['category_id'] = product.subcategory.category.category_id
         context['subcategory_id'] = product.subcategory.subcategory_id
+        # Get the first photo of the product
+        context['first_photo'] = product.photos.first()
         return context
 
     def form_valid(self, form):

@@ -11,7 +11,7 @@ from rest_framework.response import Response
 
 
 class CategoryList(generics.ListAPIView):
-    queryset = Category.objects.all()
+    queryset = Category.objects.prefetch_related('subcategories')
     serializer_class = CategorySerializer
 
 
@@ -89,5 +89,5 @@ class DeleteDayProduct(APIView):
 
 
 class LimitProduct(generics.ListAPIView):
-    queryset = LimitTimeProduct.objects.all()
+    queryset = LimitTimeProduct.objects.select_related('product_id__subcategory__category').prefetch_related('product_id__photos')
     serializer_class=LimitTimeProductSerializer
