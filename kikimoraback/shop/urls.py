@@ -1,15 +1,20 @@
 from django.urls import path
 from .views import views_admin, views_api
 from django.contrib.auth.views import LoginView, LogoutView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 product_by_subcategory = views_api.ProductViewSet.as_view({'get': 'by_subcategory'})
 product_by_category = views_api.ProductViewSet.as_view({'get': 'by_category'})
 
 urlpatterns = [
     # API
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/login/', views_api.Login.as_view(), name='api-login'),
     path('api/categories/', views_api.CategoryList.as_view(), name='category-list'),
     path('api/subcategories/', views_api.SubcategoryList.as_view(), name='subcategory-list'),
     path('api/products/', views_api.ProductList.as_view(), name='product-list'),
+    path('api/product/<int:product_id>/', views_api.ProductApi.as_view(), name='product'),
     path('api/products/subcategory/<int:subcategory_id>/', product_by_subcategory, name='products-by-subcategory'),
     path('api/products/category/<int:category_id>/', product_by_category, name='products-by-category'),
     path('api/autocomplete/product/', views_api.ProductAutocompleteView.as_view(), name='product-autocomplete-api'),

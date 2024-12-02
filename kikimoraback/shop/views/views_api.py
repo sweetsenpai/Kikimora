@@ -4,10 +4,13 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from celery.result import AsyncResult
-from ..models import *
-from rest_framework import generics, status
-from ..serializers import *
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import generics, status
+from django.contrib.auth.models import update_last_login
+from django.contrib.auth import authenticate
+from ..models import *
+from ..serializers import *
 
 
 class CategoryList(generics.ListAPIView):
@@ -21,6 +24,14 @@ class SubcategoryList(generics.ListAPIView):
     def get_queryset(self):
         category_id = self.request.query_params.get('category')
         return Subcategory.objects.filter(category=category_id)
+
+
+class ProductApi(generics.ListAPIView):
+    serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        product_id = self.kwargs.get('product_id')
+        return Product.objects.filter(product_id=product_id)
 
 
 class ProductList(generics.ListAPIView):
@@ -91,3 +102,26 @@ class DeleteDayProduct(APIView):
 class LimitProduct(generics.ListAPIView):
     queryset = LimitTimeProduct.objects.select_related('product_id__subcategory__category').prefetch_related('product_id__photos')
     serializer_class=LimitTimeProductSerializer
+
+
+class Login(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        user = authenticate(request, email=email, password=password)
+
+        if user:
+            refresh = RefreshToken.for_user(user)
+            update_last_login(None, user)
+
+            return Response({
+                "message": "Успешный вход.",
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {"error": "Неверный логин или пароль."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
