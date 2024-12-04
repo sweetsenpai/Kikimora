@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import views_admin, views_api
 from django.contrib.auth.views import LoginView, LogoutView
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
 product_by_subcategory = views_api.ProductViewSet.as_view({'get': 'by_subcategory'})
 product_by_category = views_api.ProductViewSet.as_view({'get': 'by_category'})
@@ -10,8 +10,11 @@ urlpatterns = [
     # API
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('api/login/', views_api.Login.as_view(), name='api-login'),
     path('api/register/', views_api.RegisterUserView.as_view(), name='api-register'),
+    path('api/user/', views_api.UserDataView.as_view(), name='api-user-data'),
+    path('api/user/<int:user_id>', views_api.UserDataView.as_view(), name='api-admin-user-data'),
     path('api/categories/', views_api.CategoryList.as_view(), name='category-list'),
     path('api/subcategories/', views_api.SubcategoryList.as_view(), name='subcategory-list'),
     path('api/products/', views_api.ProductList.as_view(), name='product-list'),

@@ -48,7 +48,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     user_id = models.AutoField(primary_key=True)
     email = models.EmailField(help_text="Ваш email", unique=True, db_index=True)
     user_fio = models.CharField(max_length=200, help_text='Ф.И.О.', db_index=True)
-    phone = models.CharField(max_length=12, help_text='Номер телефона', db_index=True)
+    phone = models.CharField(max_length=12, help_text='Номер телефона', unique=True, db_index=True)
     bd = models.DateField(default=timezone.now, help_text='Дата рождения')
     is_staff = models.BooleanField(default=False, help_text='')
     is_active = models.BooleanField(default=True)
@@ -83,8 +83,8 @@ class UserAddress(models.Model):
     address_id = models.AutoField(primary_key=True)
     address_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     street = models.CharField(max_length=100, help_text='Улица', db_index=True)
-    building = models.CharField(max_length=100, help_text='Дом')
-    apartment = models.CharField(max_length=100, help_text='Квартира')
+    building = models.CharField(max_length=100, help_text='Дом', null=True, blank=True)
+    apartment = models.CharField(max_length=100, help_text='Квартира', null=True, blank=True)
 
     def __str__(self):
         return f"{self.address_id}, {self.address_user}, {self.street}, {self.building}, {self.apartment}"

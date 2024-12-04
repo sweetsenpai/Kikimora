@@ -3,9 +3,12 @@ from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 from celery.result import AsyncResult
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework import generics, status
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth import authenticate
@@ -139,7 +142,36 @@ class RegisterUserView(APIView):
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),
                 },
-                "user": UserSerializer(user).data
+                "user": UserDataSerializer(user).data
             }, status=status.HTTP_201_CREATED)
         else:
+            print(serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserDataView(APIView):
+    permission_classes = [IsAuthenticated]  # Требуется авторизация
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+
+        # Проверка, если пользователь или администратор
+        if not user.is_staff:
+            # Обычный пользователь может видеть только свои данные
+            user_id = user.user_id
+        else:
+            # Администратор может запросить данные других пользователей (если требуется)
+            user_id = kwargs.get('user_id', user.user_id)
+
+        try:
+            user_data = CustomUser.objects.get(user_id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "Пользователь не найден."}, status=404)
+        serializer = UserDataSerializer(user_data)
+        return Response(serializer.data)
+
+#
+# class CustomTokenRefreshView(TokenRefreshView):
+#     def post(self, request, *args, **kwargs):
+#         response = super().post(request, *args, **kwargs)
+#         return response
