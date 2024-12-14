@@ -114,7 +114,7 @@ class Subcategory(models.Model):
 class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200, help_text='Название товара', db_index=True)
-    description = models.CharField(max_length=400, default=None, null=True)
+    description = models.CharField(max_length=5000, default=None, null=True)
     price = models.FloatField(default=0.0, help_text='Цена товара')
     weight = models.FloatField(default=0.0, help_text='Вес товара в киллограммах')
     subcategory = models.ForeignKey(Subcategory, on_delete=models.CASCADE)

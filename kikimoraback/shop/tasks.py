@@ -66,3 +66,4 @@ def delete_limite_time_product(product_id):
 
     product.delete()
     return f'Товар дня id:{product_id} удалён.'
+
