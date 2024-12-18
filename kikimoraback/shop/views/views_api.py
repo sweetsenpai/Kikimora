@@ -28,29 +28,12 @@ class CategoryList(generics.ListAPIView):
     serializer_class = CategorySerializer
 
 
-# class SubcategoryList(generics.ListAPIView):
-#     serializer_class = SubcategorySerializer
-#
-#     def get_queryset(self):
-#         category_id = self.request.query_params.get('category')
-#         print(Subcategory.objects.all())
-#         return Subcategory.objects.filter(category=category_id)
-
-
 class ProductApi(generics.ListAPIView):
     serializer_class = ProductSerializer
 
     def get_queryset(self):
         product_id = self.kwargs.get('product_id')
         return Product.objects.filter(product_id=product_id)
-
-
-# class ProductList(generics.ListAPIView):
-#     serializer_class = ProductSerializer
-#
-#     def get_queryset(self):
-#         subcategory_id = self.request.query_params.get('subcategory')
-#         return Product.objects.filter(subcategory=subcategory_id)
 
 
 class ProductViewSet(viewsets.ViewSet):
@@ -173,71 +156,6 @@ class UserDataView(APIView):
             return Response({"error": "Пользователь не найден."}, status=404)
         serializer = UserDataSerializer(user_data)
         return Response(serializer.data)
-
-
-class DB_dump(APIView):
-    def get(self, request):
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-
-        # Построение пути к JSON-файлам
-        products_path = os.path.join(current_dir, 'example.json')
-        categories_path = os.path.join(current_dir, 'output.json')
-
-        # Загрузка файлов
-        with open(products_path, 'r', encoding='utf-8') as file:
-            products = json.load(file)
-        with open(categories_path, 'r', encoding='utf-8') as file:
-            categories = json.load(file)
-        for cat in categories.keys():
-            categories[cat] = [prod.lower() for prod in categories[cat]]
-        product_lookup = {product['title']: product for product in products}
-        clean_products = {re.sub(r'\s*\(.*?\)\s*', '', key): value for key, value in product_lookup.items()}
-        # for cat in categories:
-        #     print(cat, " : ", categories[cat][0])
-        #     new_cat = Subcategory(name=cat, category=Category.objects.get(category_id=1), subcategory_id=categories[cat][0])
-        #     new_cat.save()
-        # return Response(status=status.HTTP_200_OK)
-        for product in clean_products.keys():
-            for key in categories.keys():
-                if product.lower() in categories[key]:
-                    new_prod = Product(product_id=clean_products[product]['id'], name=product,
-                                       description=clean_products[product]['description'],
-                                       price=float(clean_products[product]['variants'][0]['price_in_site_currency']),
-                                       weight=clean_products[product]['variants'][0]['weight'],
-                                       subcategory=Subcategory.objects.get(name=key),
-                                       bonus=round(float(clean_products[product]['variants'][0]['price_in_site_currency']) * 0.01))
-                    new_prod.save()
-                    for image in clean_products[product]['images']:
-                        new_image=ProductPhoto(product=Product.objects.get(product_id=clean_products[product]['id']), photo_url=image['external_id'],
-                                               is_main=(image['position'] == 1))
-                        new_image.save()
-                    print(key, ':', product, ' - удачно загружено в БД.')
-        return Response({'status': 'success'}, status=status.HTTP_200_OK)
-
-
-class FindNewProducts(APIView):
-
-    def get(self, request):
-        all_products_json = []
-        insales_url = os.getenv("INSALES_URL")
-        # for cat in Subcategory.objects.all():
-        #     requests.post(url=insales_url+'collections.json', json={"collection": {"title": cat.name + ' сайт', "parent_id": 29569288}})
-        # return Response(status=status.HTTP_201_CREATED)
-        for i in range(5):
-            response = requests.get(insales_url+'products.json', params={'page': i+1, 'per_page': 100,
-                                                                         'variant_fields': 'id, title'})
-            if response.status_code == 200:
-                if not response:
-                    break
-                products = response.json()
-                all_products_json.extend(products)
-        for product_json in all_products_json:
-            if not Product.objects.filter(product_id=product_json['id']):
-                with open("new_prod.json", "w", encoding="utf-8") as file:
-                    json.dump(product_json, file, ensure_ascii=False, indent=2)
-                break
-
-        return Response(status=status.HTTP_201_CREATED)
 
 
 class UpdateCRM(APIView):

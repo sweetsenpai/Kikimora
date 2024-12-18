@@ -16,8 +16,8 @@ app.autodiscover_tasks()
 
 # Добавьте расписание для задачи
 app.conf.beat_schedule = {
-    'check-crm-changes-every-hour': {
-        'task': 'myapp.tasks.check_crm_changes',  # Полное имя вашей задачи
-        'schedule': crontab(minute='5'),
+    'check-crm-changes-every-5-minutes': {
+        'task': 'shop.tasks.check_crm_changes',  # Полное имя вашей задачи
+        'schedule': crontab(minute='0'),  # Каждые 5 минут
     },
 }
