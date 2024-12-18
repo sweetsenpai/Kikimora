@@ -295,4 +295,4 @@ class ChekCRMChanges(APIView):
                                     new_image.save()
                                 print('Успешно добавлено в БД:', new_prod.name)
             sub_page += 1
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_201_CREATED)
