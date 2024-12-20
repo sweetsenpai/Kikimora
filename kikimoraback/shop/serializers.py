@@ -57,18 +57,38 @@ class ProductPhotoSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     photos = ProductPhotoSerializer(many=True, read_only=True)
+    subcategory = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Subcategory.objects.all()
+    )
 
     class Meta:
         model = Product
-        fields = ['product_id', 'name', 'description', 'price', 'photos', 'bonus', 'weight', 'subcategory', 'visibility']
+        fields = [
+            'product_id',
+            'name',
+            'description',
+            'price',
+            'photos',
+            'bonus',
+            'weight',
+            'subcategory',  # Обновлено для Many-to-Many
+            'visibility'
+        ]
 
 
 class SubcategorySerializer(serializers.ModelSerializer):
-    products = ProductSerializer(many=True, read_only=True)
+    products = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Product.objects.all()
+    )
 
     class Meta:
         model = Subcategory
-        fields = ['subcategory_id', 'name', 'category', 'products']
+        fields = [
+            'subcategory_id',
+            'name',
+            'category',
+            'products'  # Обновлено для Many-to-Many
+        ]
 
 
 class CategorySerializer(serializers.ModelSerializer):

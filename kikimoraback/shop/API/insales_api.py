@@ -23,8 +23,10 @@ insales_url = os.getenv('INSALES_URL')
 while True:
     response = requests.get('https://a85042b0d12227111cfd9073cf39320d:'
                             f'4a7ec2e9ecb6748c41fe00dbd6f2c79d'
-                            f'@myshop-ciz622.myinsales.ru/admin/products.json')
-    print(response.status_code)
+                            f'@myshop-ciz622.myinsales.ru/admin/collections.json')
+    for i in response.json():
+        print(i['id'], ' ', i['title'])
+    break
 # all_products = []
 #
 # for i in range(3):

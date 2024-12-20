@@ -24,7 +24,7 @@ urlpatterns = [
     path('api/discounts/stop/<int:discount_id>/', views_api.StopDiscountView.as_view(), name='stop_discount_api'),
     path('api/limitproduct', views_api.LimitProduct.as_view(), name='api-limitproduct'),
     path('api/delete_day_product/<int:limittimeproduct_id>/', views_api.DeleteDayProduct.as_view(), name='delete_day_product'),
-    path('api/crm2', views_api.ChekCRMChanges.as_view()),
+    path('api/crm2', views_api.CheckCRMChanges.as_view()),
     # HOME
     path('apanel', views_admin.AdminHomePageView.as_view(), name='admin_home'),
     path('apanel/login', views_admin.AdminLogin.as_view(), name='admin_login'),

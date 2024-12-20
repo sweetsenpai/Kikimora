@@ -12,6 +12,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework import generics, status
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth import authenticate
+from django.db import transaction
 from ..models import *
 from ..serializers import *
 from ..caches import *
@@ -94,7 +95,7 @@ class DeleteDayProduct(APIView):
 
 
 class LimitProduct(generics.ListAPIView):
-    queryset = get_promo_cash()
+#    queryset = get_promo_cash()
     serializer_class=LimitTimeProductSerializer
 
 
@@ -176,41 +177,92 @@ class UpdateCRM(APIView):
         return Response(status=status.HTTP_201_CREATED)
 
 
-class ChekCRMChanges(APIView):
+class CheckCRMChanges(APIView):
     def get(self, request):
         insales_url = os.getenv("INSALES_URL")
-        sub_page=1
+        sub_page = 1
+
         while True:
-            sub_response = requests.get(insales_url+'collections.json', params={'page': sub_page}).json()
+            # Получение данных о подкатегориях (коллекциях)
+            sub_response = requests.get(f"{insales_url}collections.json", params={"page": sub_page}).json()
             if not sub_response:
                 break
-            for subcat in sub_response:
-                if "сайт" in subcat['title']:
-                    if not Subcategory.objects.filter(subcategory_id=subcat['id']):
-                        new_sub = Subcategory(subcategory_id=subcat['id'], name=subcat['title'].replace('сайт', ''),
-                                              category=Category.objects.get(category_id=1))
-                        new_sub.save()
 
-                    prod_responce = requests.get(insales_url+f"collects.json?collection_id={subcat['id']}").json()
-                    if prod_responce:
-                        for product in prod_responce:
-                            prod_data = requests.get(insales_url+f"products/{product['product_id']}.json").json()
-                            if not Product.objects.filter(product_id=prod_data['id']):
-                                new_prod = Product(product_id=prod_data['id'], name=re.sub(r'\s*\(.*?\)\s*', '',prod_data['title']),
-                                                   description=prod_data['description'],
-                                                   price=float(prod_data['variants'][0][
-                                                                   'price_in_site_currency']),
-                                                   weight=prod_data['variants'][0]['weight'],
-                                                   subcategory=Subcategory.objects.get(subcategory_id=subcat['id']),
-                                                   bonus=round(float(prod_data['variants'][0][
-                                                                         'price_in_site_currency']) * 0.01))
-                                new_prod.save()
-                                for image in prod_data['images']:
-                                    new_image = ProductPhoto(
-                                        product=Product.objects.get(product_id=new_prod.product_id),
-                                        photo_url=image['external_id'],
-                                        is_main=(image['position'] == 1))
-                                    new_image.save()
-                                print('Успешно добавлено в БД:', new_prod.name)
+            for subcat in sub_response:
+                if "сайт" in subcat["title"]:
+                    # Проверяем, существует ли подкатегория в базе
+                    subcategory, created = Subcategory.objects.get_or_create(
+                        subcategory_id=subcat["id"],
+                        defaults={
+                            "name": subcat["title"].replace("сайт", "").strip(),
+                            "category": Category.objects.get(category_id=1),
+                        },
+                    )
+                    if created:
+                        print(f"Добавлена новая подкатегория: {subcategory.name}")
+
+                    # Получение товаров из коллекции
+                    prod_response = requests.get(
+                        f"{insales_url}collects.json", params={"collection_id": subcat["id"]}
+                    ).json()
+
+                    if prod_response:
+                        product_list = []  # Список для массовой вставки товаров
+                        product_photos = []  # Список для массовой вставки фотографий товаров
+                        subcategories_for_products = {}  # Словарь для подкатегорий товаров
+
+                        for product in prod_response:
+                            # Получение данных о товаре
+                            prod_data = requests.get(f"{insales_url}products/{product['product_id']}.json").json()
+
+                            # Проверяем, существует ли товар в базе
+                            if not Product.objects.filter(product_id=prod_data["id"]).exists():
+                                # Создаем новый товар
+                                new_prod = Product(
+                                    product_id=prod_data["id"],
+                                    name=re.sub(r"\s*\(.*?\)\s*", "", prod_data["title"]),
+                                    description=prod_data["description"],
+                                    price=float(prod_data["variants"][0]["price_in_site_currency"]),
+                                    weight=prod_data["variants"][0]["weight"],
+                                    bonus=round(float(prod_data["variants"][0]["price_in_site_currency"]) * 0.01),
+                                )
+                                product_list.append(new_prod)
+
+                                # Добавляем подкатегории для товара
+                                linked_subcategories = Subcategory.objects.filter(
+                                    subcategory_id__in=prod_data.get("collections_ids", [])
+                                )
+                                if linked_subcategories.exists():
+                                    subcategories_for_products[new_prod] = linked_subcategories
+
+                        # Используем транзакцию и bulk_create для массовой вставки товаров и фотографий
+                        with transaction.atomic():
+                            # Массовая вставка товаров
+                            if product_list:
+                                Product.objects.bulk_create(product_list)
+
+                            # Привязываем подкатегории ко всем товарам
+                            for product, subcategories in subcategories_for_products.items():
+                                product.subcategory.add(*subcategories)
+
+                            # Сохраняем фотографии товара
+                            for product in product_list:
+                                # Теперь, когда товар сохранен и у него есть product_id, добавляем фотографии
+                                for image in prod_data["images"]:
+                                    photo = ProductPhoto(
+                                        product=product,  # Привязываем фотографию к товару
+                                        photo_url=image["external_id"],
+                                        is_main=(image["position"] == 1),
+                                    )
+                                    product_photos.append(photo)
+
+                            # Массовая вставка фотографий товаров
+                            if product_photos:
+                                ProductPhoto.objects.bulk_create(product_photos)
+
+                            print(f"{len(product_list)} товаров и {len(product_photos)} фотографий добавлено в базу данных.")
+
             sub_page += 1
+
         return Response(status=status.HTTP_201_CREATED)
+

@@ -117,7 +117,7 @@ class Product(models.Model):
     description = models.CharField(max_length=5000, default=None, null=True)
     price = models.FloatField(default=0.0, help_text='Цена товара')
     weight = models.FloatField(default=0.0, help_text='Вес товара в киллограммах')
-    subcategory = models.ForeignKey(Subcategory, on_delete=models.CASCADE)
+    subcategory = models.ManyToManyField(Subcategory, related_name='products')
     bonus = models.IntegerField(default=0)
     visibility = models.BooleanField(default=True, help_text='Указывает видимость в выдаче')
 
