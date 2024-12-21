@@ -85,55 +85,73 @@ def check_crm_changes():
     new_subcategories = []
     new_products = []
     new_photos = []
+
     try:
         with httpx.Client() as client:
             while True:
+                # Получаем данные о подкатегориях (коллекциях)
                 sub_response = client.get(f"{insales_url}collections.json", params={'page': sub_page}).json()
                 if not sub_response:
                     break
 
                 for subcat in sub_response:
                     if "сайт" in subcat['title']:
-                        if not Subcategory.objects.filter(subcategory_id=subcat['id']).exists():
-                            new_subcategories.append(
-                                Subcategory(
-                                    subcategory_id=subcat['id'],
-                                    name=subcat['title'].replace('сайт', ''),
-                                    category=Category.objects.get(category_id=1)
-                                )
-                            )
+                        # Проверяем, существует ли подкатегория в базе данных
+                        subcategory, created = Subcategory.objects.get_or_create(
+                            subcategory_id=subcat['id'],
+                            defaults={
+                                'name': subcat['title'].replace('сайт', '').strip(),
+                                'category': Category.objects.get(category_id=1)
+                            }
+                        )
+                        if created:
+                            new_subcategories.append(subcategory)
 
+                        # Получаем товары из коллекции
                         prod_response = client.get(f"{insales_url}collects.json", params={'collection_id': subcat['id']}).json()
                         if prod_response:
                             for product in prod_response:
+                                # Получаем данные о товаре
                                 prod_data = client.get(f"{insales_url}products/{product['product_id']}.json").json()
-                                if not Product.objects.filter(product_id=prod_data['id']).exists():
-                                    new_product = Product(
-                                        product_id=prod_data['id'],
-                                        name=re.sub(r'\s*\(.*?\)\s*', '', prod_data['title']),
-                                        description=prod_data['description'],
-                                        price=float(prod_data['variants'][0]['price_in_site_currency']),
-                                        weight=prod_data['variants'][0]['weight'],
-                                        subcategory=Subcategory.objects.get(subcategory_id=subcat['id']),
-                                        bonus=round(float(prod_data['variants'][0]['price_in_site_currency']) * 0.01)
-                                    )
-                                    new_products.append(new_product)
 
-                                    for image in prod_data['images']:
-                                        new_photos.append(
-                                            ProductPhoto(
-                                                product=new_product,
-                                                photo_url=image['external_id'],
-                                                is_main=(image['position'] == 1)
-                                            )
+                                # Проверяем, существует ли товар в базе
+                                product_obj, created = Product.objects.get_or_create(
+                                    product_id=prod_data['id'],
+                                    defaults={
+                                        'name': re.sub(r'\s*\(.*?\)\s*', '', prod_data['title']),
+                                        'description': prod_data['description'],
+                                        'price': float(prod_data['variants'][0]['price_in_site_currency']),
+                                        'weight': prod_data['variants'][0]['weight'],
+                                        'bonus': round(float(prod_data['variants'][0]['price_in_site_currency']) * 0.01),
+                                    }
+                                )
+
+                                if created:
+                                    # Привязываем подкатегорию к товару
+                                    product_obj.subcategory.add(subcategory)
+                                    new_products.append(product_obj)
+
+                                # Добавляем фотографии товара
+                                for image in prod_data['images']:
+                                    new_photos.append(
+                                        ProductPhoto(
+                                            product=product_obj,
+                                            photo_url=image['external_id'],
+                                            is_main=(image['position'] == 1)
                                         )
+                                    )
+
                 sub_page += 1
 
+        # Используем транзакцию и bulk_create для массовой вставки товаров, подкатегорий и фотографий
         with transaction.atomic():
             Subcategory.objects.bulk_create(new_subcategories, ignore_conflicts=True)
             Product.objects.bulk_create(new_products, ignore_conflicts=True)
             ProductPhoto.objects.bulk_create(new_photos, ignore_conflicts=True)
-        logger.info("Successfully completed `check_crm_changes`.")
+
+        logger.info(
+            f"Successfully added {len(new_subcategories)} subcategories, {len(new_products)} products, and {len(new_photos)} photos.")
+
     except Exception as e:
         logger.error(f"Error in `check_crm_changes`: {e}")
         raise

@@ -18,7 +18,7 @@ from django.template import loader
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
 
 from django.urls import reverse, reverse_lazy
-from django.db.models import Q
+from django.db.models import Q, OuterRef, Subquery, Prefetch
 
 from django.core.cache import cache
 
@@ -186,7 +186,14 @@ class AdminProdactListView(StaffCheckRequiredMixin, ListView):
 
     def get_queryset(self):
         self.subcategory = get_object_or_404(Subcategory, pk=self.kwargs['subcategory_id'])
-        return Product.objects.filter(subcategory=self.subcategory).order_by('product_id')
+        photos_prefetch = Prefetch(
+            'photos',
+            queryset=ProductPhoto.objects.order_by('-is_main', 'photo_id'),
+            to_attr='prefetched_photos'
+        )
+        queryset = Product.objects.filter(subcategory=self.subcategory).prefetch_related(photos_prefetch).order_by(
+            'product_id')
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

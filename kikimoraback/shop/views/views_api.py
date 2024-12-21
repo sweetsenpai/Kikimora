@@ -235,7 +235,16 @@ class CheckCRMChanges(APIView):
                                 if linked_subcategories.exists():
                                     subcategories_for_products[new_prod] = linked_subcategories
 
-                        # Используем транзакцию и bulk_create для массовой вставки товаров и фотографий
+                                # Сохраняем фотографии товара
+                                for image in prod_data["images"]:
+                                    photo = ProductPhoto(
+                                        product=new_prod,  # Привязываем фотографию к текущему товару
+                                        photo_url=image["external_id"],
+                                        is_main=(image["position"] == 1),
+                                    )
+                                    product_photos.append(photo)
+
+                        # После цикла сохраняем товары и фотографии в транзакции
                         with transaction.atomic():
                             # Массовая вставка товаров
                             if product_list:
@@ -245,22 +254,11 @@ class CheckCRMChanges(APIView):
                             for product, subcategories in subcategories_for_products.items():
                                 product.subcategory.add(*subcategories)
 
-                            # Сохраняем фотографии товара
-                            for product in product_list:
-                                # Теперь, когда товар сохранен и у него есть product_id, добавляем фотографии
-                                for image in prod_data["images"]:
-                                    photo = ProductPhoto(
-                                        product=product,  # Привязываем фотографию к товару
-                                        photo_url=image["external_id"],
-                                        is_main=(image["position"] == 1),
-                                    )
-                                    product_photos.append(photo)
-
                             # Массовая вставка фотографий товаров
                             if product_photos:
                                 ProductPhoto.objects.bulk_create(product_photos)
 
-                            print(f"{len(product_list)} товаров и {len(product_photos)} фотографий добавлено в базу данных.")
+                        print(f"{len(product_list)} товаров и {len(product_photos)} фотографий добавлено в базу данных.")
 
             sub_page += 1
 
