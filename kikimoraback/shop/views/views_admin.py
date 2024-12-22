@@ -21,6 +21,7 @@ from django.urls import reverse, reverse_lazy
 from django.db.models import Q, OuterRef, Subquery, Prefetch
 
 from django.core.cache import cache
+from django.core.paginator import Paginator
 
 from ..models import *
 from ..forms import *
@@ -240,9 +241,6 @@ class ProductUpdateView(UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         product = self.get_object()
-        context['category_id'] = product.subcategory.category.category_id
-        context['subcategory_id'] = product.subcategory.subcategory_id
-        # Get the first photo of the product
         context['first_photo'] = product.photos.first()
         return context
 
