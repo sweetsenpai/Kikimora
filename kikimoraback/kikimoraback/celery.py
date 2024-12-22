@@ -18,6 +18,6 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'check-crm-changes-every-hour': {
         'task': 'shop.tasks.check_crm_changes',  # Полное имя вашей задачи
-        'schedule': crontab(minute='0', hour='*'),  # Каждый час в начале часа
+        'schedule': crontab(minute='*/2'),  # Каждый час в начале часа
     },
 }

@@ -110,36 +110,51 @@ def check_crm_changes():
                         # Получаем товары из коллекции
                         prod_response = client.get(f"{insales_url}collects.json", params={'collection_id': subcat['id']}).json()
                         if prod_response:
+                            if not created:
+                                product_in_db = set(subcategory.products.values_list('product_id', flat=True))
+                                product_in_crm = {item['product_id'] for item in prod_response}
+                                prod_for_delete = product_in_db - product_in_crm
+                                product_for_create = product_in_crm - prod_for_delete
+                                if prod_for_delete:
+                                    logger.info(f"Список ID для удаления связей:{prod_for_delete}")
+                                    for prod_id in prod_for_delete:
+                                        Product.objects.get(product_id=prod_id).subcategory.remove(subcategory)
+                                    logger.info(f"Связи успешно удаленны из БД")
+
                             for product in prod_response:
-                                # Получаем данные о товаре
-                                prod_data = client.get(f"{insales_url}products/{product['product_id']}.json").json()
+                                if product in product_for_create:
+                                    # Получаем данные о товаре
+                                    prod_data = client.get(f"{insales_url}products/{product['product_id']}.json").json()
 
-                                # Проверяем, существует ли товар в базе
-                                product_obj, created = Product.objects.get_or_create(
-                                    product_id=prod_data['id'],
-                                    defaults={
-                                        'name': re.sub(r'\s*\(.*?\)\s*', '', prod_data['title']),
-                                        'description': prod_data['description'],
-                                        'price': float(prod_data['variants'][0]['price_in_site_currency']),
-                                        'weight': prod_data['variants'][0]['weight'],
-                                        'bonus': round(float(prod_data['variants'][0]['price_in_site_currency']) * 0.01),
-                                    }
-                                )
-
-                                if created:
-                                    # Привязываем подкатегорию к товару
-                                    product_obj.subcategory.add(subcategory)
-                                    new_products.append(product_obj)
-
-                                # Добавляем фотографии товара
-                                for image in prod_data['images']:
-                                    new_photos.append(
-                                        ProductPhoto(
-                                            product=product_obj,
-                                            photo_url=image['external_id'],
-                                            is_main=(image['position'] == 1)
-                                        )
+                                    # Проверяем, существует ли товар в базе
+                                    product_obj, created = Product.objects.get_or_create(
+                                        product_id=prod_data['id'],
+                                        defaults={
+                                            'name': re.sub(r'\s*\(.*?\)\s*', '', prod_data['title']),
+                                            'description': prod_data['description'],
+                                            'price': float(prod_data['variants'][0]['price_in_site_currency']),
+                                            'weight': prod_data['variants'][0]['weight'],
+                                            'bonus': round(float(prod_data['variants'][0]['price_in_site_currency']) * 0.01),
+                                        }
                                     )
+
+                                    if created:
+                                        # Привязываем подкатегорию к товару
+                                        product_obj.subcategory.add(subcategory)
+                                        new_products.append(product_obj)
+
+                                        # Добавляем фотографии товара
+                                        for image in prod_data['images']:
+                                            new_photos.append(
+                                                ProductPhoto(
+                                                    product=product_obj,
+                                                    photo_url=image['external_id'],
+                                                    is_main=(image['position'] == 1)
+                                                )
+                                            )
+                                    else:
+                                        product_obj.subcategory.add(subcategory)
+                                        logger.info(f"Связи товара успешно добавлена в БД")
 
                 sub_page += 1
 
