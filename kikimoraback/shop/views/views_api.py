@@ -264,3 +264,29 @@ class CheckCRMChanges(APIView):
 
         return Response(status=status.HTTP_201_CREATED)
 
+
+class YandexCalculation(APIView):
+    def post(self, request):
+        token = 'y0_AgAAAAB0pmmmAAc6MQAAAAEc8ck3AADg-AyiA9xP04telxx52nlOzywUOQ'
+        headers = {"Authorization": f"Bearer {token}",
+                   'Accept-Language': 'ru/ru'}
+        data = {
+            "route_points": [
+                {"fullname": "Санкт-Петербург, 11-я Красноармейская улица, 11"},
+                {"fullname": f"Санкт-Петербург, {request}"}],
+        }
+        print(request)
+        yandex_response = requests.post('https://b2b.taxi.yandex.net/b2b/cargo/integration/v2/check-price',
+                                        headers=headers, json=data)
+
+        if yandex_response.status_code == 200:
+            print('Стоимость доставки: ', yandex_response.json()['price'])
+            print('Расстояние доставки: ', yandex_response.json()['distance_meters'])
+            return Response(status=status.HTTP_200_OK)
+        elif yandex_response.status_code == 400:
+            print('Неудается найти указанный адрес, проверьте правильность введенного адреса.')
+            return Response(status=status.HTTP_200_OK)
+        else:
+            print(yandex_response.json())
+            print('В данный момент не возможно осуществить доставку.')
+
