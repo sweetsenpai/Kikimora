@@ -122,7 +122,7 @@ def check_crm_changes():
                                     logger.info(f"Связи успешно удаленны из БД")
 
                             for product in prod_response:
-                                if product in product_for_create:
+                                if product['product_id'] in product_for_create:
                                     # Получаем данные о товаре
                                     prod_data = client.get(f"{insales_url}products/{product['product_id']}.json").json()
 

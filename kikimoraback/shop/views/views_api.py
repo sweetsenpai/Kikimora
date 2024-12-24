@@ -21,7 +21,9 @@ import requests
 import re
 import os
 from dotenv import load_dotenv
+import logging
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 
 class CategoryList(generics.ListAPIView):
@@ -170,7 +172,7 @@ class UpdateCRM(APIView):
                     "product_id": product.product_id}
             })
             if response.status_code == 201:
-                print(f'{product.name} успешно добавлен в {product.subcategory.name}!')
+                logger.info(f'{product.name} успешно добавлен в {product.subcategory.name}!')
             else:
                 print(response.status_code)
                 print(response.text)
@@ -199,7 +201,7 @@ class CheckCRMChanges(APIView):
                         },
                     )
                     if created:
-                        print(f"Добавлена новая подкатегория: {subcategory.name}")
+                        logger.info(f"Добавлена новая подкатегория: {subcategory.name}")
 
                     # Получение товаров из коллекции
                     prod_response = requests.get(
@@ -258,7 +260,7 @@ class CheckCRMChanges(APIView):
                             if product_photos:
                                 ProductPhoto.objects.bulk_create(product_photos)
 
-                        print(f"{len(product_list)} товаров и {len(product_photos)} фотографий добавлено в базу данных.")
+                        logger.info(f"{len(product_list)} товаров и {len(product_photos)} фотографий добавлено в базу данных.")
 
             sub_page += 1
 
@@ -266,27 +268,52 @@ class CheckCRMChanges(APIView):
 
 
 class YandexCalculation(APIView):
-    def post(self, request):
-        token = 'y0_AgAAAAB0pmmmAAc6MQAAAAEc8ck3AADg-AyiA9xP04telxx52nlOzywUOQ'
+    def post(self, request, *args, **kwargs):
+        token = os.getenv('YANDEX_TOKEN')
         headers = {"Authorization": f"Bearer {token}",
                    'Accept-Language': 'ru/ru'}
+        address = request.data.get('address')
+        if not address:
+            logger.error('Не передан адрес доставки.')
+            return Response({"error": "Не передан адрес доставки."},
+                            status=status.HTTP_400_BAD_REQUEST)
         data = {
             "route_points": [
                 {"fullname": "Санкт-Петербург, 11-я Красноармейская улица, 11"},
-                {"fullname": f"Санкт-Петербург, {request}"}],
+                {"fullname": f"Санкт-Петербург, {address}"}],
         }
-        print(request)
-        yandex_response = requests.post('https://b2b.taxi.yandex.net/b2b/cargo/integration/v2/check-price',
-                                        headers=headers, json=data)
+        try:
+            yandex_response = requests.post('https://b2b.taxi.yandex.net/b2b/cargo/integration/v2/check-price',
+                                            headers=headers, json=data)
+        except requests.RequestException as e:
+            logger.error(f'Ошибка при попытке отправить запрос к API Яндекс:{e}')
+            return Response({"error": "Ошибка при попытке расчета стоимости.\n"
+                                      "Попробуйте оформить заказ позже или обратитесь в магазин."},
+                            status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-        if yandex_response.status_code == 200:
-            print('Стоимость доставки: ', yandex_response.json()['price'])
-            print('Расстояние доставки: ', yandex_response.json()['distance_meters'])
-            return Response(status=status.HTTP_200_OK)
+        try:
+            yandex_data = yandex_response.json()
+        except ValueError:
+            logger.error(f"Некорректный JSON в ответе от API Яндекс. Статус: {yandex_response.status_code}")
+            return Response({"error": "Сервис доставки временно недоступен."},
+                            status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        default_error_msg = "Сейчас серфис доставки не доступен.\nВы можете оформить доставку самостоятельно или обратиться в магазин."
+
+        if yandex_response.ok:
+            return Response(status=status.HTTP_200_OK, data={'price': round(float(yandex_data['price'])),
+                                                             'distance_meters': yandex_data['distance_meters']})
         elif yandex_response.status_code == 400:
-            print('Неудается найти указанный адрес, проверьте правильность введенного адреса.')
-            return Response(status=status.HTTP_200_OK)
+            logger.error(f'Ошибка во время расчета стоимости заказ.\nAddres:{address}\n ERROR:{yandex_data}')
+            return Response({"error": "Не удалось расчитать стоимость доставки.\n"
+                                      "Проверьте правильность введенного адреса или повторите попытку позже."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        elif yandex_response.status_code == 401:
+            logger.error('Передан не верный токен yandex-delivery.')
+            return Response({"error": default_error_msg},
+                            status=status.HTTP_401_UNAUTHORIZED)
         else:
-            print(yandex_response.json())
-            print('В данный момент не возможно осуществить доставку.')
+            logger.error(f'Непредвиденная ошибка во время расчета стоимости заказ.\nAddres:{request}\n ERROR:{yandex_data}')
+            return Response({"error": default_error_msg},
+                            status=yandex_response.status_code)
 
