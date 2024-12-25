@@ -121,7 +121,7 @@ class DiscountForm(forms.ModelForm):
     class Meta:
         model = Discount
         fields = ('discount_type', 'value', 'description',
-                  'min_sum', 'start', 'end',
+                  'start', 'end',
                   'category', 'subcategory', 'product')
 
     def clean(self):

@@ -194,32 +194,68 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} {levelname} {name} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'info_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/info.log'),
+            'level': 'INFO',
+            'formatter': 'verbose',
+            'maxBytes': 1024*1024*5,
+            'backupCount': 3,
+        },
+        'error_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/error.log'),
+            'level': 'ERROR',
+            'formatter': 'verbose',
+            'maxBytes': 1024*1024*5,
+            'backupCount': 3,
+        },
+        'critical_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/critical.log'),
+            'level': 'CRITICAL',
+            'formatter': 'verbose',
+            'maxBytes': 1024*1024*5,
+            'backupCount': 3,
         },
     },
     'root': {
-        'handlers': ['console'],
+        'handlers': ['console', 'info_file', 'error_file'],
         'level': 'INFO',
     },
     'loggers': {
         'django': {
-            'handlers': ['console'],
+            'handlers': ['console', 'info_file', 'error_file'],
             'level': 'INFO',
             'propagate': False,
         },
         'celery': {
-            'handlers': ['console'],
+            'handlers': ['console', 'info_file', 'error_file'],
             'level': 'INFO',
             'propagate': True,
         },
         'shop': {
-            'handlers': ['console'],
+            'handlers': ['console', 'info_file', 'error_file'],
             'level': 'DEBUG',
             'propagate': True,
         },
     },
 }
+
 
 

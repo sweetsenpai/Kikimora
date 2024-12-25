@@ -151,7 +151,6 @@ class Discount(models.Model):
     discount_id = models.AutoField(primary_key=True)
     discount_type = models.CharField(max_length=15, choices=DISCOUNT_TYPE_CHOICES, default='percentage')
     value = models.FloatField(help_text='Процент скидки или сумма скидки', default=0)
-    min_sum = models.FloatField(blank=True, null=True)
     description = models.CharField(max_length=400, blank=True)
     start = models.DateTimeField(default=django.utils.timezone.now())
     end = models.DateTimeField(default=django.utils.timezone.now())

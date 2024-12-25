@@ -2,6 +2,17 @@ from django.core.cache import cache
 from .models import *
 
 
+def active_products_cash():
+    cash_key = 'products'
+    product_cash = cache.get(cash_key)
+    if not product_cash:
+        # Используем prefetch_related для загрузки Subcategory
+        product_cash = Product.objects.filter(visibility=True)
+        product_cash = list(product_cash)
+        cache.set(cash_key, product_cash, timeout=60*15)
+    return product_cash
+
+
 def get_products_sub_cash(cash_key, subcategory_id=None):
     product_sub_cash = cache.get(cash_key)
     if not product_sub_cash:
@@ -23,6 +34,15 @@ def get_discount_cash():
         disc_cash = Discount.objects.filter(active=True)
         cache.set(cash_key, disc_cash, timeout=60*15)
     return disc_cash
+
+
+def get_limit_product_cash():
+    cash_key = "limit"
+    limit_cash = cache.get(cash_key)
+    if not limit_cash:
+        limit_cash = LimitTimeProduct.objects.filter(active=True)
+        cache.set(cash_key, limit_cash, timeout=60 * 15)
+    return limit_cash
 
 
 def get_promo_cash():
