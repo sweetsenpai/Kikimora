@@ -36,6 +36,9 @@ class Cart:
         else:
             logger.warning(f"Пользователь с id {user_id}, уже находится в mongodb['cart'].")
 
+    def add_unregistered_mark(self, user_id):
+        self.cart_collection.update_one({"customer": user_id}, {'$set': {'unregistered': True}})
+
     def sync_cart_data(self, user_id, front_cart_data):
         back_user_data = self.get_cart_data(user_id)
         if front_cart_data:

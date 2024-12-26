@@ -8,7 +8,10 @@ import httpx
 import re
 import os
 import logging
+import pymongo
+from .MongoIntegration.Cart import Cart
 from dotenv import load_dotenv
+import pymongo
 load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -170,3 +173,10 @@ def check_crm_changes():
     except Exception as e:
         logger.error(f"Error in `check_crm_changes`: {e}")
         raise
+
+
+@shared_task
+def clean_up_mongo():
+    collection = pymongo.MongoClient(os.getenv("MONGOCON"))['kikimora']['cart']
+    result = collection.delete_many({"unregistered": True})
+    logger.info(f"Удалено {result.deleted_count} корзин с меткой unregistered.")

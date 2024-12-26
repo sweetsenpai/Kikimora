@@ -20,4 +20,8 @@ app.conf.beat_schedule = {
         'task': 'shop.tasks.check_crm_changes',  # Полное имя вашей задачи
         'schedule': crontab(minute='0', hour='*/1'),  # Каждый час в начале часа
     },
+    'cleanup-mongo-four-hour': {
+        'task': 'shop.tasks.clean_up_mongo',
+        'schedule': crontab(minute='0', hour='4'),
+    }
 }

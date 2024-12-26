@@ -22,6 +22,7 @@ from ..serializers import *
 from ..caches import *
 import json
 import requests
+import uuid
 import re
 import os
 from ..MongoIntegration.Cart import Cart
@@ -327,13 +328,43 @@ class YandexCalculation(APIView):
 class CheckCart(APIView):
     def post(self, request):
         front_data = request.data.get('cart')
-        user_id = 2
+        user = request.user
+
+        # Пытаемся найти пользователя
+        try:
+            user_id = CustomUser.objects.get(user_id=user.user_id).user_id
+            new_user_card = False
+        except AttributeError:
+            user_id = request.COOKIES.get('user_id', None)
+            new_user_card = user_id is None  # Если куки нет, значит, это новый пользователь
+            if new_user_card:
+                user_id = str(uuid.uuid4())
+
+        # Подключаемся к базе данных
         user_cart = Cart(MongoClient(os.getenv("MONGOCON")))
         if not user_cart.ping():
             return Response({"error": "Ошибка подключения."}, status=status.HTTP_400_BAD_REQUEST)
-        card_updated = user_cart.check_cart_data(user_id=user_id, front_data=user_cart.get_cart_data(2))
+
+        # Обрабатываем данные корзины
+        card_updated = user_cart.check_cart_data(user_id=user_id, front_data=front_data)
         if card_updated is None:
-            return Response({"Корзина пустая"}, status=status.HTTP_204_NO_CONTENT)
+            # Если корзина пустая, возвращаем ответ с куки
+            response = Response({"Корзина пустая"}, status=status.HTTP_204_NO_CONTENT)
+            if new_user_card:
+                response.set_cookie('user_id', user_id, max_age=60*60*24*30, httponly=True)
+            return response
+
+        # Синхронизируем корзину
         user_cart.sync_cart_data(user_id=user_id, front_cart_data={'total': card_updated['total'],
                                                                    'products': card_updated['updated_cart']['products']})
-        return Response(status=status.HTTP_200_OK, data=card_updated)
+
+        response = Response(status=status.HTTP_200_OK, data=card_updated)
+        if new_user_card:
+            user_cart.add_unregistered_mark(user_id=user_id)
+            response.set_cookie('user_id', user_id, max_age=60*60*24*30, httponly=True)
+        return response
+
+
+class SyncCart(APIView):
+    def post(self, request):
+        return
