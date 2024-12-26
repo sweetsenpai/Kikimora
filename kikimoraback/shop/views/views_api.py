@@ -1,3 +1,7 @@
+from django.http import JsonResponse
+from django.views import View
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework import viewsets
@@ -20,6 +24,8 @@ import json
 import requests
 import re
 import os
+from ..MongoIntegration.Cart import Cart
+from pymongo import MongoClient
 from dotenv import load_dotenv
 import logging
 load_dotenv()
@@ -317,3 +323,13 @@ class YandexCalculation(APIView):
             return Response({"error": default_error_msg},
                             status=yandex_response.status_code)
 
+
+class CheckCart(APIView):
+    def post(self, request):
+        front_data = request.data.get('cart')
+        user_id = 1
+        x = Cart(MongoClient(os.getenv("MONGOCON")))
+        if not x.ping():
+            return Response({"error": "Ошибка подключения."}, status=status.HTTP_400_BAD_REQUEST)
+        print(x.check_cart_data(user_id=1, front_data=x.get_cart_data(1)))
+        return Response(status=status.HTTP_200_OK)

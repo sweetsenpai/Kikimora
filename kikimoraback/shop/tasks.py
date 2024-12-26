@@ -69,7 +69,7 @@ def activate_promo(promo_id):
 
 @shared_task
 def delete_limite_time_product(product_id):
-    product = LimitTimeProduct.objects.filter(id=product_id).first()
+    product = LimitTimeProduct.objects.filter(product_id=product_id).first()
     if not product:
         return f'Товар дня id:{product_id} не существует в БД.'
 
@@ -154,7 +154,7 @@ def check_crm_changes():
                                             )
                                     else:
                                         product_obj.subcategory.add(subcategory)
-                                        logger.info(f"Связи товара успешно добавлена в БД")
+                                        logger.info(f"Связи товара id{product_obj.product_id}  и подкатегории {subcategory.subcategory_id} успешно добавлена в БД")
 
                 sub_page += 1
 

@@ -171,8 +171,6 @@ class Discount(models.Model):
             return max(0, price - self.value)
         return price
 
-# TODO: решить проблему с процентами и фиксированой скидкой, не забыть  изменить форму
-
 
 class PromoSystem(models.Model):
     PROMO_TYPE_CHOICES = [
