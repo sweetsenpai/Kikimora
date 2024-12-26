@@ -101,9 +101,7 @@ class CategoryCreationForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ('name', 'photo_url', 'description',
-                  'price', 'weight', 'bonus',
-                  'visibility')
+        fields = ('name', 'description', 'price', 'weight', 'bonus', 'visibility')
         error_messages = {
             'weight': {
                 'required': "Поле вес не может быть пустым!",
@@ -123,5 +121,70 @@ class DiscountForm(forms.ModelForm):
     class Meta:
         model = Discount
         fields = ('discount_type', 'value', 'description',
-                  'min_sum', 'start', 'end',
+                  'start', 'end',
                   'category', 'subcategory', 'product')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        subcategory = cleaned_data.get('subcategory')
+        product = cleaned_data.get('product')
+        discount_type = cleaned_data.get('discount_type')
+        value = cleaned_data.get('value')
+        start = cleaned_data.get('start')
+        end = cleaned_data.get('end')
+        try:
+            if discount_type == 'percentage' and value > 100:
+                raise ValidationError({'value': 'Процент скидки не может быть больше 100!'})
+        except TypeError:
+                raise ValidationError({'value': 'Размер скидки не может быть равен 0!'})
+        if start >= end:
+            raise ValidationError({'start': 'Начало скидки не может быть равно или больше окончания, это просто не имеет смысла:/'})
+
+        if product is not None:
+            cleaned_data['category'] = None
+            cleaned_data['subcategory'] = None
+
+        if subcategory is not None and product is None:
+            cleaned_data['category'] = None
+
+        return cleaned_data
+
+
+class PromocodeForm(forms.ModelForm):
+    class Meta:
+        model = PromoSystem
+        fields = ('description', 'code', 'promo_product',
+                  'type', 'min_sum', 'amount', 'procentage',
+                  'one_time', 'start', 'end')
+
+
+class LimiteTimeProductForm(forms.ModelForm):
+    class Meta:
+        model = LimitTimeProduct
+        fields = ('ammount', 'price', 'due')
+        error_messages = {
+            'ammount': {
+                'required': "Поле количество не может быть пустым!",
+            },
+            'price': {
+                'required': "Поле цена не может быть пустым!",
+            },
+            'due': {
+                'required': "Поле окончания не может быть пустым!",
+            },
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        ammount = cleaned_data.get('ammount')
+        price = cleaned_data.get('price')
+        try:
+            if ammount <= 0:
+                raise ValidationError({'ammount': 'Поле количества не может быть меньше или равно нулю!'})
+        except TypeError:
+            raise ValidationError({'ammount': 'Поле количества не может быть пустым!'})
+        try:
+            if price <=0:
+                raise ValidationError({'price': 'Поле цены не может быть меньше или равно нулю!'})
+        except TypeError:
+            raise  ValidationError({'price': 'Поле цены не может быть пустым!'})

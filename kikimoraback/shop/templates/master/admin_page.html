@@ -12,41 +12,42 @@
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/checkout/">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
     <link href="{% static 'CSS/bootstrap.min.css' %}" rel="stylesheet">
-    <style>
-      /* Центрирование контейнера с формой */
-      .centered-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh; /* Занять всю высоту экрана */
-        padding: 20px; /* Отступы внутри контейнера */
-      }
+    <link href="{% static 'CSS/forms.css' %}" rel="stylesheet">
+<!--    <style>-->
+<!--      /* Центрирование контейнера с формой */-->
+<!--      .centered-container {-->
+<!--        display: flex;-->
+<!--        align-items: center;-->
+<!--        justify-content: center;-->
+<!--        min-height: 100vh; /* Занять всю высоту экрана */-->
+<!--        padding: 20px; /* Отступы внутри контейнера */-->
+<!--      }-->
 
-      .form-container {
-        width: 100%;
-        max-width: 900px; /* Увеличена максимальная ширина формы */
-        padding: 20px;
-        background-color: #f8f9fa;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      }
+<!--      .form-container {-->
+<!--        width: 100%;-->
+<!--        max-width: 900px; /* Увеличена максимальная ширина формы */-->
+<!--        padding: 20px;-->
+<!--        background-color: #f8f9fa;-->
+<!--        border-radius: 10px;-->
+<!--        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);-->
+<!--      }-->
 
-      .form-container .form-label {
-        margin-bottom: 8px; /* Уменьшен отступ под заголовками полей */
-      }
+<!--      .form-container .form-label {-->
+<!--        margin-bottom: 8px; /* Уменьшен отступ под заголовками полей */-->
+<!--      }-->
 
-      .form-container .input-group {
-        margin-bottom: 12px; /* Уменьшен отступ между секциями */
-      }
+<!--      .form-container .input-group {-->
+<!--        margin-bottom: 12px; /* Уменьшен отступ между секциями */-->
+<!--      }-->
 
-      .form-container hr {
-        margin: 20px 0; /* Уменьшен отступ для горизонтальной линии */
-      }
+<!--      .form-container hr {-->
+<!--        margin: 20px 0; /* Уменьшен отступ для горизонтальной линии */-->
+<!--      }-->
 
-      .form-container button {
-        margin-top: 15px;
-      }
-    </style>
+<!--      .form-container button {-->
+<!--        margin-top: 15px;-->
+<!--      }-->
+<!--    </style>-->
     <!-- Custom styles for this template -->
     <link href="{% static 'CSS/checkout.css' %}" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -75,7 +76,7 @@
     <div class="container">
       <main>
         <div class="py-5 text-center">
-          <img class="d-block mx-auto mb-4" src="{% static 'images/browse-svgrepo-com.svg' %}" alt="" width="72" height="57">
+          <img class="d-block mx-auto mb-4" src="{% static 'images/browse-svgrepo-com.svg' %}" alt="" width="80">
           <h2>Сотрудник {{admin.user_fio}}</h2>
         </div>
 

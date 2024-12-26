@@ -10,50 +10,15 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
     <link href="{% static 'CSS/bootstrap.min.css' %}" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="{% static 'images/browse-svgrepo-com.svg' %}">
-    <style>
-      /* Центрирование контейнера с формой */
-      .centered-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh; /* Занять всю высоту экрана */
-        padding: 20px; /* Отступы внутри контейнера */
-      }
-
-      .form-container {
-        width: 100%;
-        max-width: 900px; /* Увеличена максимальная ширина формы */
-        padding: 20px;
-        background-color: #f8f9fa;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      }
-
-      .form-container .form-label {
-        margin-bottom: 8px; /* Уменьшен отступ под заголовками полей */
-      }
-
-      .form-container .input-group {
-        margin-bottom: 12px; /* Уменьшен отступ между секциями */
-      }
-
-      .form-container hr {
-        margin: 20px 0; /* Уменьшен отступ для горизонтальной линии */
-      }
-
-      .form-container button {
-        margin-top: 15px;
-      }
-    </style>
-
     <!-- Custom styles for this template -->
     <link href="{% static 'CSS/checkout.css' %}" rel="stylesheet">
+    <link href="{% static 'CSS/forms.css' %}" rel="stylesheet">
   </head>
   <body class="bg-body-tertiary">
     <div class="container centered-container">
       <main class="form-container">
         <div class="py-3 text-center">
-          <img class="d-block mx-auto mb-3" src="{% static 'images/browse-svgrepo-com.svg' %}" alt="" width="100">
+          <img class="d-block mx-auto mb-3" src="{% static 'images/browse-svgrepo-com.svg' %}" alt="" width="80">
           <h2>{{ product.name }}</h2>
           <p class="lead">Ниже представлена информация по выбранной позиции.<br>
           Нажмите на соответствующую кнопку, чтобы перейти к редактированию.</p>
@@ -77,15 +42,6 @@
               <div class="input-group has-validation">
                 <span id="name-display">{{ product.name }}</span>
                 <input id="name-input" type="text" name="name" class="form-control d-none" placeholder="{{ product.name }}">
-              </div>
-            </div>
-            <hr>
-
-            <div class="col-12">
-              <label class="form-label"><b>Изображение</b></label>
-              <div class="input-group has-validation">
-                <img id="photo-display" src="{{ product.photo_url }}" class="rounded mx-auto d-block" width="72">
-                <input id="photo-input" type="text" name="photo_url" class="form-control d-none" placeholder="{{ product.photo_url }}">
               </div>
             </div>
             <hr>
@@ -151,7 +107,9 @@
             <button type="button" class="w-100 btn btn-success btn-lg" id="edit-button" onclick="toggleEditMode()">Изменить</button>
             <button type="submit" class="w-100 btn btn-success btn-lg d-none" id="save-button">Сохранить</button>
             <hr class="my-2">
-            <button type="button" class="w-100 btn btn-primary btn-lg" onclick="window.location='/category/{{product.subcategory.category.category_id}}/subcategories/{{product.subcategory.subcategory_id}}';">Назад</button>
+            <button type="button" class="w-100 btn btn-info btn-lg" style="color:white" onclick="window.location='/day_products/{{product.product_id}}';">Добавить в товар дня</button>
+            <hr class="my-2">
+            <button type="button" class="w-100 btn btn-primary btn-lg" onclick="window.history.back();">Назад</button>
 
           </form>
         </div>

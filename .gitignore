@@ -170,3 +170,4 @@ cython_debug/
 /kikimoraback/shop/migrations
 .idea/dbnavigator.xml
 kikimoraback/shop/migrations/0001_initial.py
+/kikimoraback/shop/static/images/test_img.webp

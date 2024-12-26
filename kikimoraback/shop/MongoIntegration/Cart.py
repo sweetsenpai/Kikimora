@@ -1,0 +1,143 @@
+from pymongo import MongoClient, ASCENDING
+from collections import defaultdict
+import logging
+from ..caches import active_products_cash, get_limit_product_cash, get_discount_cash
+from ..models import Product, Subcategory
+
+logger = logging.getLogger('shop')
+
+
+class Cart:
+    db_client = None
+
+    def __init__(self, db_client=None):
+        if Cart.db_client is None:
+            Cart.db_client = db_client
+        self.cart_collection = Cart.db_client["kikimora"]["cart"]
+
+    def ping(self):
+        try:
+            self.db_client.admin.command('ping')
+            return True
+        except Exception as e:
+            logger.critical(f"Не удалось подключиться к mongodb.\n Errpr:{e}")
+            return False
+
+    def get_cart_data(self, user_id):
+        # Используем pymongo для синхронного запроса
+        return self.cart_collection.find_one({"customer": user_id})
+
+    def create_cart(self, user_id, front_cart_data):
+        # Синхронная вставка в коллекцию
+        if not self.get_cart_data(user_id):
+            self.cart_collection.insert_one({"customer": user_id,
+                                             "products": front_cart_data['products'],
+                                             "total": front_cart_data['total']})
+        else:
+            logger.warning(f"Пользователь с id {user_id}, уже находится в mongodb['cart'].")
+
+    def add_unregistered_mark(self, user_id):
+        self.cart_collection.update_one({"customer": user_id}, {'$set': {'unregistered': True}})
+
+    def sync_cart_data(self, user_id, front_cart_data):
+        back_user_data = self.get_cart_data(user_id)
+        if front_cart_data:
+            if not back_user_data:
+                self.create_cart(user_id, front_cart_data)
+                return self.get_cart_data(user_id)
+            else:
+                self.cart_collection.update_one({"customer": user_id},
+                                                {"$set": {
+                                                    "products": front_cart_data['products'],
+                                                    "total": front_cart_data['total']
+                                                }})
+                return self.get_cart_data(user_id)
+        else:
+            if back_user_data:
+                logger.info(f'Данные для корзины пользователя с id {user_id} загружены из mongo_db.')
+                return self.get_cart_data(user_id)
+            else:
+                return None
+
+    def check_cart_data(self, front_data, user_id):
+        deleted_products = []
+        price_mismatches = []
+        total_db = 0
+        minus_double_check_price = defaultdict(float)
+        updated_cart = {'products': []}
+
+        if not front_data:
+            logger.warning(f'Корзина пользователя с id {user_id} пришла пустой от frontend.')
+            return None
+
+        # Кэшируем скидки и товары
+        active_discounts = get_discount_cash()
+        limit_products = get_limit_product_cash()
+        product_ids = [product['product_id'] for product in front_data['products']]
+
+        product_db_data = active_products_cash().filter(product_id__in=product_ids)
+
+        # Пройдем по всем товарам в корзине
+        for product in front_data['products']:
+            product_data = next((item for item in product_db_data if item.product_id == product['product_id']), None)
+
+            if not product_data:
+                # Товар удалён из базы
+                deleted_products.append(product['name'])
+                continue
+            limit_product = limit_products.filter(product_id=product['product_id']).first()
+            if limit_product:
+                price = limit_product.price
+            # Ищем скидку: сначала для подкатегории, затем индивидуальную
+            else:
+                discount = active_discounts.filter(subcategory__in=product_data.subcategory.all()).first()
+                product_discount = active_discounts.filter(product_id=product['product_id']).first()
+                price = product_data.price
+                if product_discount:
+                    discount = product_discount
+
+                    # Рассчитываем актуальную цену с учётом скидок
+                if discount:
+                    if discount.discount_type == 'percentage':
+                        price -= price * (discount.value / 100)
+                    else:
+                        price -= discount.value
+
+            # Сравниваем цену с переданной от фронтенда
+            if price != product['price']:
+                price_mismatches.append({
+                    'product_id': product['product_id'],
+                    'name': product['name'],
+                    'old_price': product['price'],
+                    'new_price': price,
+                })
+
+            # Добавляем товар в обновлённую корзину
+            updated_cart['products'].append({
+                'product_id': product['product_id'],
+                'name': product['name'],
+                'price': price,
+                'quantity': product['quantity'],
+            })
+
+            # Учитываем цену в итоговой сумме
+            total_db += price * product['quantity']
+            minus_double_check_price[product['product_id']] = price * product['quantity']
+            logger.info(f"Товар {product['name']} обработан. Цена: {price}, Количество: {product['quantity']}.")
+
+        # Проверяем итоговую сумму
+        if total_db != front_data['total']:
+            logger.warning(
+                f'Итоговая сумма не совпадает. Пересчитанная сумма: {total_db}, переданная сумма: {front_data["total"]}.'
+            )
+
+        return {
+            'total': total_db,
+            'deleted_products': deleted_products,
+            'price_mismatches': price_mismatches,
+            'updated_cart': updated_cart,
+        }
+
+    def create_indexes(self):
+        # Синхронное создание индексов
+        self.cart_collection.create_index([("customer", ASCENDING)])

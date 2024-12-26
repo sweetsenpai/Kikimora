@@ -3,21 +3,24 @@ import uuid
 import os
 from dotenv import load_dotenv
 load_dotenv()
-TOKEN = os.getenv('YANDEX_TOKEN')
+token = os.getenv('YANDEX_TOKEN')
+headers={"Authorization": f"Bearer {token}",
+         'Accept-Language': 'ru/ru'}
+data= {
+        "route_points": [
+            {"fullname": "Санкт-Петербург, 11-я Красноармейская улица, 11"},
+            {"fullname": "Санкт-Петербург, Московский проспект 135"}],
+    }
 
 
-class YandexDelivery:
-    host_url = 'https://b2b.taxi.yandex.net'
-    my_addres = ''
+yandex_response = requests.post('https://b2b.taxi.yandex.net/b2b/cargo/integration/v2/check-price', headers=headers, json=data)
 
-    def __init__(self, token, client_addres):
-        self.token = token
-        self.client_addres = client_addres
+if yandex_response.status_code == 200:
+    print('Стоимость доставки: ', yandex_response.json()['price'])
+    print('Расстояние доставки: ', yandex_response.json()['distance_meters'])
+elif yandex_response.status_code == 400:
+    print('Неудается найти указанный адрес, проверьте правильность введенного адреса.')
+else:
+    print(yandex_response.json())
+    print('В данный момент не возможно осуществить доставку.')
 
-    def calculate_delivery(self):
-        req_result = requests.api.post(url=self.host_url, headers={"Authorization": "Bearer bafe64a70e3c4c269f70ebdfbe3f5f86"})
-        return req_result
-
-
-a = YandexDelivery(TOKEN, 'test')
-print(a.calculate_delivery().text)

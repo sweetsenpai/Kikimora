@@ -13,7 +13,7 @@
         </div>
       </div>
     </form>
-<div class="table-responsive">
+<div class="table-responsive" style="max-height: 90%; overflow-y: auto;">
     <table class="table table-hover">
         <thead>
             <tr>
@@ -25,28 +25,39 @@
             </tr>
         </thead>
         <tbody>
-        {% for product in products %}
-        <tr id="product-{{ product.product_id }}">
-            <th scope="row">{{ product.product_id }}</th>
-            <td onclick="window.location='/product/{{product.product_id }}';">{{ product.name }}</td>
-            <td onclick="window.location='/product/{{product.product_id }}';"><img class="rounded mx-auto d-block" src="{{ product.photo_url }}" style="width: 100px;"></td>
-            <td onclick="window.location='/product/{{product.product_id }}';">{{ product.price }} ₽</td>
-            <td>
-                <button type="button" class="btn {% if product.visibility %}btn-warning{% else %}btn-primary{% endif %}"
-                        style="color:{% if product.visibility %}#C7253E{% else %} white {% endif %}"
-                        onclick="toggleVisibilityProduct({{ product.product_id }})">
-                    {% if product.visibility %}
-                    Убрать из выдачи
+            {% for product in products %}
+            <tr id="product-{{ product.product_id }}">
+                <th scope="row">{{ product.product_id }}</th>
+                <td onclick="window.location='/product/{{ product.product_id }}';">{{ product.name }}</td>
+                <td onclick="window.location='/product/{{ product.product_id }}';">
+                    {% if product.prefetched_photos %}
+                        <img class="rounded mx-auto d-block"
+                             src="{{ product.prefetched_photos.0.photo_url }}"
+                             alt="Фото товара {{ product.name }}"
+                             style="width: 100px;">
                     {% else %}
-                        Вернуть в выдачу
+                        Нет фото
                     {% endif %}
-                </button>
-            </td>
-        </tr>
-        {% endfor %}
+                </td>
+                <td onclick="window.location='/product/{{ product.product_id }}';">{{ product.price }} ₽</td>
+                <td>
+                    <button type="button"
+                            class="btn {% if product.visibility %}btn-warning{% else %}btn-primary{% endif %}"
+                            style="color:{% if product.visibility %}#C7253E{% else %} white {% endif %}"
+                            onclick="toggleVisibilityProduct({{ product.product_id }})">
+                        {% if product.visibility %}
+                        Убрать из выдачи
+                        {% else %}
+                        Вернуть в выдачу
+                        {% endif %}
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
         </tbody>
     </table>
 </div>
+
 <script src="{% static 'JS/jquery-3.7.1.min.js' %}"></script>
 <script src="{% static 'JS/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'JS/visibility_toggle_product.js' %}"></script>

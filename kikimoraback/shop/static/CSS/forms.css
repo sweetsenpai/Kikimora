@@ -1,0 +1,53 @@
+    .centered-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .form-container {
+      width: 100%;
+      max-width: 900px;
+      padding: 20px;
+      background-color: #f8f9fa;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container .form-label {
+      margin-bottom: 8px;
+    }
+
+    .form-container .input-group {
+      margin-bottom: 12px;
+    }
+
+    .form-container hr {
+      margin: 20px 0;
+    }
+
+    .form-container button {
+      margin-top: 15px;
+    }
+
+    .flatpickr-calendar {
+    background-color: #fff; /* Белый фон */
+    color: #000; /* Черный текст */
+    border: 1px solid #ddd; /* Легкая граница */
+    border-radius: 4px; /* Скругление углов */
+  }
+
+  .flatpickr-calendar .flatpickr-day:hover {
+    background-color: #007bff; /* Цвет фона при наведении на день */
+    color: #fff; /* Белый текст при наведении */
+  }
+
+  .flatpickr-calendar .flatpickr-time {
+    color: #000; /* Цвет текста времени */
+  }
+
+  /* Ensure the calendar appears on top */
+  .flatpickr-calendar {
+    z-index: 1050; /* Высокий z-index для отображения поверх других элементов */
+  }
