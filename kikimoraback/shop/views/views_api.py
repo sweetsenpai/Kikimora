@@ -327,9 +327,13 @@ class YandexCalculation(APIView):
 class CheckCart(APIView):
     def post(self, request):
         front_data = request.data.get('cart')
-        user_id = 1
-        x = Cart(MongoClient(os.getenv("MONGOCON")))
-        if not x.ping():
+        user_id = 2
+        user_cart = Cart(MongoClient(os.getenv("MONGOCON")))
+        if not user_cart.ping():
             return Response({"error": "Ошибка подключения."}, status=status.HTTP_400_BAD_REQUEST)
-        print(x.check_cart_data(user_id=1, front_data=x.get_cart_data(1)))
-        return Response(status=status.HTTP_200_OK)
+        card_updated = user_cart.check_cart_data(user_id=user_id, front_data=user_cart.get_cart_data(2))
+        if card_updated is None:
+            return Response({"Корзина пустая"}, status=status.HTTP_204_NO_CONTENT)
+        user_cart.sync_cart_data(user_id=user_id, front_cart_data={'total': card_updated['total'],
+                                                                   'products': card_updated['updated_cart']['products']})
+        return Response(status=status.HTTP_200_OK, data=card_updated)

@@ -70,12 +70,12 @@ class Cart:
         # Кэшируем скидки и товары
         active_discounts = get_discount_cash()
         limit_products = get_limit_product_cash()
-        product_ids = [product['product_id'] for product in front_data['products'].values()]
+        product_ids = [product['product_id'] for product in front_data['products']]
 
         product_db_data = active_products_cash().filter(product_id__in=product_ids)
 
         # Пройдем по всем товарам в корзине
-        for product in front_data['products'].values():
+        for product in front_data['products']:
             product_data = next((item for item in product_db_data if item.product_id == product['product_id']), None)
 
             if not product_data:
