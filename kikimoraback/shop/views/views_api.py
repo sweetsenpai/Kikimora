@@ -366,5 +366,14 @@ class CheckCart(APIView):
 
 
 class SyncCart(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
-        return
+        front_data = request.data.get('cart')
+        user = request.user
+        try:
+            user_data = CustomUser.objects.get(user_id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "Пользователь не найден."}, status=404)
+        cart = Cart(os.getenv('MONGOCON'))
+        return Response(data=cart.sync_cart_data(user_id=user_data.user_id, front_cart_data=front_data['cart'])['products'], status=status)
