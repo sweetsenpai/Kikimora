@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.views import View
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.models import AnonymousUser
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework import viewsets
@@ -13,6 +14,8 @@ from celery.result import AsyncResult
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import generics, status
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth import authenticate
@@ -104,7 +107,7 @@ class DeleteDayProduct(APIView):
 
 
 class LimitProduct(generics.ListAPIView):
-#    queryset = get_promo_cash()
+    queryset = get_promo_cash()
     serializer_class=LimitTimeProductSerializer
 
 
@@ -152,6 +155,7 @@ class RegisterUserView(APIView):
 
 class UserDataView(APIView):
     permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -275,13 +279,14 @@ class CheckCRMChanges(APIView):
 
 
 class YandexCalculation(APIView):
+
     def post(self, request, *args, **kwargs):
         token = os.getenv('YANDEX_TOKEN')
         headers = {"Authorization": f"Bearer {token}",
                    'Accept-Language': 'ru/ru'}
         address = request.data.get('address')
         if not address:
-            logger.error('Не передан адрес доставки.')
+            logger.warning('Не передан адрес доставки.')
             return Response({"error": "Не передан адрес доставки."},
                             status=status.HTTP_400_BAD_REQUEST)
         data = {
@@ -293,7 +298,7 @@ class YandexCalculation(APIView):
             yandex_response = requests.post('https://b2b.taxi.yandex.net/b2b/cargo/integration/v2/check-price',
                                             headers=headers, json=data)
         except requests.RequestException as e:
-            logger.error(f'Ошибка при попытке отправить запрос к API Яндекс:{e}')
+            logger.critical(f'Ошибка при попытке отправить запрос к API Яндекс:{e}')
             return Response({"error": "Ошибка при попытке расчета стоимости.\n"
                                       "Попробуйте оформить заказ позже или обратитесь в магазин."},
                             status=status.HTTP_503_SERVICE_UNAVAILABLE)
@@ -316,7 +321,7 @@ class YandexCalculation(APIView):
                                       "Проверьте правильность введенного адреса или повторите попытку позже."},
                             status=status.HTTP_400_BAD_REQUEST)
         elif yandex_response.status_code == 401:
-            logger.error('Передан не верный токен yandex-delivery.')
+            logger.critical('Передан не верный токен yandex-delivery.')
             return Response({"error": default_error_msg},
                             status=status.HTTP_401_UNAUTHORIZED)
         else:
@@ -327,14 +332,20 @@ class YandexCalculation(APIView):
 
 class CheckCart(APIView):
     def post(self, request):
+        authentication_classes = [JWTAuthentication]
+        permission_classes = [IsAuthenticated]
+
         front_data = request.data.get('cart')
         user = request.user
-
+        print('Данные пользователя', user)
         # Пытаемся найти пользователя
-        try:
-            user_id = CustomUser.objects.get(user_id=user.user_id).user_id
-            new_user_card = False
-        except AttributeError:
+        if not isinstance(user, AnonymousUser):
+            try:
+                user_id = CustomUser.objects.get(user_id=user.user_id).user_id
+                new_user_card = False
+            except CustomUser.DoesNotExist:
+                return Response({"error": "Пользователь не найден."}, status=status.HTTP_404_NOT_FOUND)
+        else:
             user_id = request.COOKIES.get('user_id', None)
             new_user_card = user_id is None  # Если куки нет, значит, это новый пользователь
             if new_user_card:
@@ -346,7 +357,12 @@ class CheckCart(APIView):
             return Response({"error": "Ошибка подключения."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Обрабатываем данные корзины
-        card_updated = user_cart.check_cart_data(user_id=user_id, front_data=front_data)
+        try:
+            card_updated = user_cart.check_cart_data(user_id=user_id, front_data=front_data)
+        except Exception as e:
+            logger.error(f'По какой-то причине не удалось обновить корзину.\nОшибка: {e}')
+            return Response(status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
         if card_updated is None:
             # Если корзина пустая, возвращаем ответ с куки
             response = Response({"Корзина пустая"}, status=status.HTTP_204_NO_CONTENT)
@@ -359,7 +375,7 @@ class CheckCart(APIView):
                                                                    'products': card_updated['updated_cart']['products']})
 
         response = Response(status=status.HTTP_200_OK, data=card_updated)
-        if new_user_card:
+        if isinstance(user, AnonymousUser):
             user_cart.add_unregistered_mark(user_id=user_id)
             response.set_cookie('user_id', user_id, max_age=60*60*24*30, httponly=True)
         return response
@@ -372,7 +388,7 @@ class SyncCart(APIView):
         front_data = request.data.get('cart')
         user = request.user
         try:
-            user_data = CustomUser.objects.get(user_id=user_id)
+            user_data = CustomUser.objects.get(user_id=user.user_id)
         except CustomUser.DoesNotExist:
             return Response({"error": "Пользователь не найден."}, status=404)
         cart = Cart(os.getenv('MONGOCON'))

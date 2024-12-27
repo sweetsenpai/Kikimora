@@ -123,7 +123,6 @@ class Cart:
             # Учитываем цену в итоговой сумме
             total_db += price * product['quantity']
             minus_double_check_price[product['product_id']] = price * product['quantity']
-            logger.info(f"Товар {product['name']} обработан. Цена: {price}, Количество: {product['quantity']}.")
 
         # Проверяем итоговую сумму
         if total_db != front_data['total']:

@@ -95,6 +95,8 @@ def check_crm_changes():
                 # Получаем данные о подкатегориях (коллекциях)
                 sub_response = client.get(f"{insales_url}collections.json", params={'page': sub_page}).json()
                 if not sub_response:
+                    logger.error('Не удалось подключиться к crm для обнавления БД.\n'
+                                    'Ошибка на шаге 1, получение данных о категориях.')
                     break
 
                 for subcat in sub_response:
@@ -119,10 +121,8 @@ def check_crm_changes():
                                 prod_for_delete = product_in_db - product_in_crm
                                 product_for_create = product_in_crm - prod_for_delete
                                 if prod_for_delete:
-                                    logger.info(f"Список ID для удаления связей:{prod_for_delete}")
                                     for prod_id in prod_for_delete:
                                         Product.objects.get(product_id=prod_id).subcategory.remove(subcategory)
-                                    logger.info(f"Связи успешно удаленны из БД")
 
                             for product in prod_response:
                                 if product['product_id'] in product_for_create:
@@ -157,7 +157,6 @@ def check_crm_changes():
                                             )
                                     else:
                                         product_obj.subcategory.add(subcategory)
-                                        logger.info(f"Связи товара id{product_obj.product_id}  и подкатегории {subcategory.subcategory_id} успешно добавлена в БД")
 
                 sub_page += 1
 
