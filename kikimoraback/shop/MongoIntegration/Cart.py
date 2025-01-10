@@ -1,11 +1,11 @@
 from pymongo import MongoClient, ASCENDING
 from collections import defaultdict
 import logging
-from ..caches import active_products_cash, get_limit_product_cash, get_discount_cash
+from ..caches import active_products_cash, get_limit_product_cash, get_discount_cash, get_promo_cash
 from ..models import Product, Subcategory
-
+import json
 logger = logging.getLogger('shop')
-
+logger.setLevel(logging.DEBUG)
 
 class Cart:
     db_client = None
@@ -123,7 +123,8 @@ class Cart:
             # Учитываем цену в итоговой сумме
             total_db += price * product['quantity']
             minus_double_check_price[product['product_id']] = price * product['quantity']
-
+        if front_data.get('delivery'):
+            total_db+= front_data['delivery']
         # Проверяем итоговую сумму
         if total_db != front_data['total']:
             logger.warning(
@@ -137,6 +138,17 @@ class Cart:
             'updated_cart': updated_cart,
         }
 
+    def apply_promo(self, promo, user_id):
+        promo_data = get_promo_cash().objects.filter(code=promo)
+        cart = self.get_cart_data(user_id)
+        if not promo_data:
+            return None
+        if promo_data.type == 'delivery':
+            return {'delivery_free': True}
+        if promo.promo_product in cart['products']:
+            ...
+        if not promo_data.min_sum:
+            ...
+
     def create_indexes(self):
-        # Синхронное создание индексов
         self.cart_collection.create_index([("customer", ASCENDING)])

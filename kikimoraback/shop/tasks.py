@@ -95,8 +95,6 @@ def check_crm_changes():
                 # Получаем данные о подкатегориях (коллекциях)
                 sub_response = client.get(f"{insales_url}collections.json", params={'page': sub_page}).json()
                 if not sub_response:
-                    logger.error('Не удалось подключиться к crm для обнавления БД.\n'
-                                    'Ошибка на шаге 1, получение данных о категориях.')
                     break
 
                 for subcat in sub_response:
