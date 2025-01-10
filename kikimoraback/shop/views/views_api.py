@@ -34,6 +34,7 @@ from dotenv import load_dotenv
 import logging
 load_dotenv()
 logger = logging.getLogger('shop')
+logger.setLevel(logging.DEBUG)
 
 
 class CategoryList(generics.ListAPIView):
@@ -184,9 +185,7 @@ class UpdateCRM(APIView):
             })
             if response.status_code == 201:
                 logger.info(f'{product.name} успешно добавлен в {product.subcategory.name}!')
-            else:
-                print(response.status_code)
-                print(response.text)
+
         return Response(status=status.HTTP_201_CREATED)
 
 
@@ -332,13 +331,9 @@ class YandexCalculation(APIView):
 
 class CheckCart(APIView):
     def post(self, request):
-        authentication_classes = [JWTAuthentication]
-        permission_classes = [IsAuthenticated]
-
         front_data = request.data.get('cart')
+        promo = request.data.get('cart')
         user = request.user
-        print('Данные пользователя', user)
-        # Пытаемся найти пользователя
         if not isinstance(user, AnonymousUser):
             try:
                 user_id = CustomUser.objects.get(user_id=user.user_id).user_id
@@ -375,6 +370,8 @@ class CheckCart(APIView):
                                                                    'products': card_updated['updated_cart']['products']})
 
         response = Response(status=status.HTTP_200_OK, data=card_updated)
+        # if promo:
+        #     user_cart.apply_promo(promo)
         if isinstance(user, AnonymousUser):
             user_cart.add_unregistered_mark(user_id=user_id)
             response.set_cookie('user_id', user_id, max_age=60*60*24*30, httponly=True)
@@ -393,3 +390,26 @@ class SyncCart(APIView):
             return Response({"error": "Пользователь не найден."}, status=404)
         cart = Cart(os.getenv('MONGOCON'))
         return Response(data=cart.sync_cart_data(user_id=user_data.user_id, front_cart_data=front_data['cart'])['products'], status=status)
+
+
+class CheckPromo(APIView):
+    def post(self, request):
+        promo = request.data.get('promo_code')
+        all_pormos = get_promo_cash()
+        promo_data = all_pormos.odjects.filter(code=promo)
+
+        if not promo_data:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        if promo_data.type =='delivery':
+            return Response(status=status.HTTP_200_OK, data={'free_delivery': True})
+        if promo_data.one_time:
+            if check_promo_one_time(user_id, promo):
+                return Response(status=status.HTTP_409_CONFLICT)
+        user_cart = []
+        return Response(status=status.HTTP_200_OK)
+
+
+class PaymentNotification(APIView):
+    def post(self, request):
+        payement_id = request.data.get('payement_id')
+        return Response(status=status.HTTP_200_OK)
