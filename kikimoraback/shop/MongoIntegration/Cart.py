@@ -7,6 +7,7 @@ import json
 logger = logging.getLogger('shop')
 logger.setLevel(logging.DEBUG)
 
+
 class Cart:
     db_client = None
 
