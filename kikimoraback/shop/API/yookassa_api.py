@@ -2,7 +2,6 @@ from yookassa import Configuration, Payment
 from pymongo import MongoClient
 from yookassa import Payment
 from yookassa import Receipt
-from ..MongoIntegration.Cart import Cart
 import var_dump as var_dump
 import os
 import logging
@@ -10,6 +9,7 @@ from dotenv import load_dotenv
 import random
 load_dotenv()
 logger = logging.getLogger('shop')
+logger.setLevel(logging.DEBUG)
 key = 'test__kXJEEjyiSkZNQzUGm5nb5EwNtgjz4HHAIBXojqhYMU'
 id = '1007767'
 # order_num = random.random()
@@ -58,7 +58,7 @@ id = '1007767'
 
 class PaymentYookassa:
     def __init__(self):
-        Configuration.configure(os.getenv('YOOMONEY_ID'), os.getenv('YOOMONEY_KEY'))
+        Configuration.configure('1007767', 'test__kXJEEjyiSkZNQzUGm5nb5EwNtgjz4HHAIBXojqhYMU')
 
     def send_payment_request(self, user_data, cart, order_id):
         items=[]
@@ -102,7 +102,7 @@ class PaymentYookassa:
                 }
             })
         try:
-            return payement.json()['confirmation']['confirmation_url'], payement.id
+            return payement.json()
         except KeyError as e:
             logger.error(f"Ошибка при извлечении данных из ответа: {e}")
         except Exception as e:
@@ -110,9 +110,10 @@ class PaymentYookassa:
         return False
 
 
-cart = Cart(MongoClient(os.getenv("MONGOCON")))
-cart_data = cart.get_cart_data(user_id=1)
-print(cart_data)
+
+# cart = Cart(MongoClient(os.getenv("MONGOCON")))
+# cart_data = cart.get_cart_data(user_id=1)
+# print(cart_data)
 # payement = PaymentYookassa()
 # payement.send_payment_request(user_data={'fio': "Захаров Александр", "email": 'test@mail.ru',"phone": '+79118468177'},
 #                               cart=cart_data, order_id=random.random())

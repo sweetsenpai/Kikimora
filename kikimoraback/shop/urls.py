@@ -8,33 +8,36 @@ product_by_category = views_api.ProductViewSet.as_view({'get': 'by_category'})
 
 urlpatterns = [
     # API
+    # TOKEN
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
-
+    # REGISTRATION and LOGIN
     path('api/login/', views_api.Login.as_view(), name='api-login'),
     path('api/register/', views_api.RegisterUserView.as_view(), name='api-register'),
-
+    # USER DATA
     path('api/user/', views_api.UserDataView.as_view(), name='api-user-data'),
     path('api/user/<int:user_id>', views_api.UserDataView.as_view(), name='api-admin-user-data'),
-
+    # PRODUCTS
     path('api/categories/', views_api.CategoryList.as_view(), name='category-list'),
     path('api/product/<int:product_id>/', views_api.ProductApi.as_view(), name='product'),
     path('api/products/subcategory/<int:subcategory_id>/', product_by_subcategory, name='products-by-subcategory'),
     path('api/products/category/<int:category_id>/', product_by_category, name='products-by-category'),
     path('api/autocomplete/product/', views_api.ProductAutocompleteView.as_view(), name='product-autocomplete-api'),
-
+    # PRICE CHANGERS
     path('api/discount', views_api.DiscountProductActiveList.as_view(), name='api-discount'),
     path('api/discounts/stop/<int:discount_id>/', views_api.StopDiscountView.as_view(), name='stop_discount_api'),
     path('api/limitproduct', views_api.LimitProduct.as_view(), name='api-limitproduct'),
-
+    # CRM WORK
     path('api/delete_day_product/<int:limittimeproduct_id>/', views_api.DeleteDayProduct.as_view(), name='delete_day_product'),
-
     path('api/crm2', views_api.CheckCRMChanges.as_view(), name='check-crm'),
+    # DELIVERY
     path('api/calculate_delivery', views_api.YandexCalculation.as_view(), name='calculate-delivery'),
-
+    # CART
     path('api/check_cart', views_api.CheckCart.as_view(), name='ckeck-cart'),
     path('api/sync_cart', views_api.SyncCart.as_view(), name='sunc-cart'),
+    # PAYMENT
+    path('api/payment', views_api.Payment.as_view(), name='payment'),
     # HOME
     path('apanel', views_admin.AdminHomePageView.as_view(), name='admin_home'),
     path('apanel/login', views_admin.AdminLogin.as_view(), name='admin_login'),

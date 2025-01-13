@@ -29,7 +29,9 @@ import uuid
 import re
 import os
 from ..MongoIntegration.Cart import Cart
+from ..MongoIntegration.Order import Order
 from pymongo import MongoClient
+from ..API.yookassa_api import PaymentYookassa
 from dotenv import load_dotenv
 import logging
 load_dotenv()
@@ -407,6 +409,44 @@ class CheckPromo(APIView):
                 return Response(status=status.HTTP_409_CONFLICT)
         user_cart = []
         return Response(status=status.HTTP_200_OK)
+
+
+class Payment(APIView):
+    def post(self, request):
+        reg_user = request.user
+        user_data = request.data.get('userData')
+        if not isinstance(reg_user, AnonymousUser):
+            try:
+                user_id = CustomUser.objects.get(user_id=reg_user.user_id).user_id
+            except CustomUser.DoesNotExist:
+                return Response({"error": "Пользователь не найден."}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            user_id = request.COOKIES.get('user_id', None)
+            if not user_id:
+                logger.error("По какой-то причине не удалось опознать корзину клиента.")
+                return Response({"error": "Что-то пошло не так, убедитесь что корзина не пустая.\n"
+                                          "Обновите страницу и попробуйте оформить заказ ещё раз, "
+                                          "если ошибка не исчезла, "
+                                          "то свяжитесь с магазином и поможем с оформление заказа."})
+
+        payment = PaymentYookassa()
+        connection = MongoClient(os.getenv("MONGOCON"))
+        user_cart = Cart(connection)
+        if not user_cart.ping():
+            return Response({"error": "Ошибка подключения Корзины."}, status=status.HTTP_400_BAD_REQUEST)
+        order = Order(connection)
+
+        cart_data = user_cart.get_cart_data(user_id)
+        response = json.loads(payment.send_payment_request(user_data=user_data,
+                                                cart=cart_data,
+                                                order_id=order.get_neworder_num()))
+        if not response:
+            return Response({"error": "Во время оформления заказа произошла ошибка.\n"
+                                      "Попробуйте перезагрузить страниц."},
+                            status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        user_cart.add_payement_id(user_id=user_id, payment_id=response['id'])
+
+        return Response(status=200, data={'paymentLink': response['confirmation']['confirmation_url']})
 
 
 class PaymentNotification(APIView):

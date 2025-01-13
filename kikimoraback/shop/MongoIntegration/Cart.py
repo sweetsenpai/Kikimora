@@ -5,7 +5,6 @@ from ..caches import active_products_cash, get_limit_product_cash, get_discount_
 from ..models import Product, Subcategory
 import json
 logger = logging.getLogger('shop')
-logger.setLevel(logging.DEBUG)
 
 
 class Cart:
@@ -150,6 +149,12 @@ class Cart:
             ...
         if not promo_data.min_sum:
             ...
+
+    def add_payement_id(self, payment_id, user_id):
+        self.cart_collection.update_one({"customer": user_id}, {'$set': {'payment_id': payment_id}})
+
+    def remove_payement_id(self, payment_id, user_id):
+        self.cart_collection.update_one({"customer": user_id}, {'$unset': {'payment_id': payment_id}})
 
     def create_indexes(self):
         self.cart_collection.create_index([("customer", ASCENDING)])
