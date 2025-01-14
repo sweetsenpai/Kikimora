@@ -440,10 +440,9 @@ class Payment(APIView):
         order = Order(connection)
         user_cart.add_delivery(user_id, delivery_data, user_data, comment)
         cart_data = user_cart.get_cart_data(user_id)
-        print(delivery_data)
         response = json.loads(payment.send_payment_request(user_data=user_data,
                                                            cart=cart_data,
-                                                           order_id=random.random(),
+                                                           order_id=order.get_neworder_num(user_id),
                                                            delivery_data=delivery_data))
         if not response:
             return Response({"error": "Во время оформления заказа произошла ошибка.\n"
