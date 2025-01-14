@@ -35,7 +35,7 @@ from ..API.yookassa_api import PaymentYookassa
 from dotenv import load_dotenv
 import logging
 import random
-
+from yookassa import Webhook
 load_dotenv()
 logger = logging.getLogger('shop')
 logger.setLevel(logging.DEBUG)
@@ -453,7 +453,21 @@ class Payment(APIView):
         return Response(status=200, data={'paymentLink': response['confirmation']['confirmation_url']})
 
 
-class PaymentNotification(APIView):
-    def post(self, request):
-        payement_id = request.data.get('payement_id')
-        return Response(status=status.HTTP_200_OK)
+@csrf_exempt
+def yookassa_webhook(request):
+    if request.method == 'POST':
+        try:
+            event_json = json.loads(request.body)
+            notification_object = WebhookNotification(event_json)
+            # Обработка уведомления
+            if notification_object.event == 'payment.succeeded':
+                payment = notification_object.object
+                # Логика обработки успешного платежа
+                # Например, обновление статуса заказа в базе данных
+                return JsonResponse({'status': 'ok'})
+            if notification_object.event == 'payment.canceled':
+                payment = notification_object.object
+                return JsonResponse({'status': 'ok'})
+        except Exception as e:
+            logger.error({'status': 'error', 'error': str(e)})
+    return JsonResponse({'status': 'method not allowed'}, status=405)

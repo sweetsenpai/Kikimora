@@ -119,12 +119,3 @@ class PaymentYookassa:
         except Exception as e:
             logger.critical(f"Не удалось создать оплату для клиента: {e}")
         return False
-
-
-
-# cart = Cart(MongoClient(os.getenv("MONGOCON")))
-# cart_data = cart.get_cart_data(user_id=1)
-# print(cart_data)
-# payement = PaymentYookassa()
-# payement.send_payment_request(user_data={'fio': "Захаров Александр", "email": 'test@mail.ru',"phone": '+79118468177'},
-#                               cart=cart_data, order_id=random.random())
