@@ -1,5 +1,6 @@
 from pymongo import MongoClient, ASCENDING
 from collections import defaultdict
+from datetime import datetime
 import logging
 from ..caches import active_products_cash, get_limit_product_cash, get_discount_cash, get_promo_cash
 from ..models import Product, Subcategory
@@ -123,8 +124,6 @@ class Cart:
             # Учитываем цену в итоговой сумме
             total_db += price * product['quantity']
             minus_double_check_price[product['product_id']] = price * product['quantity']
-        if front_data.get('delivery'):
-            total_db+= front_data['delivery']
         # Проверяем итоговую сумму
         if total_db != front_data['total']:
             logger.warning(
@@ -137,6 +136,48 @@ class Cart:
             'price_mismatches': price_mismatches,
             'updated_cart': updated_cart,
         }
+
+    def add_delivery(self, user_id, delivery_data, customer_data, comment):
+        if delivery_data['deliveryMethod']== 'Доставка':
+            self.cart_collection.update_one({"customer": user_id},
+                                            {"$set": {
+                                                "delivery_data.method": "Доставка",
+                                                "delivery_data.street": delivery_data['street'],
+                                                "delivery_data.building": delivery_data['houseNumber'],
+                                                "delivery_data.apartment": delivery_data.get('apartment'),
+                                                "delivery_data.date":  datetime.strptime(delivery_data['date'], "%Y-%m-%d"),
+                                                "delivery_data.time": delivery_data['time'],
+                                                "delivery_data.cost":  delivery_data['deliveryCost'],
+
+                                                "customer_data.fio": customer_data['fio'],
+                                                "customer_data.phone": customer_data['phone'],
+                                                "customer_data.email": customer_data['email'],
+
+                                                "comment": comment,
+                                                "date_of_creation": datetime.now()
+
+                                            },
+                                            "$inc": {
+                                                "total": delivery_data['deliveryCost']
+                                            },
+                                             })
+        else:
+            self.cart_collection.update_one({"customer": user_id},
+                                            {"$set": {
+                                                "delivery_data.method": "Самовывоз",
+                                                "delivery_data.date": datetime.strptime(delivery_data['date'], "%Y-%m-%d"),
+                                                "delivery_data.time": delivery_data['time'],
+                                                "delivery_data.cost": 0,
+
+                                                "customer_data.fio": customer_data['fio'],
+                                                "customer_data.phone": customer_data['phone'],
+                                                "customer_data.email": customer_data['email'],
+
+                                                "comment": comment,
+                                                "date_of_creation": datetime.now()
+                                            }
+                                            })
+            return
 
     def apply_promo(self, promo, user_id):
         promo_data = get_promo_cash().objects.filter(code=promo)

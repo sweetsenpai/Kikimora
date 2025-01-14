@@ -34,6 +34,8 @@ from pymongo import MongoClient
 from ..API.yookassa_api import PaymentYookassa
 from dotenv import load_dotenv
 import logging
+import random
+
 load_dotenv()
 logger = logging.getLogger('shop')
 logger.setLevel(logging.DEBUG)
@@ -102,7 +104,7 @@ class DeleteDayProduct(APIView):
             day_product = LimitTimeProduct.objects.get(pk=limittimeproduct_id)
             if day_product.task_id:
                 AsyncResult(id=day_product.task_id).revoke(terminate=True)
-                print(f'Задача удалена! info:{day_product.task_id}')
+                logger.info(f'Задача удалена! info:{day_product.task_id}')
             day_product.delete()
             return Response({'status': 'success'}, status=status.HTTP_200_OK)
         except LimitTimeProduct.DoesNotExist:
@@ -152,7 +154,6 @@ class RegisterUserView(APIView):
                 "user": UserDataSerializer(user).data
             }, status=status.HTTP_201_CREATED)
         else:
-            print(serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -415,6 +416,8 @@ class Payment(APIView):
     def post(self, request):
         reg_user = request.user
         user_data = request.data.get('userData')
+        delivery_data = request.data.get('deliveryData')
+        comment = request.data.get('comment')
         if not isinstance(reg_user, AnonymousUser):
             try:
                 user_id = CustomUser.objects.get(user_id=reg_user.user_id).user_id
@@ -435,11 +438,13 @@ class Payment(APIView):
         if not user_cart.ping():
             return Response({"error": "Ошибка подключения Корзины."}, status=status.HTTP_400_BAD_REQUEST)
         order = Order(connection)
-
+        user_cart.add_delivery(user_id, delivery_data, user_data, comment)
         cart_data = user_cart.get_cart_data(user_id)
+        print(delivery_data)
         response = json.loads(payment.send_payment_request(user_data=user_data,
-                                                cart=cart_data,
-                                                order_id=order.get_neworder_num()))
+                                                           cart=cart_data,
+                                                           order_id=random.random(),
+                                                           delivery_data=delivery_data))
         if not response:
             return Response({"error": "Во время оформления заказа произошла ошибка.\n"
                                       "Попробуйте перезагрузить страниц."},

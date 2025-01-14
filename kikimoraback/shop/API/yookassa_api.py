@@ -60,7 +60,7 @@ class PaymentYookassa:
     def __init__(self):
         Configuration.configure('1007767', 'test__kXJEEjyiSkZNQzUGm5nb5EwNtgjz4HHAIBXojqhYMU')
 
-    def send_payment_request(self, user_data, cart, order_id):
+    def send_payment_request(self, user_data, cart, order_id, delivery_data):
         items=[]
         for product in cart['products']:
             items.append({
@@ -70,12 +70,23 @@ class PaymentYookassa:
                     "value": product['price'],
                     "currency": "RUB"},
                 "vat_code": "1",
-                "payment_mode": "full_payment",
+                "payment_mode": "prepayment",
                 "payment_subject": "commodity",
                 "country_of_origin_code": "RU",
                 "measure": "piece"
                 }
                 )
+        items.append({
+            "description": delivery_data['deliveryMethod'],
+            "quantity": 1,
+            "amount": {
+                "value": delivery_data['deliveryCost'],
+                "currency": "RUB"},
+            "vat_code": "1",
+            "payment_mode": "prepayment",
+            "payment_subject": "service",
+        }
+        )
         payement = \
             Payment.create({
                 "amount": {
@@ -84,7 +95,7 @@ class PaymentYookassa:
                 },
                 "confirmation": {
                     "type": "redirect",
-                    "return_url": "sucsess url"
+                    "return_url": "http://localhost:3000/"
                 },
                 "capture": True,
                 "description": f"Заказ №{order_id}",
