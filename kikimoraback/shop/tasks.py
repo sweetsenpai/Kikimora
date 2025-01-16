@@ -56,9 +56,9 @@ def new_order_email(order_data):
     products_list = "".join(
         f"""
         <tr>
-            <td style="border: 1px solid #ddd; padding: 8px;">{product['name']}</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">{product['quantity']}</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">{product['price']} ₽</td>
+            <td style="border: 1px solid #ddd;">{product['name']}</td>
+            <td style="border: 1px solid #ddd;">{product['quantity']}</td>
+            <td style="border: 1px solid #ddd;">{product['price']} ₽</td>
         </tr>
         """
         for product in order_data["products"]
@@ -76,6 +76,13 @@ def new_order_email(order_data):
         delivery_info = f"""
             <p>Доставка по адресу: <b>{order_data['delivery_data']['street']} {order_data['delivery_data']['building']}, {order_data['delivery_data']['apartment']}</b></p>
             <p>Выбранная дата и время доставки: <b>{delivery_date} {order_data['delivery_data']['time']}</b></p>
+        """
+        products_list += f"""
+        <tr>
+            <td style="border: 1px solid #ddd;">Доставка</td>
+            <td style="border: 1px solid #ddd;">1</td>
+            <td style="border: 1px solid #ddd;">{order_data['delivery_data']['cost']} ₽</td>
+        </tr>
         """
 
     # HTML-содержимое письма

@@ -499,16 +499,17 @@ def yookassa_webhook(request):
 
 
 class TestWebhook(APIView):
-
+# TODO: поправить отображение адреса, сейчас в письме вместо квартиры NOne
+# TODO: решить что-то с номерами заказов которые формирует crm
     def post(self, request):
-        payment_id = "2f18b19a-000f-5000-a000-148efa97c9df"
+        payment_id = "2f1b3e6c-000f-5000-b000-13d319182a5e"
         user_cart = Cart()
         user_order = Order()
         if not user_cart.ping():
             return Response(status=status.HTTP_400_BAD_REQUEST)
         user_cart_data = user_cart.get_cart_data(payment_id=payment_id)
-        user_order.create_order_on_cart(user_cart_data)
         if send_new_order(user_cart_data):
+            user_order.create_order_on_cart(user_cart_data)
             new_order_email(user_cart_data)
             user_cart.delete_cart(payment_id=payment_id)
             return Response(status=status.HTTP_200_OK)
