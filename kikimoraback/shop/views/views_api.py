@@ -32,10 +32,15 @@ from ..MongoIntegration.Cart import Cart
 from ..MongoIntegration.Order import Order
 from pymongo import MongoClient
 from ..API.yookassa_api import PaymentYookassa
+from ..API.insales_api import send_new_order
+from yookassa.domain.notification import WebhookNotificationEventType, WebhookNotificationFactory
+from yookassa.domain.common import SecurityHelper
 from dotenv import load_dotenv
 import logging
 import random
 from yookassa import Webhook
+from ..tasks import new_order_email
+
 load_dotenv()
 logger = logging.getLogger('shop')
 logger.setLevel(logging.DEBUG)
@@ -439,35 +444,59 @@ class Payment(APIView):
             return Response({"error": "Ошибка подключения Корзины."}, status=status.HTTP_400_BAD_REQUEST)
         order = Order(connection)
         user_cart.add_delivery(user_id, delivery_data, user_data, comment)
-        cart_data = user_cart.get_cart_data(user_id)
+        cart_data = user_cart.get_cart_data(user_id=user_id)
+        order_number = order.get_neworder_num(user_id)
         response = json.loads(payment.send_payment_request(user_data=user_data,
                                                            cart=cart_data,
-                                                           order_id=order.get_neworder_num(user_id),
+                                                           order_id=order_number,
                                                            delivery_data=delivery_data))
         if not response:
             return Response({"error": "Во время оформления заказа произошла ошибка.\n"
                                       "Попробуйте перезагрузить страниц."},
                             status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        user_cart.add_payement_id(user_id=user_id, payment_id=response['id'])
+        user_cart.add_payement_data(user_id=user_id, payment_id=response['id'], order_number=order_number)
 
         return Response(status=200, data={'paymentLink': response['confirmation']['confirmation_url']})
 
 
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
 @csrf_exempt
 def yookassa_webhook(request):
-    if request.method == 'POST':
-        try:
-            event_json = json.loads(request.body)
-            notification_object = WebhookNotification(event_json)
-            # Обработка уведомления
-            if notification_object.event == 'payment.succeeded':
-                payment = notification_object.object
-                # Логика обработки успешного платежа
-                # Например, обновление статуса заказа в базе данных
-                return JsonResponse({'status': 'ok'})
-            if notification_object.event == 'payment.canceled':
-                payment = notification_object.object
-                return JsonResponse({'status': 'ok'})
-        except Exception as e:
-            logger.error({'status': 'error', 'error': str(e)})
-    return JsonResponse({'status': 'method not allowed'}, status=405)
+    ip = get_client_ip(request)
+    if not SecurityHelper().is_ip_trusted(ip):
+        logger.warning("Поптыка получить доступ к api оплаты из незарегистрированного источника.")
+        return HttpResponse(status=400)
+
+    event_json = json.loads(request.body)
+    try:
+        notification_object = WebhookNotificationFactory().create(event_json)
+        response_object = notification_object.object
+
+        if notification_object.event == WebhookNotificationEventType.PAYMENT_SUCCEEDED:
+            payment_id = response_object.id
+            connection = MongoClient(os.getenv("MONGOCON"))
+            user_cart = Cart(connection)
+            user_order = Order(connection)
+            if not user_cart.ping():
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            user_cart_data = user_cart.get_cart_data(payment_id=payment_id)
+            user_order.create_order_on_cart(user_cart_data)
+            if send_new_order(user_cart_data):
+                new_order_email(user_cart_data)
+                user_cart.delete_cart(payment_id=payment_id)
+                return Response(status=status.HTTP_200_OK)
+            else:
+                logging.error('Не удалось загрузить новый заказ в crm!')
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Ошибка при обработке вебхука Yookassa: {str(e)}, данные: {event_json}")
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
