@@ -65,8 +65,7 @@ def new_order_email(order_data):
     )
 
     total = order_data["total"]
-    delivery_date = datetime.fromisoformat(order_data['delivery_data']['date'].replace("Z", "+00:00")).strftime(
-        "%d.%m.%Y")  # Преобразование
+    delivery_date = order_data['delivery_data']['date'].strftime("%d.%m.%Y")
 
     if order_data['delivery_data']['method'] == "Самовывоз":
         delivery_info = f"""
@@ -84,7 +83,7 @@ def new_order_email(order_data):
         <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6;">
                 <h1 style="color: #4CAF50;">Спасибо за заказ!</h1>
-                <p>Ваш заказ №<b>{order_data['order_number']}</b> принят в работу.</p>
+                <p>Ваш заказ №<b>1488</b> принят в работу.</p>
                 <p>Детали заказа:</p>
                 <table style="border-collapse: collapse; width: 100%; text-align: left;">
                     <thead>
@@ -105,7 +104,7 @@ def new_order_email(order_data):
                 <!-- Подвал -->
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
                 <footer style="text-align: center; color: #888; font-size: 14px;">
-                    <p>С уважением, команда магазина "Кикимора"</p>
+                    <p>С уважением, команда мастерской "Кикимора"</p>
                     <p>Контакты: <a href="mailto:info@kikimora.ru" style="color: #4CAF50; text-decoration: none;">info@kikimora.ru</a> | Телефон: <a href="tel:+79992099638" style="color: #4CAF50; text-decoration: none;">+7(999) 209-96-38</a></p>
                     <p>Адрес: Санкт-Петербург, ул. 11-я Красноармейская, 11, строение 3</p>
                     <p>Следите за нами: 
@@ -119,7 +118,7 @@ def new_order_email(order_data):
 
     # Создаем сообщение
     email_message = EmailMessage(
-        subject=f"Кикимора заказ №{order_data['order_number']}",
+        subject=f"Кикимора заказ №1488",
         body=html_content,
         from_email='settings.EMAIL_HOST_USER',
         to=[order_data['customer_data']['email']],

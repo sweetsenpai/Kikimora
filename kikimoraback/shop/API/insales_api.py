@@ -4,8 +4,10 @@ from dotenv import load_dotenv
 import os
 from pymongo import MongoClient
 from datetime import datetime
-load_dotenv()
+import logging
 
+load_dotenv()
+logger = logging.getLogger('shop')
 # cart_db = MongoClient("mongodb://localhost:27017/")["kikimora"]["cart"]
 # data = cart_db.find_one({'customer': 1})
 
@@ -74,9 +76,11 @@ def send_new_order(data):
 
     base_url = os.getenv("INSALES_URL") + "orders.json"
     response = requests.post(base_url, json=order_request)
-    if response.status_code == '':
+    if response.status_code == 201:
         return response.json()['number']
     else:
+        logger.critical(f"по какой-то причине не удалось загрузить заказ в CRM! Ответ CRM:{response.json()}")
+        print(response.status_code)
         return False
 
 

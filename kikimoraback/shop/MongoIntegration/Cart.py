@@ -1,4 +1,5 @@
 from pymongo import MongoClient, ASCENDING
+from ..MongoIntegration.db_connection import MongoDBClient
 from collections import defaultdict
 from datetime import datetime
 import logging

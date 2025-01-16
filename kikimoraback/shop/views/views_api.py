@@ -497,3 +497,21 @@ def yookassa_webhook(request):
         logger.error(f"Ошибка при обработке вебхука Yookassa: {str(e)}, данные: {event_json}")
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
+
+class TestWebhook(APIView):
+
+    def post(self, request):
+        payment_id = "2f18b19a-000f-5000-a000-148efa97c9df"
+        user_cart = Cart()
+        user_order = Order()
+        if not user_cart.ping():
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        user_cart_data = user_cart.get_cart_data(payment_id=payment_id)
+        user_order.create_order_on_cart(user_cart_data)
+        if send_new_order(user_cart_data):
+            new_order_email(user_cart_data)
+            user_cart.delete_cart(payment_id=payment_id)
+            return Response(status=status.HTTP_200_OK)
+        else:
+            logging.error('Не удалось загрузить новый заказ в crm!')
+            return Response(status=status.HTTP_400_BAD_REQUEST)

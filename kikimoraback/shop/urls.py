@@ -38,6 +38,7 @@ urlpatterns = [
     path('api/sync_cart', views_api.SyncCart.as_view(), name='sunc-cart'),
     # PAYMENT
     path('api/payment', views_api.Payment.as_view(), name='payment'),
+    path('api/yookassa/test', views_api.TestWebhook.as_view(), name='webhook'),
     # HOME
     path('apanel', views_admin.AdminHomePageView.as_view(), name='admin_home'),
     path('apanel/login', views_admin.AdminLogin.as_view(), name='admin_login'),
