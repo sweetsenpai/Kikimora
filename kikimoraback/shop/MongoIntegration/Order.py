@@ -26,6 +26,10 @@ class Order:
             logger.critical(f"Не удалось подключиться к mongodb.\n Errpr:{e}")
             return False
 
+    def create_order_on_cart(self, cart_data):
+        self.order_collection.insert_one(cart_data)
+        return
+
     def get_neworder_num(self, user_id):
         hash_string = f"{user_id}-{datetime.datetime.now()}"
         order_hash = hashlib.md5(hash_string.encode()).hexdigest()
