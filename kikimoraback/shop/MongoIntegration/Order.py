@@ -1,5 +1,6 @@
 from pymongo import MongoClient, ASCENDING
 from collections import defaultdict
+from ..MongoIntegration.db_connection import MongoDBClient
 import logging
 import datetime
 import hashlib
@@ -11,12 +12,9 @@ logger = logging.getLogger('shop')
 
 
 class Order:
-    db_client = None
-
-    def __init__(self, db_client=None):
-        if Order.db_client is None:
-            Order.db_client = db_client
-        self.order_collection = Order.db_client["kikimora"]["order"]
+    def __init__(self):
+        self.db_client = MongoDBClient.get_client()
+        self.order_collection = self.db_client["kikimora"]["order"]
 
     def ping(self):
         try:

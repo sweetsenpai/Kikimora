@@ -30,7 +30,6 @@ import re
 import os
 from ..MongoIntegration.Cart import Cart
 from ..MongoIntegration.Order import Order
-from pymongo import MongoClient
 from ..API.yookassa_api import PaymentYookassa
 from ..API.insales_api import send_new_order
 from yookassa.domain.notification import WebhookNotificationEventType, WebhookNotificationFactory
@@ -355,7 +354,7 @@ class CheckCart(APIView):
                 user_id = str(uuid.uuid4())
 
         # Подключаемся к базе данных
-        user_cart = Cart(MongoClient(os.getenv("MONGOCON")))
+        user_cart = Cart()
         if not user_cart.ping():
             return Response({"error": "Ошибка подключения."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -438,11 +437,10 @@ class Payment(APIView):
                                           "то свяжитесь с магазином и поможем с оформление заказа."})
 
         payment = PaymentYookassa()
-        connection = MongoClient(os.getenv("MONGOCON"))
-        user_cart = Cart(connection)
+        user_cart = Cart()
         if not user_cart.ping():
             return Response({"error": "Ошибка подключения Корзины."}, status=status.HTTP_400_BAD_REQUEST)
-        order = Order(connection)
+        order = Order()
         user_cart.add_delivery(user_id, delivery_data, user_data, comment)
         cart_data = user_cart.get_cart_data(user_id=user_id)
         order_number = order.get_neworder_num(user_id)
@@ -482,9 +480,8 @@ def yookassa_webhook(request):
 
         if notification_object.event == WebhookNotificationEventType.PAYMENT_SUCCEEDED:
             payment_id = response_object.id
-            connection = MongoClient(os.getenv("MONGOCON"))
-            user_cart = Cart(connection)
-            user_order = Order(connection)
+            user_cart = Cart()
+            user_order = Order()
             if not user_cart.ping():
                 return Response(status=status.HTTP_400_BAD_REQUEST)
             user_cart_data = user_cart.get_cart_data(payment_id=payment_id)

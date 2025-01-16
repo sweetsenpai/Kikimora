@@ -12,48 +12,6 @@ logger = logging.getLogger('shop')
 logger.setLevel(logging.DEBUG)
 key = 'test__kXJEEjyiSkZNQzUGm5nb5EwNtgjz4HHAIBXojqhYMU'
 id = '1007767'
-# order_num = random.random()
-# Configuration.configure(id, key)
-# res = Payment.create(
-#     {
-#         "amount": {
-#             "value": 1000,
-#             "currency": "RUB"
-#         },
-#         "confirmation": {
-#             "type": "redirect",
-#             "return_url": "https://2ch.hk/b"
-#         },
-#         "capture": True,
-#         "description": f"Заказ №{order_num}",
-#         "metadata": {
-#             'orderNumber': f'{order_num}'
-#         },
-#         "receipt": {
-#             "customer": {
-#                 "full_name": "Ivanov Ivan Ivanovich",
-#                 "email": "workchocolatemilk00@gmail.com",
-#                 "phone": "79211234567",
-#                 "inn": "6321341814"
-#             },
-#             "items": [
-#                 {
-#                     "description": "Переносное зарядное устройство Хувей",
-#                     "quantity": "1.00",
-#                     "amount": {
-#                         "value": 1000,
-#                         "currency": "RUB"
-#                     },
-#                     "vat_code": "1",
-#                     "payment_mode": "full_payment",
-#                     "payment_subject": "commodity",
-#                     "country_of_origin_code": "CN",
-#                     "measure": "piece"
-#                 },
-#             ]
-#         }
-#     }
-# )
 
 
 class PaymentYookassa:
@@ -119,3 +77,5 @@ class PaymentYookassa:
         except Exception as e:
             logger.critical(f"Не удалось создать оплату для клиента: {e}")
         return False
+
+

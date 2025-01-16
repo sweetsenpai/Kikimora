@@ -9,13 +9,10 @@ logger = logging.getLogger('shop')
 
 
 class Cart:
-    db_client = None
-
-    def __init__(self, db_client=None):
-        if Cart.db_client is None:
-            Cart.db_client = db_client
-        self.cart_collection = Cart.db_client["kikimora"]["cart"]
-
+    def __init__(self):
+        self.db_client = MongoDBClient.get_client()
+        self.cart_collection = self.db_client["kikimora"]["cart"]
+            
     def ping(self):
         try:
             self.db_client.admin.command('ping')
