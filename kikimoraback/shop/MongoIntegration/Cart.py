@@ -24,12 +24,13 @@ class Cart:
             logger.critical(f"Не удалось подключиться к mongodb.\n Errpr:{e}")
             return False
 
-    def get_cart_data(self, user_id):
-        # Используем pymongo для синхронного запроса
+    def get_cart_data(self, user_id=None, payment_id=None):
+        """Получить информацию о корзине клиента по его id или с помощью payment_id"""
+        if payment_id:
+            return self.cart_collection.find_one({"payment_id": payment_id})
         return self.cart_collection.find_one({"customer": user_id})
 
     def create_cart(self, user_id, front_cart_data):
-        # Синхронная вставка в коллекцию
         if not self.get_cart_data(user_id):
             self.cart_collection.insert_one({"customer": user_id,
                                              "products": front_cart_data['products'],
@@ -191,11 +192,18 @@ class Cart:
         if not promo_data.min_sum:
             ...
 
-    def add_payement_id(self, payment_id, user_id):
-        self.cart_collection.update_one({"customer": user_id}, {'$set': {'payment_id': payment_id}})
+    def add_payement_data(self, payment_id, user_id, order_number):
+        self.cart_collection.update_one({"customer": user_id}, {'$set': {'payment_id': payment_id,
+                                                                         'order_number': order_number}})
 
     def remove_payement_id(self, payment_id, user_id):
         self.cart_collection.update_one({"customer": user_id}, {'$unset': {'payment_id': payment_id}})
+        
+    def delete_cart(self, user_id=None, payment_id=None):
+        if payment_id:
+            self.cart_collection.delete_one({"payment_id": payment_id})
+        else:
+            self.cart_collection.delete_one({"customer": user_id})
 
     def create_indexes(self):
         self.cart_collection.create_index([("customer", ASCENDING)])
