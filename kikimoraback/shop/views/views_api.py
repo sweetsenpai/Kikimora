@@ -72,7 +72,7 @@ class ProductViewSet(viewsets.ViewSet):
     def by_subcategory(self, request, subcategory_id=None):
         products = get_products_sub_cash(f"products_sub_{subcategory_id}", subcategory_id)
         paginator = self.pagination_class()
-        result_page = paginator.paginate_queryset(products, request)
+        result_page = paginator.paginate_queryset(products.order_by('name'), request)
         serializer = self.serializer_class(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
