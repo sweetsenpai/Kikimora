@@ -24,6 +24,7 @@ urlpatterns = [
     path('api/products/subcategory/<int:subcategory_id>/', product_by_subcategory, name='products-by-subcategory'),
     path('api/products/category/<int:category_id>/', product_by_category, name='products-by-category'),
     path('api/autocomplete/product/', views_api.ProductAutocompleteView.as_view(), name='product-autocomplete-api'),
+    path('api/menu/subcategory/', views_api.MenuSubcategory.as_view(), name='sub-menu'),
     # PRICE CHANGERS
     path('api/discount', views_api.DiscountProductActiveList.as_view(), name='api-discount'),
     path('api/discounts/stop/<int:discount_id>/', views_api.StopDiscountView.as_view(), name='stop_discount_api'),

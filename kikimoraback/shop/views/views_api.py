@@ -51,6 +51,11 @@ class CategoryList(generics.ListAPIView):
     serializer_class = CategorySerializer
 
 
+class MenuSubcategory(generics.ListAPIView):
+    queryset = subcategory_cash()
+    serializer_class = MenuSubcategorySerializer
+
+
 class ProductApi(generics.ListAPIView):
     serializer_class = ProductSerializer
 

@@ -76,6 +76,14 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
 
 
+class MenuSubcategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subcategory
+        fields = [
+            'subcategory_id',
+            'name']
+
+
 class SubcategorySerializer(serializers.ModelSerializer):
     products = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Product.objects.all()

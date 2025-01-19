@@ -4,6 +4,15 @@ from .serializers import DiscountSerializer
 from rest_framework.renderers import JSONRenderer
 
 
+def subcategory_cash():
+    cash_kay = 'subcategory'
+    sub_cash = cache.get(cash_kay)
+    if not sub_cash:
+        sub_cash = Subcategory.objects.filter(visibility=True)
+        cache.set(cash_kay, sub_cash, timeout=60*15)
+    return sub_cash
+
+
 def active_products_cash():
     cash_key = 'products'
     product_cash = cache.get(cash_key)
