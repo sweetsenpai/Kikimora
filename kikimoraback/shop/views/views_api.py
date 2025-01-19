@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.pagination import PageNumberPagination
 from celery.result import AsyncResult
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -60,19 +61,24 @@ class ProductApi(generics.ListAPIView):
 
 class ProductViewSet(viewsets.ViewSet):
     serializer_class = ProductSerializer
+    pagination_class = PageNumberPagination
 
     @action(detail=False, methods=['get'], url_path='subcategory/(?P<subcategory_id>[^/.]+)')
     def by_subcategory(self, request, subcategory_id=None):
         products = get_products_sub_cash(f"products_sub_{subcategory_id}", subcategory_id)
-        serializer = self.serializer_class(products, many=True)
-        return Response(serializer.data)
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(products, request)
+        serializer = self.serializer_class(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='category/(?P<category_id>[^/.]+)')
     def by_category(self, request, category_id=None):
         subcategories = Subcategory.objects.filter(category_id=category_id)
         products = get_products_sub_cash(f"products_sub_{subcategory_id}", subcategory_id)
-        serializer = self.serializer_class(products, many=True)
-        return Response(serializer.data)
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(products, request)
+        serializer = self.serializer_class(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class ProductAutocompleteView(APIView):
