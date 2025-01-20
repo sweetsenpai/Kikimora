@@ -72,7 +72,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 class UserBonusSystem(models.Model):
     bonus_id = models.AutoField(primary_key=True)
-    user_bonus = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user_bonus = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='bonus')
     bonus_ammount = models.IntegerField()
 
     def __str__(self):
@@ -81,7 +81,7 @@ class UserBonusSystem(models.Model):
 
 class UserAddress(models.Model):
     address_id = models.AutoField(primary_key=True)
-    address_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    address_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='address')
     street = models.CharField(max_length=100, help_text='Улица', db_index=True)
     building = models.CharField(max_length=100, help_text='Дом', null=True, blank=True)
     apartment = models.CharField(max_length=100, help_text='Квартира', null=True, blank=True)

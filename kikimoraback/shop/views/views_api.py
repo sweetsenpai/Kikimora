@@ -172,6 +172,16 @@ class RegisterUserView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class TestUserAPi(APIView):
+    serializer_class = UserDataSerializer
+
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        user_data = CustomUser.objects.get(user_id=user_id)
+        serializer = self.serializer_class(user_data, many=False)
+        return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+
 class UserDataView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
@@ -191,108 +201,13 @@ class UserDataView(APIView):
         return Response(serializer.data)
 
 
-class UpdateCRM(APIView):
-    def get(self, request):
-        insales_url = os.getenv("INSALES_URL")
-        products = Product.objects.all()
-        for product in products:
-            response = requests.post(url=insales_url+'collects.json', json={
-                "collect": {
-                    "collection_id": product.subcategory.subcategory_id,
-                    "product_id": product.product_id}
-            })
-            if response.status_code == 201:
-                logger.info(f'{product.name} успешно добавлен в {product.subcategory.name}!')
+class UpdateUsersData(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
-        return Response(status=status.HTTP_201_CREATED)
+    def post(self, request):
 
-
-class CheckCRMChanges(APIView):
-    def get(self, request):
-        insales_url = os.getenv("INSALES_URL")
-        sub_page = 1
-
-        while True:
-            # Получение данных о подкатегориях (коллекциях)
-            sub_response = requests.get(f"{insales_url}collections.json", params={"page": sub_page}).json()
-            if not sub_response:
-                break
-
-            for subcat in sub_response:
-                if "сайт" in subcat["title"]:
-                    # Проверяем, существует ли подкатегория в базе
-                    subcategory, created = Subcategory.objects.get_or_create(
-                        subcategory_id=subcat["id"],
-                        defaults={
-                            "name": subcat["title"].replace("сайт", "").strip(),
-                            "category": Category.objects.get(category_id=1),
-                        },
-                    )
-                    if created:
-                        logger.info(f"Добавлена новая подкатегория: {subcategory.name}")
-
-                    # Получение товаров из коллекции
-                    prod_response = requests.get(
-                        f"{insales_url}collects.json", params={"collection_id": subcat["id"]}
-                    ).json()
-
-                    if prod_response:
-                        product_list = []  # Список для массовой вставки товаров
-                        product_photos = []  # Список для массовой вставки фотографий товаров
-                        subcategories_for_products = {}  # Словарь для подкатегорий товаров
-
-                        for product in prod_response:
-                            # Получение данных о товаре
-                            prod_data = requests.get(f"{insales_url}products/{product['product_id']}.json").json()
-
-                            # Проверяем, существует ли товар в базе
-                            if not Product.objects.filter(product_id=prod_data["id"]).exists():
-                                # Создаем новый товар
-                                new_prod = Product(
-                                    product_id=prod_data["id"],
-                                    name=re.sub(r"\s*\(.*?\)\s*", "", prod_data["title"]),
-                                    description=prod_data["description"],
-                                    price=float(prod_data["variants"][0]["price_in_site_currency"]),
-                                    weight=prod_data["variants"][0]["weight"],
-                                    bonus=round(float(prod_data["variants"][0]["price_in_site_currency"]) * 0.01),
-                                )
-                                product_list.append(new_prod)
-
-                                # Добавляем подкатегории для товара
-                                linked_subcategories = Subcategory.objects.filter(
-                                    subcategory_id__in=prod_data.get("collections_ids", [])
-                                )
-                                if linked_subcategories.exists():
-                                    subcategories_for_products[new_prod] = linked_subcategories
-
-                                # Сохраняем фотографии товара
-                                for image in prod_data["images"]:
-                                    photo = ProductPhoto(
-                                        product=new_prod,  # Привязываем фотографию к текущему товару
-                                        photo_url=image["external_id"],
-                                        is_main=(image["position"] == 1),
-                                    )
-                                    product_photos.append(photo)
-
-                        # После цикла сохраняем товары и фотографии в транзакции
-                        with transaction.atomic():
-                            # Массовая вставка товаров
-                            if product_list:
-                                Product.objects.bulk_create(product_list)
-
-                            # Привязываем подкатегории ко всем товарам
-                            for product, subcategories in subcategories_for_products.items():
-                                product.subcategory.add(*subcategories)
-
-                            # Массовая вставка фотографий товаров
-                            if product_photos:
-                                ProductPhoto.objects.bulk_create(product_photos)
-
-                        logger.info(f"{len(product_list)} товаров и {len(product_photos)} фотографий добавлено в базу данных.")
-
-            sub_page += 1
-
-        return Response(status=status.HTTP_201_CREATED)
+        return Response(status.HTTP_200_OK)
 
 
 class YandexCalculation(APIView):

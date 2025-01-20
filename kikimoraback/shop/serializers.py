@@ -8,22 +8,26 @@ from .models import *
 class UserAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserAddress
-        fields = ('address_id', 'address_user', 'street', 'building', 'apartment')
+        fields = ('address_id', 'street', 'building', 'apartment')
 
 
 class UserBonusSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserBonusSystem
-        fields = ('bonus_id', 'user_bonus', 'bonus_ammount')
+        fields = ('bonus_id', 'bonus_ammount')
 
 
 class UserDataSerializer(serializers.ModelSerializer):
-    bonus = UserBonusSerializer(many=True, read_only=True)
+    bonus = serializers.SerializerMethodField()
     address = UserAddressSerializer(many=True, read_only=True)
 
     class Meta:
         model = CustomUser
         fields = ('email', 'user_fio', 'phone', 'bd', 'bonus', 'address')
+
+    def get_bonus(self, obj):
+        user_bonus = UserBonusSystem.objects.filter(user_bonus=obj).first()
+        return user_bonus.bonus_ammount if user_bonus else 0
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -71,7 +75,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'photos',
             'bonus',
             'weight',
-            'subcategory',  # Обновлено для Many-to-Many
+            'subcategory',
             'visibility'
         ]
 
