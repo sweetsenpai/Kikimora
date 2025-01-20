@@ -142,17 +142,22 @@ class Login(APIView):
             refresh = RefreshToken.for_user(user)
             update_last_login(None, user)
 
-            return Response({
+            response = JsonResponse({
                 "message": "Успешный вход.",
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
             }, status=status.HTTP_200_OK)
+
+            # Устанавливаем куки на сервере
+            response.set_cookie("access_token", str(refresh.access_token), httponly=True, secure=True, samesite='Strict')
+            response.set_cookie("refresh_token", str(refresh), httponly=True, secure=True, samesite='Strict')
+
+            return response
         else:
             return Response(
                 {"error": "Неверный логин или пароль."},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-
 
 class RegisterUserView(APIView):
     def post(self, request):
@@ -160,7 +165,8 @@ class RegisterUserView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             refresh = RefreshToken.for_user(user)
-            return Response({
+
+            response = JsonResponse({
                 "message": "Пользователь успешно зарегистрирован.",
                 "tokens": {
                     "refresh": str(refresh),
@@ -168,6 +174,12 @@ class RegisterUserView(APIView):
                 },
                 "user": UserDataSerializer(user).data
             }, status=status.HTTP_201_CREATED)
+
+            # Устанавливаем куки на сервере
+            response.set_cookie("access_token", str(refresh.access_token), httponly=True, secure=True, samesite='Strict')
+            response.set_cookie("refresh_token", str(refresh), httponly=True, secure=True, samesite='Strict')
+
+            return response
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
