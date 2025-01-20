@@ -32,7 +32,6 @@ urlpatterns = [
     path('api/limitproduct', views_api.LimitProduct.as_view(), name='api-limitproduct'),
     # CRM WORK
     path('api/delete_day_product/<int:limittimeproduct_id>/', views_api.DeleteDayProduct.as_view(), name='delete_day_product'),
-    path('api/crm2', views_api.CheckCRMChanges.as_view(), name='check-crm'),
     # DELIVERY
     path('api/calculate_delivery', views_api.YandexCalculation.as_view(), name='calculate-delivery'),
     # CART
