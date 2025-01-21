@@ -1,6 +1,6 @@
 from celery import shared_task
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.db import transaction
 from django.utils import timezone
 from .models import *
@@ -12,6 +12,8 @@ import pymongo
 from .MongoIntegration.Cart import Cart
 from dotenv import load_dotenv
 import pymongo
+import datetime
+
 load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -19,15 +21,123 @@ logger = logging.getLogger(__name__)
 
 @shared_task
 def new_admin_mail(password, email):
-    send_mail('Готов вкалывать?',
-                          f'Привет новый ра..сотрудник!\n'
-                          f'Для входа в систему тебе нужен логин и пароль.\n'
-                          f'Пароль я дам:  {password}  , логин я не дам... \n'
-                          f'Логин это твоя почта она у тебя и так есть.\n'
-                          f'Только прошу, не давай пароль никому кроме себя, а то всем придется не сладко, особенно тебе!',
-                          'settings.EMAIL_HOST_USER',
-                          [email],
-                          fail_silently=False)
+    # Создаем HTML-контент письма
+    html_content = f"""
+    <html>
+        <body>
+            <h1 style="color: #4CAF50;">Добро пожаловать в команду!</h1>
+            <p>Привет, новый <strong>сотрудник</strong>!</p>
+            <p>Для входа в систему тебе понадобятся логин и пароль:</p>
+            <ul>
+                <li><strong>Логин:</strong> {email}</li>
+                <li><strong>Пароль:</strong> {password}</li>
+            </ul>
+            <p>Только прошу, не давай пароль никому, иначе будут проблемы!</p>
+        </body>
+    </html>
+    """
+
+    # Создаем сообщение
+    email_message = EmailMessage(
+        subject="Готов вкалывать?",
+        body=html_content,
+        from_email='settings.EMAIL_HOST_USER',
+        to=[email],
+    )
+
+    email_message.content_subtype = "html"
+    email_message.send(fail_silently=False)
+    return
+
+
+@shared_task()
+def new_order_email(order_data):
+    # Формируем строку с перечислением товаров
+    products_list = "".join(
+        f"""
+        <tr>
+            <td style="border: 1px solid #ddd;">{product['name']}</td>
+            <td style="border: 1px solid #ddd;">{product['quantity']}</td>
+            <td style="border: 1px solid #ddd;">{product['price']} ₽</td>
+        </tr>
+        """
+        for product in order_data["products"]
+    )
+
+    total = order_data["total"]
+    delivery_date = order_data['delivery_data']['date'].strftime("%d.%m.%Y")
+
+    if order_data['delivery_data']['method'] == "Самовывоз":
+        delivery_info = f"""
+            <p>Ваш заказ можно будет забрать по адресу: <b>Санкт-Петербург, ул. 11-я Красноармейская, 11, строение 3.</b></p>
+            <p>Выбранная дата и время получения: <b>{delivery_date} {order_data['delivery_data']['time']}</b></p>
+        """
+    else:
+        delivery_info = f"""
+            <p>Доставка по адресу: <b>{order_data['delivery_data']['street']} {order_data['delivery_data']['building']}, {order_data['delivery_data']['apartment']}</b></p>
+            <p>Выбранная дата и время доставки: <b>{delivery_date} {order_data['delivery_data']['time']}</b></p>
+        """
+        products_list += f"""
+        <tr>
+            <td style="border: 1px solid #ddd;">Доставка</td>
+            <td style="border: 1px solid #ddd;">1</td>
+            <td style="border: 1px solid #ddd;">{order_data['delivery_data']['cost']} ₽</td>
+        </tr>
+        """
+
+    # HTML-содержимое письма
+    html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+                <h1 style="color: #4CAF50;">Спасибо за заказ!</h1>
+                <p>Ваш заказ №<b>1488</b> принят в работу.</p>
+                <p>Детали заказа:</p>
+                <table style="border-collapse: collapse; width: 100%; text-align: left;">
+                    <thead>
+                        <tr style="background-color: #f2f2f2;">
+                            <th style="border: 1px solid #ddd; padding: 8px;">Товар</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Количество</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Цена</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {products_list}
+                    </tbody>
+                </table>
+                <p><strong>Общая стоимость: {total} ₽</strong></p>
+                {delivery_info}
+                <p>Спасибо за ваш заказ! Ждем вас снова.</p>
+
+                <!-- Подвал -->
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+                <footer style="text-align: center; color: #888; font-size: 14px;">
+                    <p>С уважением, команда мастерской "Кикимора"</p>
+                    <p>Контакты: <a href="mailto:info@kikimora.ru" style="color: #4CAF50; text-decoration: none;">info@kikimora.ru</a> | Телефон: <a href="tel:+79992099638" style="color: #4CAF50; text-decoration: none;">+7(999) 209-96-38</a></p>
+                    <p>Адрес: Санкт-Петербург, ул. 11-я Красноармейская, 11, строение 3</p>
+                    <p>Следите за нами: 
+                        <a href="https://vk.com/kikimora" style="color: #4CAF50; text-decoration: none;">ВКонтакте</a> | 
+                        <a href="https://instagram.com/kikimora" style="color: #4CAF50; text-decoration: none;">Instagram</a>
+                    </p>
+                </footer>
+            </body>
+        </html>
+    """
+
+    # Создаем сообщение
+    email_message = EmailMessage(
+        subject=f"Кикимора заказ №1488",
+        body=html_content,
+        from_email='settings.EMAIL_HOST_USER',
+        to=[order_data['customer_data']['email']],
+    )
+
+    # Указываем, что содержимое письма в формате HTML
+    email_message.content_subtype = "html"
+
+    # Отправляем письмо
+    email_message.send(fail_silently=False)
+
+    return
 
 
 @shared_task
@@ -119,10 +229,8 @@ def check_crm_changes():
                                 prod_for_delete = product_in_db - product_in_crm
                                 product_for_create = product_in_crm - prod_for_delete
                                 if prod_for_delete:
-                                    logger.info(f"Список ID для удаления связей:{prod_for_delete}")
                                     for prod_id in prod_for_delete:
                                         Product.objects.get(product_id=prod_id).subcategory.remove(subcategory)
-                                    logger.info(f"Связи успешно удаленны из БД")
 
                             for product in prod_response:
                                 if product['product_id'] in product_for_create:
@@ -157,7 +265,6 @@ def check_crm_changes():
                                             )
                                     else:
                                         product_obj.subcategory.add(subcategory)
-                                        logger.info(f"Связи товара id{product_obj.product_id}  и подкатегории {subcategory.subcategory_id} успешно добавлена в БД")
 
                 sub_page += 1
 

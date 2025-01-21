@@ -6,7 +6,8 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.db import models
 from datetime import datetime, timedelta
-
+import logging
+logger = logging.getLogger('shop')
 
 class AccountManager(BaseUserManager):
     use_in_migrations = True
@@ -72,16 +73,59 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 class UserBonusSystem(models.Model):
     bonus_id = models.AutoField(primary_key=True)
-    user_bonus = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user_bonus = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='bonus')
     bonus_ammount = models.IntegerField()
 
     def __str__(self):
         return f"{self.bonus_id}, {self.user_bonus}, {self.bonus_ammount}"
 
+    @classmethod
+    def add_bonus(cls, user_id: int, bonuses: int)->None:
+        """
+        Начисляет бонусы пользователю. Если запись о пользователе не существует, то запись создается.
+        """
+        try:
+            user = CustomUser.objects.get(user_id=user_id)
+        except CustomUser.DoesNotExist:
+            logger.error(f"Пользователь с id {user_id} не найден. Неудалось начислить баллы за заказ.")
+            raise ValueError(f"Пользователь с id {user_id} не найден.")
+
+        try:
+            bonus_record, created = cls.objects.get_or_create(user_bonus=user)
+            if not created:
+                bonus_record.bonus_ammount += bonuses
+                bonus_record.save()
+            else:
+                bonus_record.bonus_ammount = bonuses
+                bonus_record.save()
+        except Exception as e:
+            raise ValueError(f"Ошибка при начислении бонусов: {e}")
+
+    @classmethod
+    def deduct_bonuses(cls, user_id, bonuses):
+        """
+        Списывает бонусы с аккаунта пользователя.
+        """
+        try:
+            user = CustomUser.objects.get(user_id=user_id)
+        except CustomUser.DoesNotExist:
+            raise ValueError(f"Пользователь с id {user_id} не найден.")
+
+        try:
+            bonus_record = cls.objects.get(user_bonus=user)
+        except cls.DoesNotExist:
+            raise ValueError(f"Запись о бонусах для пользователя с id {user_id} не найдена.")
+
+        if bonus_record.bonus_ammount < bonuses:
+            raise ValueError(f"Ошибка при списании бонусов: Невозможно списать бонусов больше, чем есть у пользователя id {user_id}. Бонусов есть: {bonus_record.bonus_ammount}."
+                             f"'\n Бонусов для списания:{bonuses}")
+        bonus_record.bonus_ammount -= bonuses
+        bonus_record.save()
+
 
 class UserAddress(models.Model):
     address_id = models.AutoField(primary_key=True)
-    address_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    address_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='address')
     street = models.CharField(max_length=100, help_text='Улица', db_index=True)
     building = models.CharField(max_length=100, help_text='Дом', null=True, blank=True)
     apartment = models.CharField(max_length=100, help_text='Квартира', null=True, blank=True)

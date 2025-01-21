@@ -1,20 +1,19 @@
 from pymongo import MongoClient, ASCENDING
+from ..MongoIntegration.db_connection import MongoDBClient
 from collections import defaultdict
+from datetime import datetime
 import logging
-from ..caches import active_products_cash, get_limit_product_cash, get_discount_cash
+from ..caches import active_products_cash, get_limit_product_cash, get_discount_cash, get_promo_cash, user_bonus_cash
 from ..models import Product, Subcategory
-
+import json
 logger = logging.getLogger('shop')
 
 
 class Cart:
-    db_client = None
-
-    def __init__(self, db_client=None):
-        if Cart.db_client is None:
-            Cart.db_client = db_client
-        self.cart_collection = Cart.db_client["kikimora"]["cart"]
-
+    def __init__(self):
+        self.db_client = MongoDBClient.get_client()
+        self.cart_collection = self.db_client["kikimora"]["cart"]
+            
     def ping(self):
         try:
             self.db_client.admin.command('ping')
@@ -23,12 +22,13 @@ class Cart:
             logger.critical(f"Не удалось подключиться к mongodb.\n Errpr:{e}")
             return False
 
-    def get_cart_data(self, user_id):
-        # Используем pymongo для синхронного запроса
+    def get_cart_data(self, user_id=None, payment_id=None):
+        """Получить информацию о корзине клиента по его id или с помощью payment_id"""
+        if payment_id:
+            return self.cart_collection.find_one({"payment_id": payment_id})
         return self.cart_collection.find_one({"customer": user_id})
 
     def create_cart(self, user_id, front_cart_data):
-        # Синхронная вставка в коллекцию
         if not self.get_cart_data(user_id):
             self.cart_collection.insert_one({"customer": user_id,
                                              "products": front_cart_data['products'],
@@ -49,7 +49,8 @@ class Cart:
                 self.cart_collection.update_one({"customer": user_id},
                                                 {"$set": {
                                                     "products": front_cart_data['products'],
-                                                    "total": front_cart_data['total']
+                                                    "total": front_cart_data['total'],
+                                                    "add_bonuses": front_cart_data['add_bonuses']
                                                 }})
                 return self.get_cart_data(user_id)
         else:
@@ -63,6 +64,7 @@ class Cart:
         deleted_products = []
         price_mismatches = []
         total_db = 0
+        bonuses_to_add = 0
         minus_double_check_price = defaultdict(float)
         updated_cart = {'products': []}
 
@@ -82,10 +84,11 @@ class Cart:
             product_data = next((item for item in product_db_data if item.product_id == product['product_id']), None)
 
             if not product_data:
-                # Товар удалён из базы
                 deleted_products.append(product['name'])
                 continue
+            bonuses_to_add += product_data.bonus * product['quantity']
             limit_product = limit_products.filter(product_id=product['product_id']).first()
+
             if limit_product:
                 price = limit_product.price
             # Ищем скидку: сначала для подкатегории, затем индивидуальную
@@ -112,7 +115,6 @@ class Cart:
                     'new_price': price,
                 })
 
-            # Добавляем товар в обновлённую корзину
             updated_cart['products'].append({
                 'product_id': product['product_id'],
                 'name': product['name'],
@@ -120,12 +122,9 @@ class Cart:
                 'quantity': product['quantity'],
             })
 
-            # Учитываем цену в итоговой сумме
             total_db += price * product['quantity']
             minus_double_check_price[product['product_id']] = price * product['quantity']
-            logger.info(f"Товар {product['name']} обработан. Цена: {price}, Количество: {product['quantity']}.")
 
-        # Проверяем итоговую сумму
         if total_db != front_data['total']:
             logger.warning(
                 f'Итоговая сумма не совпадает. Пересчитанная сумма: {total_db}, переданная сумма: {front_data["total"]}.'
@@ -136,8 +135,76 @@ class Cart:
             'deleted_products': deleted_products,
             'price_mismatches': price_mismatches,
             'updated_cart': updated_cart,
+            'add_bonuses': bonuses_to_add
         }
 
+    def add_delivery(self, user_id, delivery_data, customer_data, comment):
+        if delivery_data['deliveryMethod']== 'Доставка':
+            self.cart_collection.update_one({"customer": user_id},
+                                            {"$set": {
+                                                "delivery_data.method": "Доставка",
+                                                "delivery_data.street": delivery_data['street'],
+                                                "delivery_data.building": delivery_data['houseNumber'],
+                                                "delivery_data.apartment": delivery_data.get('apartment'),
+                                                "delivery_data.date":  datetime.strptime(delivery_data['date'], "%Y-%m-%d"),
+                                                "delivery_data.time": delivery_data['time'],
+                                                "delivery_data.cost":  delivery_data['deliveryCost'],
+
+                                                "customer_data.fio": customer_data['fio'],
+                                                "customer_data.phone": customer_data['phone'],
+                                                "customer_data.email": customer_data['email'],
+
+                                                "comment": comment,
+                                                "date_of_creation": datetime.now()
+
+                                            },
+                                            "$inc": {
+                                                "total": delivery_data['deliveryCost']
+                                            },
+                                             })
+        else:
+            self.cart_collection.update_one({"customer": user_id},
+                                            {"$set": {
+                                                "delivery_data.method": "Самовывоз",
+                                                "delivery_data.date": datetime.strptime(delivery_data['date'], "%Y-%m-%d"),
+                                                "delivery_data.time": delivery_data['time'],
+                                                "delivery_data.cost": 0,
+
+                                                "customer_data.fio": customer_data['fio'],
+                                                "customer_data.phone": customer_data['phone'],
+                                                "customer_data.email": customer_data['email'],
+
+                                                "comment": comment,
+                                                "date_of_creation": datetime.now()
+                                            }
+                                            })
+            return
+
+    def apply_promo(self, promo, user_id):
+        promo_data = get_promo_cash().objects.filter(code=promo)
+        cart = self.get_cart_data(user_id)
+        if not promo_data:
+            return None
+        if promo_data.type == 'delivery':
+            return {'delivery_free': True}
+        if promo.promo_product in cart['products']:
+            ...
+        if not promo_data.min_sum:
+            ...
+
+    def add_payement_data(self, payment_id, user_id, order_number, bonuses):
+        self.cart_collection.update_one({"customer": user_id}, {'$set': {'payment_id': payment_id,
+                                                                         'order_number': order_number,
+                                                                         'bonuses_deducted': bonuses}})
+
+    def remove_payement_id(self, payment_id, user_id):
+        self.cart_collection.update_one({"customer": user_id}, {'$unset': {'payment_id': payment_id}})
+        
+    def delete_cart(self, user_id=None, payment_id=None):
+        if payment_id:
+            self.cart_collection.delete_one({"payment_id": payment_id})
+        else:
+            self.cart_collection.delete_one({"customer": user_id})
+
     def create_indexes(self):
-        # Синхронное создание индексов
         self.cart_collection.create_index([("customer", ASCENDING)])
