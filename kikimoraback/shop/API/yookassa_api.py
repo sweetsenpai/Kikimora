@@ -18,14 +18,15 @@ class PaymentYookassa:
     def __init__(self):
         Configuration.configure('1007767', 'test__kXJEEjyiSkZNQzUGm5nb5EwNtgjz4HHAIBXojqhYMU')
 
-    def send_payment_request(self, user_data, cart, order_id, delivery_data):
+    def send_payment_request(self, user_data, cart, order_id, delivery_data, bonuses):
+        bonuses = bonuses or 0
         items=[]
         for product in cart['products']:
             items.append({
                 "description": product['name'],
                 "quantity": product['quantity'],
                 "amount": {
-                    "value": product['price'],
+                    "value": round(product['price'] - ((product['price']/cart['total']) * bonuses)),
                     "currency": "RUB"},
                 "vat_code": "1",
                 "payment_mode": "prepayment",
@@ -48,7 +49,7 @@ class PaymentYookassa:
         payement = \
             Payment.create({
                 "amount": {
-                    "value": cart['total'],
+                    "value": round(cart['total'] - bonuses),
                     "currency": "RUB"
                 },
                 "confirmation": {
@@ -56,10 +57,7 @@ class PaymentYookassa:
                     "return_url": "http://localhost:3000/"
                 },
                 "capture": True,
-                "description": f"Заказ №{order_id}",
-                "metadata": {
-                    'orderNumber': f'{order_id}'
-                },
+                "description": f"Оплата №{order_id}",
                 "receipt": {
                     "customer": {
                         "full_name": user_data['fio'],
@@ -71,6 +69,7 @@ class PaymentYookassa:
                 }
             })
         try:
+            logger.info(f"Платеж {order_id} успешно создан.")
             return payement.json()
         except KeyError as e:
             logger.error(f"Ошибка при извлечении данных из ответа: {e}")

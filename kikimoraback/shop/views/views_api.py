@@ -159,6 +159,7 @@ class Login(APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
+
 class RegisterUserView(APIView):
     def post(self, request):
         serializer = RegistrationSerializer(data=request.data)
@@ -296,34 +297,30 @@ class CheckCart(APIView):
                 return Response({"error": "Пользователь не найден."}, status=status.HTTP_404_NOT_FOUND)
         else:
             user_id = request.COOKIES.get('user_id', None)
-            new_user_card = user_id is None  # Если куки нет, значит, это новый пользователь
+            new_user_card = user_id is None
             if new_user_card:
                 user_id = str(uuid.uuid4())
 
-        # Подключаемся к базе данных
         user_cart = Cart()
         if not user_cart.ping():
             return Response({"error": "Ошибка подключения."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Обрабатываем данные корзины
         try:
             card_updated = user_cart.check_cart_data(user_id=user_id, front_data=front_data)
+
         except Exception as e:
             logger.error(f'По какой-то причине не удалось обновить корзину.\nОшибка: {e}')
             return Response(status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         if card_updated is None:
-            # Если корзина пустая, возвращаем ответ с куки
             response = Response({"Корзина пустая"}, status=status.HTTP_204_NO_CONTENT)
-            if new_user_card:
-                response.set_cookie('user_id', user_id, max_age=60*60*24*30, httponly=True)
             return response
-
-        # Синхронизируем корзину
         user_cart.sync_cart_data(user_id=user_id, front_cart_data={'total': card_updated['total'],
                                                                    'products': card_updated['updated_cart']['products']})
 
         response = Response(status=status.HTTP_200_OK, data=card_updated)
+        if new_user_card:
+            response.set_cookie('user_id', user_id, max_age=60 * 60 * 24 * 30, httponly=True)
         # if promo:
         #     user_cart.apply_promo(promo)
         if isinstance(user, AnonymousUser):
@@ -342,7 +339,7 @@ class SyncCart(APIView):
             user_data = CustomUser.objects.get(user_id=user.user_id)
         except CustomUser.DoesNotExist:
             return Response({"error": "Пользователь не найден."}, status=404)
-        cart = Cart(os.getenv('MONGOCON'))
+        cart = Cart()
         return Response(data=cart.sync_cart_data(user_id=user_data.user_id, front_cart_data=front_data['cart'])['products'], status=status)
 
 
@@ -366,6 +363,7 @@ class CheckPromo(APIView):
 class Payment(APIView):
     def post(self, request):
         reg_user = request.user
+        bonuses = request.data.get('usedBonus')
         user_data = request.data.get('userData')
         delivery_data = request.data.get('deliveryData')
         comment = request.data.get('comment')
@@ -390,18 +388,23 @@ class Payment(APIView):
         order = Order()
         user_cart.add_delivery(user_id, delivery_data, user_data, comment)
         cart_data = user_cart.get_cart_data(user_id=user_id)
+
         order_number = order.get_neworder_num(user_id)
         response = json.loads(payment.send_payment_request(user_data=user_data,
                                                            cart=cart_data,
                                                            order_id=order_number,
-                                                           delivery_data=delivery_data))
+                                                           delivery_data=delivery_data,
+                                                           bonuses=bonuses))
         if not response:
             return Response({"error": "Во время оформления заказа произошла ошибка.\n"
                                       "Попробуйте перезагрузить страниц."},
                             status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        user_cart.add_payement_data(user_id=user_id, payment_id=response['id'], order_number=order_number)
+        user_cart.add_payement_data(user_id=user_id, payment_id=response['id'], order_number=order_number, bonuses=bonuses)
 
-        return Response(status=200, data={'paymentLink': response['confirmation']['confirmation_url']})
+        return Response(
+            {"detail": "Redirecting to payment", "redirect_url": response['confirmation']['confirmation_url']},
+            status=status.HTTP_302_FOUND
+        )
 
 
 def get_client_ip(request):

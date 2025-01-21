@@ -4,6 +4,15 @@ from .serializers import DiscountSerializer
 from rest_framework.renderers import JSONRenderer
 
 
+def user_bonus_cash():
+    cash_key = 'bonus'
+    bonus_cash = cache.get(cash_key)
+    if not bonus_cash:
+        bonus_cash = UserBonusSystem.objects.all()
+        cache.set(cash_key, bonus_cash, timeout=60*15)
+    return bonus_cash
+
+
 def subcategory_cash():
     cash_kay = 'subcategory'
     sub_cash = cache.get(cash_kay)

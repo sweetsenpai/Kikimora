@@ -3,7 +3,7 @@ from ..MongoIntegration.db_connection import MongoDBClient
 from collections import defaultdict
 from datetime import datetime
 import logging
-from ..caches import active_products_cash, get_limit_product_cash, get_discount_cash, get_promo_cash
+from ..caches import active_products_cash, get_limit_product_cash, get_discount_cash, get_promo_cash, user_bonus_cash
 from ..models import Product, Subcategory
 import json
 logger = logging.getLogger('shop')
@@ -112,7 +112,6 @@ class Cart:
                     'new_price': price,
                 })
 
-            # Добавляем товар в обновлённую корзину
             updated_cart['products'].append({
                 'product_id': product['product_id'],
                 'name': product['name'],
@@ -120,10 +119,9 @@ class Cart:
                 'quantity': product['quantity'],
             })
 
-            # Учитываем цену в итоговой сумме
             total_db += price * product['quantity']
             minus_double_check_price[product['product_id']] = price * product['quantity']
-        # Проверяем итоговую сумму
+
         if total_db != front_data['total']:
             logger.warning(
                 f'Итоговая сумма не совпадает. Пересчитанная сумма: {total_db}, переданная сумма: {front_data["total"]}.'
@@ -190,9 +188,10 @@ class Cart:
         if not promo_data.min_sum:
             ...
 
-    def add_payement_data(self, payment_id, user_id, order_number):
+    def add_payement_data(self, payment_id, user_id, order_number, bonuses):
         self.cart_collection.update_one({"customer": user_id}, {'$set': {'payment_id': payment_id,
-                                                                         'order_number': order_number}})
+                                                                         'order_number': order_number,
+                                                                         'bonuses_deducted': bonuses}})
 
     def remove_payement_id(self, payment_id, user_id):
         self.cart_collection.update_one({"customer": user_id}, {'$unset': {'payment_id': payment_id}})
