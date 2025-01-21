@@ -61,9 +61,9 @@ class ProductPhotoSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     photos = ProductPhotoSerializer(many=True, read_only=True)
-    subcategory = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Subcategory.objects.all()
-    )
+    # subcategory = serializers.PrimaryKeyRelatedField(
+    #     many=True, queryset=Subcategory.objects.all()
+    # )
 
     class Meta:
         model = Product
@@ -75,7 +75,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'photos',
             'bonus',
             'weight',
-            'subcategory',
+            # 'subcategory',
             'visibility'
         ]
 

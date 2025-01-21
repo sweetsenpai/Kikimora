@@ -316,7 +316,8 @@ class CheckCart(APIView):
             response = Response({"Корзина пустая"}, status=status.HTTP_204_NO_CONTENT)
             return response
         user_cart.sync_cart_data(user_id=user_id, front_cart_data={'total': card_updated['total'],
-                                                                   'products': card_updated['updated_cart']['products']})
+                                                                   'products': card_updated['updated_cart']['products'],
+                                                                   'add_bonuses': card_updated['add_bonuses']})
 
         response = Response(status=status.HTTP_200_OK, data=card_updated)
         if new_user_card:
@@ -390,11 +391,20 @@ class Payment(APIView):
         cart_data = user_cart.get_cart_data(user_id=user_id)
 
         order_number = order.get_neworder_num(user_id)
+
+        if bonuses:
+            try:
+                UserBonusSystem.deduct_bonuses(user_id=user_id, bonuses=bonuses)
+            except Exception as e:
+                logger.error(f"Неудалось списать бонусы с баланса пользователя id {user_id}. Ошибка: {e}")
+                return Response({"error": "Неудалось списать бонусы в счёт заказа."}, status=status.HTTP_400_BAD_REQUEST)
+
         response = json.loads(payment.send_payment_request(user_data=user_data,
                                                            cart=cart_data,
                                                            order_id=order_number,
                                                            delivery_data=delivery_data,
                                                            bonuses=bonuses))
+
         if not response:
             return Response({"error": "Во время оформления заказа произошла ошибка.\n"
                                       "Попробуйте перезагрузить страниц."},
@@ -427,14 +437,18 @@ def yookassa_webhook(request):
     try:
         notification_object = WebhookNotificationFactory().create(event_json)
         response_object = notification_object.object
-
+        user_cart = Cart()
+        user_order = Order()
         if notification_object.event == WebhookNotificationEventType.PAYMENT_SUCCEEDED:
             payment_id = response_object.id
-            user_cart = Cart()
-            user_order = Order()
             if not user_cart.ping():
                 return Response(status=status.HTTP_400_BAD_REQUEST)
             user_cart_data = user_cart.get_cart_data(payment_id=payment_id)
+            try:
+                UserBonusSystem.add_bonus(user_cart_data['customer'], user_cart_data['add_bonuses'])
+            except Exception as e:
+                logger.error(f"Ошибка при начислении баллов пользователю с id {user_cart_data['customer']}.\n Ошибка: {e}")
+
             user_order.create_order_on_cart(user_cart_data)
             if send_new_order(user_cart_data):
                 new_order_email(user_cart_data)
@@ -443,6 +457,15 @@ def yookassa_webhook(request):
             else:
                 logging.error('Не удалось загрузить новый заказ в crm!')
                 return Response(status=status.HTTP_400_BAD_REQUEST)
+        elif notification_object.event == WebhookNotificationEventType.PAYMENT_CANCELED:
+            payment_id = response_object.id
+            user_cart_data = user_cart.get_cart_data(payment_id=payment_id)
+            if user_cart_data['bonuses_deducted']:
+                try:
+                    UserBonusSystem.add_bonus(user_id=user_cart_data['customer'], bonuses=user_cart_data['bonuses_deducted'])
+                except Exception as e:
+                    logger.error(f"Ошибка при позвращении пользователю id {user_cart_data['customer']} бонусов. Ошибка:{e}")
+
     except Exception as e:
         logger.error(f"Ошибка при обработке вебхука Yookassa: {str(e)}, данные: {event_json}")
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -452,16 +475,22 @@ class TestWebhook(APIView):
 # TODO: поправить отображение адреса, сейчас в письме вместо квартиры NOne
 # TODO: решить что-то с номерами заказов которые формирует crm
     def post(self, request):
-        payment_id = "2f1b3e6c-000f-5000-b000-13d319182a5e"
+        payment_id = "2f21eef2-000f-5000-8000-12d6d6fc017a"
         user_cart = Cart()
         user_order = Order()
         if not user_cart.ping():
             return Response(status=status.HTTP_400_BAD_REQUEST)
         user_cart_data = user_cart.get_cart_data(payment_id=payment_id)
-        if send_new_order(user_cart_data):
+        if not send_new_order(user_cart_data):
             user_order.create_order_on_cart(user_cart_data)
             new_order_email(user_cart_data)
             user_cart.delete_cart(payment_id=payment_id)
+
+            try:
+                UserBonusSystem.add_bonus(user_cart_data['customer'], user_cart_data['add_bonuses'])
+            except Exception as e:
+                logger.error(f"Ошибка при начислении баллов пользователю с id {user_cart_data['customer']}.\n Ошибка: {e}")
+
             return Response(status=status.HTTP_200_OK)
         else:
             logging.error('Не удалось загрузить новый заказ в crm!')

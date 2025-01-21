@@ -49,7 +49,8 @@ class Cart:
                 self.cart_collection.update_one({"customer": user_id},
                                                 {"$set": {
                                                     "products": front_cart_data['products'],
-                                                    "total": front_cart_data['total']
+                                                    "total": front_cart_data['total'],
+                                                    "add_bonuses": front_cart_data['add_bonuses']
                                                 }})
                 return self.get_cart_data(user_id)
         else:
@@ -63,6 +64,7 @@ class Cart:
         deleted_products = []
         price_mismatches = []
         total_db = 0
+        bonuses_to_add = 0
         minus_double_check_price = defaultdict(float)
         updated_cart = {'products': []}
 
@@ -82,10 +84,11 @@ class Cart:
             product_data = next((item for item in product_db_data if item.product_id == product['product_id']), None)
 
             if not product_data:
-                # Товар удалён из базы
                 deleted_products.append(product['name'])
                 continue
+            bonuses_to_add += product_data.bonus * product['quantity']
             limit_product = limit_products.filter(product_id=product['product_id']).first()
+
             if limit_product:
                 price = limit_product.price
             # Ищем скидку: сначала для подкатегории, затем индивидуальную
@@ -132,6 +135,7 @@ class Cart:
             'deleted_products': deleted_products,
             'price_mismatches': price_mismatches,
             'updated_cart': updated_cart,
+            'add_bonuses': bonuses_to_add
         }
 
     def add_delivery(self, user_id, delivery_data, customer_data, comment):

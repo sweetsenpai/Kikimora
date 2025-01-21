@@ -49,7 +49,7 @@ class PaymentYookassa:
         payement = \
             Payment.create({
                 "amount": {
-                    "value": round(cart['total'] - bonuses),
+                    "value": cart['total'] - bonuses,
                     "currency": "RUB"
                 },
                 "confirmation": {

@@ -71,6 +71,7 @@ def send_new_order(data):
             'delivery_to_minutes': time_rang['to_minutes'],
             'financial_status': 'paid',
             'comment': data['comment'],
+            'discount': f"В счет заказа использованно {data['bonuses_deducted']} бонусов",
         }
     }
 
@@ -80,11 +81,4 @@ def send_new_order(data):
         return response.json()['number']
     else:
         logger.critical(f"по какой-то причине не удалось загрузить заказ в CRM! Ответ CRM:{response.json()}")
-        print(response.status_code)
         return False
-
-
-#print(requests.get(os.getenv("INSALES_URL")+"payment_gateways.json").json())
-#print(requests.get(os.getenv("INSALES_URL")+"orders/127574022.json").json())
-
-#print(prep_time('14:00-17:00'))
