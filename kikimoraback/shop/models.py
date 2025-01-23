@@ -267,40 +267,6 @@ class PromoSystem(models.Model):
         now = timezone.now()
         return self.start <= now <= self.end
 
-    def apply_promo(self, cart_total, product=None):
-        """
-        Применяет скидку к товару или корзине в зависимости от типа промокода.
-        Общая стоимость заказа не может быть снижена ниже 10% от изначальной.
-        """
-        original_total = cart_total  # Сохраняем исходную сумму
-        if cart_total < self.min_sum:
-            return cart_total  # Не применять, если не выполнено условие минимальной суммы
-
-        if self.type == 'delivery':
-            return cart_total  # Бесплатная доставка не изменяет общую сумму
-
-        elif self.type == 'product_discount' and product == self.promo_product:
-            # Если скидка на конкретный товар
-            if self.discount_amount:
-                discounted_price = max(0, product.price - self.discount_amount)
-            elif self.discount_percent:
-                discounted_price = max(0, product.price * (1 - self.discount_percent / 100))
-            else:
-                discounted_price = product.price
-
-            cart_total = cart_total - (product.price - discounted_price)
-
-        elif self.type == 'cart_discount':
-            # Если скидка на всю корзину
-            if self.discount_amount:
-                cart_total = max(0, cart_total - self.discount_amount)
-            elif self.discount_percent:
-                cart_total = max(0, cart_total * (1 - self.discount_percent / 100))
-
-        # Ограничение: итоговая сумма не должна опускаться ниже 10% от исходной суммы
-        min_allowed_total = original_total * 0.1
-        return max(cart_total, min_allowed_total)
-
 
 class PromoCodeUseg(models.Model):
     promo_id = models.ForeignKey('PromoSystem', on_delete=models.CASCADE)

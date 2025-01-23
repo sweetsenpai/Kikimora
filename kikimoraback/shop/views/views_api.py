@@ -148,7 +148,6 @@ class Login(APIView):
                 "access": str(refresh.access_token),
             }, status=status.HTTP_200_OK)
 
-            # Устанавливаем куки на сервере
             response.set_cookie("access_token", str(refresh.access_token), httponly=True, secure=True, samesite='Strict')
             response.set_cookie("refresh_token", str(refresh), httponly=True, secure=True, samesite='Strict')
 
@@ -176,7 +175,6 @@ class RegisterUserView(APIView):
                 "user": UserDataSerializer(user).data
             }, status=status.HTTP_201_CREATED)
 
-            # Устанавливаем куки на сервере
             response.set_cookie("access_token", str(refresh.access_token), httponly=True, secure=True, samesite='Strict')
             response.set_cookie("refresh_token", str(refresh), httponly=True, secure=True, samesite='Strict')
 
@@ -189,6 +187,7 @@ class UserDataView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
     serializer_class = UserDataSerializer
+    # TODO: вынести  проверку пользователя в отдельную функцию
 
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -204,7 +203,7 @@ class UserDataView(APIView):
             return Response({"error": "Пользователь не найден."}, status=404)
         return Response(status=status.HTTP_200_OK,data=serializer.data)
 
-    def put(self, request, **kwargs):
+    def putch(self, request, **kwargs):
         user = request.user
         user_id = kwargs.get('user_id', user.user_id)
         new_password = request.data.get('new_password')
@@ -217,10 +216,11 @@ class UserDataView(APIView):
         except CustomUser.DoesNotExist:
             return Response({"error": "Пользователь не найден."}, status=404)
 
-        if old_password and not user.check_password(old_password):
-            return Response({"error": "Неверный старый пароль."}, status=400)
-
         if new_password:
+            if not user.is_staff and not old_password:
+                return Response({"error": "Требуется старый пароль."}, status=400)
+            if not user.is_staff and not user.check_password(old_password):
+                return Response({"error": "Неверный старый пароль."}, status=400)
             user.set_password(new_password)
 
         serializer = self.serializer_class(user_data, data=request.data, partial=True)
@@ -332,7 +332,7 @@ class CheckCart(APIView):
 
 class SyncCart(APIView):
     permission_classes = [IsAuthenticated]
-
+    # TODO: реализовать функционал синхронизации корзины между сервером и клиентом
     def post(self, request):
         front_data = request.data.get('cart')
         user = request.user
@@ -409,7 +409,7 @@ class Payment(APIView):
             return Response({"error": "Во время оформления заказа произошла ошибка.\n"
                                       "Попробуйте перезагрузить страниц."},
                             status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        user_cart.add_payement_data(user_id=user_id, payment_id=response['id'], order_number=order_number, bonuses=bonuses)
+        user_cart.add_payment_data(user_id=user_id, payment_id=response['id'], order_number=order_number, bonuses=bonuses)
 
         return Response(
             {"detail": "Redirecting to payment", "redirect_url": response['confirmation']['confirmation_url']},
@@ -428,6 +428,7 @@ def get_client_ip(request):
 
 @csrf_exempt
 def yookassa_webhook(request):
+    # TODO: возможно стоит добавить работу со статусами заказов при оплате. Пока такой функционал не требуется.
     ip = get_client_ip(request)
     if not SecurityHelper().is_ip_trusted(ip):
         logger.warning("Поптыка получить доступ к api оплаты из незарегистрированного источника.")

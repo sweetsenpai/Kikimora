@@ -192,7 +192,7 @@ class Cart:
         if not promo_data.min_sum:
             ...
 
-    def add_payement_data(self, payment_id, user_id, order_number, bonuses):
+    def add_payment_data(self, payment_id, user_id, order_number, bonuses):
         self.cart_collection.update_one({"customer": user_id}, {'$set': {'payment_id': payment_id,
                                                                          'order_number': order_number,
                                                                          'bonuses_deducted': bonuses}})
