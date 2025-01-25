@@ -61,6 +61,9 @@ class ProductPhotoSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     photos = ProductPhotoSerializer(many=True, read_only=True)
+    final_price = serializers.SerializerMethodField()
+    discounts = serializers.SerializerMethodField()
+    # has_limited_offer = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -69,11 +72,26 @@ class ProductSerializer(serializers.ModelSerializer):
             'name',
             'description',
             'price',
-            'photos',
             'bonus',
             'weight',
-            'visibility'
+            'final_price',
+            'discounts',
+            # 'has_limited_offer'
+            'photos',
+
         ]
+
+    def get_final_price(self, obj):
+        return self.context.get('price_map', {}).get(obj.product_id, obj.price)
+
+    def get_discounts(self, obj):
+        return self.context.get('discounts_map', {}).get(obj.product_id, [])
+
+    # def get_has_limited_offer(self, obj):
+    #     return hasattr(obj, 'limittimeproduct')
+
+    def get_photos(self, obj):
+        return self.context.get('photos_map', {}).get(obj.product_id, [])
 
 
 class MenuSubcategorySerializer(serializers.ModelSerializer):

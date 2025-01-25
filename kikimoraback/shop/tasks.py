@@ -3,7 +3,9 @@ from django.conf import settings
 from django.core.mail import EmailMessage
 from django.db import transaction
 from django.utils import timezone
+from .caches import *
 from .models import *
+from .price_calculation import calculate_prices
 import httpx
 import re
 import os
@@ -276,7 +278,7 @@ def check_crm_changes():
 
         logger.info(
             f"Successfully added {len(new_subcategories)} subcategories, {len(new_products)} products, and {len(new_photos)} photos.")
-
+        update_price_cache()
     except Exception as e:
         logger.error(f"Error in `check_crm_changes`: {e}")
         raise
@@ -287,3 +289,14 @@ def clean_up_mongo():
     collection = pymongo.MongoClient(os.getenv("MONGOCON"))['kikimora']['cart']
     result = collection.delete_many({"unregistered": True})
     logger.info(f"Удалено {result.deleted_count} корзин с меткой unregistered.")
+
+
+@shared_task
+def update_price_cache():
+    """
+    Фоновая задача для предрасчета цен товаров.
+    """
+    products = active_products_cash()
+    result = calculate_prices(products)
+    cache.set("all_products_prices", result, timeout=None)
+    logger.info("Кэширование цен товаров прошло успешно.")

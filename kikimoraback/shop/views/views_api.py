@@ -39,7 +39,7 @@ from dotenv import load_dotenv
 import logging
 import random
 from yookassa import Webhook
-from ..tasks import new_order_email
+from ..tasks import new_order_email, update_price_cache
 
 load_dotenv()
 logger = logging.getLogger('shop')
@@ -70,19 +70,27 @@ class ProductViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'], url_path='subcategory/(?P<subcategory_id>[^/.]+)')
     def by_subcategory(self, request, subcategory_id=None):
-        products = get_products_sub_cash(f"products_sub_{subcategory_id}", subcategory_id)
-        paginator = self.pagination_class()
-        result_page = paginator.paginate_queryset(products.order_by('name'), request)
-        serializer = self.serializer_class(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        cached_data = cache.get("all_products_prices")
+        if not cached_data:
+            update_price_cache()
+            cached_data = cache.get("all_products_prices")
 
-    @action(detail=False, methods=['get'], url_path='category/(?P<category_id>[^/.]+)')
-    def by_category(self, request, category_id=None):
-        subcategories = Subcategory.objects.filter(category_id=category_id)
-        products = get_products_sub_cash(f"products_sub_{subcategory_id}", subcategory_id)
+        products = Product.objects.filter(subcategory__subcategory_id=subcategory_id).order_by('name')
+
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(products, request)
-        serializer = self.serializer_class(result_page, many=True)
+        context = {
+            'price_map': cached_data['price_map'],
+            'discounts_map': cached_data['discounts_map'],
+            'photos_map': cached_data['photos_map']
+        }
+
+        serializer = self.serializer_class(
+            result_page,
+            many=True,
+            context=context
+        )
+
         return paginator.get_paginated_response(serializer.data)
 
 
