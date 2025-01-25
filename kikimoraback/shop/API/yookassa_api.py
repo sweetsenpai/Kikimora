@@ -13,7 +13,7 @@ logger.setLevel(logging.DEBUG)
 key = 'test__kXJEEjyiSkZNQzUGm5nb5EwNtgjz4HHAIBXojqhYMU'
 id = '1007767'
 
-
+# TODO: Доработать использование баллов, после ввода Decimal стали появляться ошибки, возможно стоит добавить проверку, можно ли списать все баллы с стоимости одного товара
 class PaymentYookassa:
     def __init__(self):
         Configuration.configure(os.getenv("YOOMONEY_ID_2"), os.getenv("YOOMONEY_KEY_2"))
@@ -46,14 +46,13 @@ class PaymentYookassa:
 
             if product != last_product:
                 bonus_for_product = (product_price / cart_total * bonuses).quantize(
-                    Decimal('0.01'), rounding=ROUND_HALF_UP
-                )
+                    Decimal('0.01'), rounding=ROUND_HALF_UP)
                 remaining_bonuses -= bonus_for_product
                 items.append({
                     "description": product['name'],
                     "quantity": product['quantity'],
                     "amount": {
-                        "value": (product_price - bonus_for_product ).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                        "value": float((product_price - bonus_for_product).quantize(Decimal('0'), rounding=ROUND_HALF_UP)),
                         "currency": "RUB"
                     },
                     "vat_code": "1",
@@ -67,7 +66,7 @@ class PaymentYookassa:
                     "description": product['name'],
                     "quantity": product['quantity'],
                     "amount": {
-                        "value": (product_price - remaining_bonuses).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                        "value": float((product_price - remaining_bonuses).quantize(Decimal('0'), rounding=ROUND_HALF_UP)),
                         "currency": "RUB"
                     },
                     "vat_code": "1",
@@ -77,12 +76,12 @@ class PaymentYookassa:
                     "measure": "piece"
                 })
 
-        delivery_cost = Decimal(delivery_data['deliveryCost'])
+        delivery_cost = delivery_data['deliveryCost']
         items.append({
             "description": delivery_data['deliveryMethod'],
             "quantity": 1,
             "amount": {
-                "value": delivery_cost.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                "value": delivery_cost,
                 "currency": "RUB"
             },
             "vat_code": "1",
@@ -94,7 +93,7 @@ class PaymentYookassa:
 
     def send_payment_request(self, user_data, cart, order_id, delivery_data, bonuses):
         bonuses = bonuses or 0
-
+        print(self.item_check_builder(cart, delivery_data, bonuses))
         payement = \
             Payment.create({
                 "amount": {
