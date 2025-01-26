@@ -3,8 +3,13 @@ from ..MongoIntegration.db_connection import MongoDBClient
 from collections import defaultdict
 from datetime import datetime
 import logging
-from ..caches import active_products_cash, get_limit_product_cash, get_discount_cash, get_promo_cash, user_bonus_cash
+from ..caches import active_products_cash, \
+                    get_limit_product_cash, \
+                    get_discount_cash, \
+                    get_promo_cash, user_bonus_cash
 from ..models import Product, Subcategory
+from ..tasks import update_price_cache
+from ..serializers import ProductSerializer
 import json
 logger = logging.getLogger('shop')
 
@@ -61,70 +66,64 @@ class Cart:
                 return None
 
     def check_cart_data(self, front_data, user_id):
+        """
+        Проверяет данные корзины, переданные от фронтенда, и возвращает актуальные данные.
+
+        Args:
+            front_data (dict): Данные корзины от фронтенда.
+            user_id (int): ID пользователя.
+
+        Returns:
+            dict: Словарь с актуальными данными корзины.
+        """
         deleted_products = []
         price_mismatches = []
         total_db = 0
         bonuses_to_add = 0
-        minus_double_check_price = defaultdict(float)
         updated_cart = {'products': []}
 
         if not front_data:
-            logger.warning(f'Корзина пользователя с id {user_id} пришла пустой от frontend.')
+            logger.warning(f'Корзина пользователя с id {user_id} пришла пустой от фронтенда.')
             return None
 
-        # Кэшируем скидки и товары
-        active_discounts = get_discount_cash()
-        limit_products = get_limit_product_cash()
-        product_ids = [product['product_id'] for product in front_data['products']]
-
-        product_db_data = active_products_cash().filter(product_id__in=product_ids)
-
+        # Получаем кэшированные данные о ценах, скидках и фотографиях
+        cached_data = update_price_cache()
+        product_cash = active_products_cash()
+        price_map = cached_data['price_map']
         # Пройдем по всем товарам в корзине
         for product in front_data['products']:
-            product_data = next((item for item in product_db_data if item.product_id == product['product_id']), None)
+            product_id = product['product_id']
 
-            if not product_data:
+            # Проверяем, есть ли товар в кэше
+            if product_id not in price_map:
                 deleted_products.append(product['name'])
                 continue
-            bonuses_to_add += product_data.bonus * product['quantity']
-            limit_product = limit_products.filter(product_id=product['product_id']).first()
 
-            if limit_product:
-                price = limit_product.price
-            # Ищем скидку: сначала для подкатегории, затем индивидуальную
-            else:
-                discount = active_discounts.filter(subcategory__in=product_data.subcategory.all()).first()
-                product_discount = active_discounts.filter(product_id=product['product_id']).first()
-                price = product_data.price
-                if product_discount:
-                    discount = product_discount
-
-                    # Рассчитываем актуальную цену с учётом скидок
-                if discount:
-                    if discount.discount_type == 'percentage':
-                        price -= price * (discount.value / 100)
-                    else:
-                        price -= discount.value
+            # Получаем актуальную цену и бонусы из кэша
+            final_price = price_map[product_id]
+            bonuses_to_add += product_cash.get(product_id=product['product_id']).bonus * product['quantity']
 
             # Сравниваем цену с переданной от фронтенда
-            if price != product['price']:
+            if final_price != product['price']:
                 price_mismatches.append({
-                    'product_id': product['product_id'],
+                    'product_id': product_id,
                     'name': product['name'],
                     'old_price': product['price'],
-                    'new_price': price,
+                    'new_price': final_price,
                 })
 
+            # Обновляем данные корзины
             updated_cart['products'].append({
-                'product_id': product['product_id'],
+                'product_id': product_id,
                 'name': product['name'],
-                'price': price,
+                'price': final_price,
                 'quantity': product['quantity'],
             })
 
-            total_db += price * product['quantity']
-            minus_double_check_price[product['product_id']] = price * product['quantity']
+            # Считаем общую сумму
+            total_db += final_price * product['quantity']
 
+        # Проверяем, совпадает ли итоговая сумма
         if total_db != front_data['total']:
             logger.warning(
                 f'Итоговая сумма не совпадает. Пересчитанная сумма: {total_db}, переданная сумма: {front_data["total"]}.'
