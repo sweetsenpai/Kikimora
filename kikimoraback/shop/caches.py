@@ -2,6 +2,7 @@ from django.core.cache import cache
 from .models import *
 from .serializers import DiscountSerializer
 from rest_framework.renderers import JSONRenderer
+from django.db.models import QuerySet
 
 
 def user_bonus_cash():
@@ -22,11 +23,26 @@ def subcategory_cash():
     return sub_cash
 
 
-def active_products_cash():
-    cash_key = 'products'
+def active_products_cash(subcategory_id: int = None)->QuerySet:
+    """
+        Возвращает кэшированные продукты. Если subcategory_id указан, возвращает товары для этой подкатегории.
+        Если subcategory_id не указан, возвращает все видимые товары.
+
+        Args:
+            subcategory_id (int, optional): ID подкатегории для фильтрации товаров. По умолчанию None.
+
+        Returns:
+            QuerySet: Список товаров.
+        """
+    cash_key = f'products_subcategory_id_{subcategory_id}' if subcategory_id else 'products'
+
     product_cash = cache.get(cash_key)
     if not product_cash:
-        product_cash = Product.objects.filter(visibility=True)
+        if subcategory_id:
+            product_cash = Product.objects.filter(subcategory__subcategory_id=subcategory_id).order_by('name')
+        else:
+            product_cash = Product.objects.filter(visibility=True)
+
         cache.set(cash_key, product_cash, timeout=60*15)
     return product_cash
 
