@@ -70,12 +70,8 @@ class ProductViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'], url_path='subcategory/(?P<subcategory_id>[^/.]+)')
     def by_subcategory(self, request, subcategory_id=None):
-        cached_data = cache.get("all_products_prices")
-        if not cached_data:
-            update_price_cache()
-            cached_data = cache.get("all_products_prices")
-
-        products = Product.objects.filter(subcategory__subcategory_id=subcategory_id).order_by('name')
+        cached_data = update_price_cache()
+        products = active_products_cash(subcategory_id)
 
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(products, request)
