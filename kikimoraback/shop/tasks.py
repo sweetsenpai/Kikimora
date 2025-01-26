@@ -2,16 +2,18 @@ from celery import shared_task
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.db import transaction
+from django.core.cache import cache
 from django.utils import timezone
 from .caches import *
 from .models import *
+from functools import wraps
 from .price_calculation import calculate_prices
 import httpx
 import re
 import os
 import logging
 import pymongo
-from .MongoIntegration.Cart import Cart
+# from .MongoIntegration.Cart import Cart
 from dotenv import load_dotenv
 import pymongo
 import datetime
@@ -278,7 +280,7 @@ def check_crm_changes():
 
         logger.info(
             f"Successfully added {len(new_subcategories)} subcategories, {len(new_products)} products, and {len(new_photos)} photos.")
-        update_price_cache()
+        update_price_cache(forced=True)
     except Exception as e:
         logger.error(f"Error in `check_crm_changes`: {e}")
         raise
@@ -291,12 +293,42 @@ def clean_up_mongo():
     logger.info(f"Удалено {result.deleted_count} корзин с меткой unregistered.")
 
 
+def cache_result(cache_key: str, timeout: int = None):
+    """
+    Декоратор для кэширования.
+
+    :param cache_key: Ключ для хранения результата в кэше.
+    :param timeout: Время жизни кэша в секундах. Если None, кэш будет вечным.
+    """
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Извлекаем параметр forced из kwargs, если он есть
+            forced = kwargs.pop('forced', False)
+
+            # Проверяем, есть ли результаты в кэше
+            cached_result = cache.get(cache_key)
+            if cached_result is not None and not forced:
+                return cached_result
+            # Кэшируем полученные данные и сохраняем
+            result = func(*args, **kwargs)
+            cache.set(cache_key, result, timeout=timeout)
+            return result
+
+        return wrapper
+
+    return decorator
+
+
 @shared_task
-def update_price_cache():
+@cache_result("all_products_prices", timeout=None)
+def update_price_cache(forced=False):
     """
     Фоновая задача для предрасчета цен товаров.
+        :param forced: Используется для принудительного создания нового кэша, даже если он есть. По умолчанию false.
     """
     products = active_products_cash()
     result = calculate_prices(products)
-    cache.set("all_products_prices", result, timeout=None)
     logger.info("Кэширование цен товаров прошло успешно.")
+    return result
