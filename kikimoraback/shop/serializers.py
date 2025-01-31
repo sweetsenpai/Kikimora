@@ -99,7 +99,8 @@ class MenuSubcategorySerializer(serializers.ModelSerializer):
         model = Subcategory
         fields = [
             'subcategory_id',
-            'name']
+            'name',
+            'text']
 
 
 class SubcategorySerializer(serializers.ModelSerializer):

@@ -5,8 +5,7 @@ from datetime import datetime
 import logging
 from ..caches import active_products_cash, \
                     get_limit_product_cash, \
-                    get_discount_cash, \
-                    get_promo_cash, user_bonus_cash
+                    get_discount_cash, user_bonus_cash
 from ..models import Product, Subcategory
 from ..tasks import update_price_cache
 from ..serializers import ProductSerializer
@@ -101,7 +100,8 @@ class Cart:
 
             # Получаем актуальную цену и бонусы из кэша
             final_price = price_map[product_id]
-            bonuses_to_add += product_cash.get(product_id=product['product_id']).bonus * product['quantity']
+            product_bonus = product_cash.get(product_id=product['product_id']).bonus
+            bonuses_to_add += product_bonus * product['quantity']
 
             # Сравниваем цену с переданной от фронтенда
             if final_price != product['price']:
@@ -117,6 +117,7 @@ class Cart:
                 'product_id': product_id,
                 'name': product['name'],
                 'price': final_price,
+                'bonus': product_bonus,
                 'quantity': product['quantity'],
             })
 
@@ -144,7 +145,7 @@ class Cart:
                                                 "delivery_data.method": "Доставка",
                                                 "delivery_data.street": delivery_data['street'],
                                                 "delivery_data.building": delivery_data['houseNumber'],
-                                                "delivery_data.apartment": delivery_data.get('apartment'),
+                                                "delivery_data.apartment": delivery_data['appartmentNumber'],
                                                 "delivery_data.date":  datetime.strptime(delivery_data['date'], "%Y-%m-%d"),
                                                 "delivery_data.time": delivery_data['time'],
                                                 "delivery_data.cost":  delivery_data['deliveryCost'],
@@ -179,17 +180,16 @@ class Cart:
                                             })
             return
 
-    def apply_promo(self, promo, user_id):
-        promo_data = get_promo_cash().objects.filter(code=promo)
-        cart = self.get_cart_data(user_id)
-        if not promo_data:
-            return None
-        if promo_data.type == 'delivery':
-            return {'delivery_free': True}
-        if promo.promo_product in cart['products']:
-            ...
-        if not promo_data.min_sum:
-            ...
+    def apply_promo(self, user_id, promo_data):
+        print("____________________________________")
+        print(promo_data)
+        self.cart_collection.update_one({"customer": user_id},
+                                        {"$set":
+                                             {"promo_data.promo_id": promo_data['promocode_id'],
+                                              "promo_data.type": promo_data['type'],
+                                              "promo_data.one_time": promo_data['one_time'],
+                                              "promo_data.value": promo_data.get('discount_value')}})
+        return
 
     def add_payment_data(self, payment_id, user_id, order_number, bonuses):
         self.cart_collection.update_one({"customer": user_id}, {'$set': {'payment_id': payment_id,

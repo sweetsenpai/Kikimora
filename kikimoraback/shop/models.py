@@ -158,7 +158,7 @@ class Subcategory(models.Model):
 class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200, help_text='Название товара', db_index=True)
-    description = models.CharField(max_length=5000, default=None, null=True)
+    description = models.TextField(default=None, null=True)
     price = models.FloatField(default=0.0, help_text='Цена товара')
     weight = models.FloatField(default=0.0, help_text='Вес товара в киллограммах')
     subcategory = models.ManyToManyField(Subcategory, related_name='products')
@@ -236,7 +236,8 @@ class PromoSystem(models.Model):
                 regex='^[A-Za-zА-Яа-я0-9]*$',
                 message="Промокод должен состоять только из букв и цифр."
             )
-        ]
+        ],
+        db_index=True
     )
 
     # Промокод для конкретного товара (опционально)

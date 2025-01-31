@@ -131,7 +131,7 @@ class DeleteDayProduct(APIView):
 
 
 class LimitProduct(generics.ListAPIView):
-    queryset = get_promo_cash()
+    queryset = get_limit_product_cash()
     serializer_class=LimitTimeProductSerializer
 
 
@@ -348,21 +348,99 @@ class SyncCart(APIView):
         return Response(data=cart.sync_cart_data(user_id=user_data.user_id, front_cart_data=front_data['cart'])['products'], status=status)
 
 
-class CheckPromo(APIView):
+class PromoCode(APIView):
     def post(self, request):
-        promo = request.data.get('promo_code')
-        all_pormos = get_promo_cash()
-        promo_data = all_pormos.odjects.filter(code=promo)
+        user = request.user
+        cart_service = Cart()
+        cart_data = cart_service.get_cart_data(user_id=user.user_id)
+        promo_code = request.data.get('promoCode')
+        promo = PromoSystem.objects.filter(code=promo_code, active=True).prefetch_related('promocodeuseg_set').first()
+        print("&&&&&&&&&&&&&&&&&&&&")
+        print(cart_data)
+        # try:
+        response = self.apply_promo(cart_data, promo, user, promo_code)
+        # except Exception as error:
+        #     logger.error(
+        #         f"Ошибка применения промокода.\nPROMO: {promo}\nCART: {cart_data}\nERROR: {error}"
+        #     )
+        #     return Response(
+        #         {"error": "Сейчас невозможно использовать этот промокод. Попробуйте позже."},
+        #         status=status.HTTP_503_SERVICE_UNAVAILABLE
+        #     )
+        return response
 
-        if not promo_data:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        if promo_data.type =='delivery':
-            return Response(status=status.HTTP_200_OK, data={'free_delivery': True})
-        if promo_data.one_time:
-            if check_promo_one_time(user_id, promo):
-                return Response(status=status.HTTP_409_CONFLICT)
-        user_cart = []
-        return Response(status=status.HTTP_200_OK)
+    def apply_promo(self, cart_data, promo, user, promo_code):
+        if not promo:
+            return Response({"error": "Промокод не существует."}, status=status.HTTP_404_NOT_FOUND)
+
+        if promo.one_time and not isinstance(user, AnonymousUser):
+            return Response(
+                {"error": f"Зарегистрируйтесь или войдите в аккаунт, чтобы использовать промокод {promo_code}."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if promo.one_time and promo.promocodeuseg_set.filter(user_id=user.user_id).exists():
+            return Response({"error": "Промокод уже использован."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if promo.min_sum and promo.min_sum > cart_data['total']:
+            return Response(
+                {"error": f"Минимальная стоимость заказа для использования промокода {promo.min_sum} р."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        promo_metadata = {"promocode_id": promo.promo_id, "one_time": promo.one_time}
+
+        if promo.type == "delivery":
+            return self.apply_delivery_discount(cart_data, promo, promo_metadata)
+
+        if promo.amount:
+            return self.apply_fixed_discount(cart_data, promo, promo_metadata)
+
+        return self.apply_percentage_discount(cart_data, promo, promo_metadata)
+
+    def apply_delivery_discount(self, cart_data, promo, promo_metadata):
+        try:
+            if cart_data['delivery_data']['method'] != "Доставка":
+                return Response(
+                    {"error": "Невозможно применить промокод для бесплатной доставки в заказе без доставки."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except KeyError:
+            return Response(
+                {"error": "Невозможно применить промокод для бесплатной доставки в заказе без доставки."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        promo_metadata['type'] = "delivery"
+        promo_metadata['new_total'] = cart_data['total'] - cart_data['delivery_data']['cost']
+        Cart().apply_promo(cart_data['customer'], promo_metadata)
+        return Response(status=status.HTTP_200_OK, data={"freeDelivery": True})
+
+    def apply_fixed_discount(self, cart_data, promo, promo_metadata):
+        total_after_discount = cart_data['total'] - promo.amount
+        if total_after_discount < 1:
+            return Response(
+                {
+                    "error": f"Нельзя применить промокод, недостаточная сумма заказа. Минимальная сумма заказа {promo.min_sum} р."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        promo_metadata['type'] = "fixed"
+        promo_metadata['new_total'] = total_after_discount
+        promo_metadata['discount_value'] = promo.amount
+
+        Cart().apply_promo(cart_data['customer'], promo_metadata)
+        return Response(data={"amount": promo.amount}, status=status.HTTP_200_OK)
+
+    def apply_percentage_discount(self, cart_data, promo, promo_metadata):
+        discount_value = round(cart_data['total'] * (promo.procentage * 0.01))
+        new_total = cart_data['total'] - discount_value
+
+        promo_metadata['type'] = "percentage"
+        promo_metadata['new_total'] = new_total
+        promo_metadata['discount_value'] = promo.procentage
+        Cart().apply_promo(cart_data['customer'], promo_metadata)
+        return Response(data={"percentage": promo.procentage}, status=status.HTTP_200_OK)
 
 
 class Payment(APIView):
@@ -477,16 +555,17 @@ def yookassa_webhook(request):
 
 
 class TestWebhook(APIView):
-# TODO: поправить отображение адреса, сейчас в письме вместо квартиры NOne
 # TODO: решить что-то с номерами заказов которые формирует crm
     def post(self, request):
-        payment_id = "2f21eef2-000f-5000-8000-12d6d6fc017a"
+        payment_id = "2f2c3dce-000f-5000-8000-14aa51f73808"
         user_cart = Cart()
         user_order = Order()
         if not user_cart.ping():
             return Response(status=status.HTTP_400_BAD_REQUEST)
         user_cart_data = user_cart.get_cart_data(payment_id=payment_id)
-        if not send_new_order(user_cart_data):
+        new_order_number = send_new_order(user_cart_data)
+        if new_order_number:
+            print("НОМЕР НОВОГО ЗАКАЗА:", new_order_number)
             user_order.create_order_on_cart(user_cart_data)
             new_order_email(user_cart_data)
             user_cart.delete_cart(payment_id=payment_id)
@@ -495,7 +574,6 @@ class TestWebhook(APIView):
                 UserBonusSystem.add_bonus(user_cart_data['customer'], user_cart_data['add_bonuses'])
             except Exception as e:
                 logger.error(f"Ошибка при начислении баллов пользователю с id {user_cart_data['customer']}.\n Ошибка: {e}")
-
             return Response(status=status.HTTP_200_OK)
         else:
             logging.error('Не удалось загрузить новый заказ в crm!')

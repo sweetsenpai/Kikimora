@@ -8,8 +8,6 @@ import logging
 
 load_dotenv()
 logger = logging.getLogger('shop')
-# cart_db = MongoClient("mongodb://localhost:27017/")["kikimora"]["cart"]
-# data = cart_db.find_one({'customer': 1})
 
 
 def prep_time(time_string: str) -> dict:
@@ -22,14 +20,15 @@ def prep_time(time_string: str) -> dict:
             'to_hour': to_hour,
             'to_minutes': to_minute}
 
-
+# TODO при формировании заказа с доставкой не ставиться корректная цена из бд.
+# TODO решить как отображать бонусы использованные при оформлении заказа.
 def send_new_order(data):
     if data['delivery_data']['method'] == 'Самовывоз':
         addres = "11-ая Красноармейская, д.11 стр. 3 Мастерская Кикимора"
         delivery_variant = os.getenv("SELF_DELIVERY_CODE")
     else:
         addres = f"{data['delivery_data']['street']}, " \
-                 f"{data['delivery_data']['building']}," \
+                 f"{data['delivery_data']['building']}, кв." \
                  f"{data['delivery_data']['apartment']}"
         delivery_variant = os.getenv("DELIVERY_CODE")
 

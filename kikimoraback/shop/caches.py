@@ -5,6 +5,7 @@ from rest_framework.renderers import JSONRenderer
 from django.db.models import QuerySet
 
 
+
 def user_bonus_cash():
     cash_key = 'bonus'
     bonus_cash = cache.get(cash_key)
@@ -75,21 +76,3 @@ def get_limit_product_cash():
         limit_cash = LimitTimeProduct.objects.all()
         cache.set(cash_key, limit_cash, timeout=60 * 15)
     return limit_cash
-
-
-def get_promo_cash():
-    cash_key = "promo"
-    promo_cash = cache.get(cash_key)
-
-    if not promo_cash:
-        # Используем prefetch_related для many-to-many связи
-        promo_cash = LimitTimeProduct.objects.prefetch_related(
-            'product_id__subcategory',  # Получаем связанные подкатегории для каждого товара
-            'product_id__photos',  # Получаем фотографии товара
-            'product_id__subcategory__category'  # Получаем связанные категории для каждой подкатегории
-        )
-
-        # Кешируем данные
-        cache.set(cash_key, promo_cash, timeout=60 * 15)
-
-    return promo_cash

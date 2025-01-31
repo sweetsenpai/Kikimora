@@ -36,6 +36,8 @@ urlpatterns = [
     # CART
     path('api/check_cart', views_api.CheckCart.as_view(), name='ckeck-cart'),
     path('api/sync_cart', views_api.SyncCart.as_view(), name='sunc-cart'),
+    # PROMOCODE
+    path('api/promo', views_api.PromoCode.as_view(), name='prom-api'),
     # PAYMENT
     path('api/payment', views_api.Payment.as_view(), name='payment'),
     path('api/yookassa/test', views_api.TestWebhook.as_view(), name='webhook'),

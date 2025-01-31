@@ -4,6 +4,7 @@ import os
 import logging
 from dotenv import load_dotenv
 from decimal import Decimal, ROUND_HALF_UP
+from pprint import pprint
 
 load_dotenv()
 
@@ -34,7 +35,12 @@ class PaymentYookassa:
             Returns:
                 list: Список товаров и услуги доставки в формате для оплаты.
             """
+        promo_data=cart.get("promo_data")
+
         bonuses = Decimal(bonuses or 0)
+        if promo_data:
+            bonuses+=Decimal(promo_data['value'])
+
         items = []
 
         cart_total = Decimal(cart['total'])
@@ -101,10 +107,16 @@ class PaymentYookassa:
             "payment_mode": "prepayment",
             "payment_subject": "service",
         })
+        pprint(items)
         return items
 
     def send_payment_request(self, user_data, cart, order_id, delivery_data, bonuses):
+        promo_data = cart.get("promo_data")
+
         bonuses = bonuses or 0
+        if promo_data:
+            bonuses += promo_data['value']
+
         payement = \
             Payment.create({
                 "amount": {
