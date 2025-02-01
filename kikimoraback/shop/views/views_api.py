@@ -291,7 +291,6 @@ class YandexCalculation(APIView):
 class CheckCart(APIView):
     def post(self, request):
         front_data = request.data.get('cart')
-        promo = request.data.get('cart')
         user = request.user
         if not isinstance(user, AnonymousUser):
             try:
@@ -336,7 +335,6 @@ class CheckCart(APIView):
 
 class SyncCart(APIView):
     permission_classes = [IsAuthenticated]
-    # TODO: реализовать функционал синхронизации корзины между сервером и клиентом
     def post(self, request):
         front_data = request.data.get('cart')
         user = request.user
@@ -345,7 +343,8 @@ class SyncCart(APIView):
         except CustomUser.DoesNotExist:
             return Response({"error": "Пользователь не найден."}, status=404)
         cart = Cart()
-        return Response(data=cart.sync_cart_data(user_id=user_data.user_id, front_cart_data=front_data['cart'])['products'], status=status)
+
+        return Response(data=cart.sync_cart_data(user_id=user_data.user_id, front_cart_data=front_data), status=status.HTTP_200_OK)
 
 
 class PromoCode(APIView):
@@ -355,18 +354,16 @@ class PromoCode(APIView):
         cart_data = cart_service.get_cart_data(user_id=user.user_id)
         promo_code = request.data.get('promoCode')
         promo = PromoSystem.objects.filter(code=promo_code, active=True).prefetch_related('promocodeuseg_set').first()
-        print("&&&&&&&&&&&&&&&&&&&&")
-        print(cart_data)
-        # try:
-        response = self.apply_promo(cart_data, promo, user, promo_code)
-        # except Exception as error:
-        #     logger.error(
-        #         f"Ошибка применения промокода.\nPROMO: {promo}\nCART: {cart_data}\nERROR: {error}"
-        #     )
-        #     return Response(
-        #         {"error": "Сейчас невозможно использовать этот промокод. Попробуйте позже."},
-        #         status=status.HTTP_503_SERVICE_UNAVAILABLE
-        #     )
+        try:
+            response = self.apply_promo(cart_data, promo, user, promo_code)
+        except Exception as error:
+            logger.error(
+                f"Ошибка применения промокода.\nPROMO: {promo}\nCART: {cart_data}\nERROR: {error}"
+            )
+            return Response(
+                {"error": "Сейчас невозможно использовать этот промокод. Попробуйте позже."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
         return response
 
     def apply_promo(self, cart_data, promo, user, promo_code):

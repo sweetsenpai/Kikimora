@@ -45,24 +45,30 @@ class Cart:
 
     def sync_cart_data(self, user_id, front_cart_data):
         back_user_data = self.get_cart_data(user_id)
-        if front_cart_data:
-            if not back_user_data:
-                self.create_cart(user_id, front_cart_data)
-                return self.get_cart_data(user_id)
+        try:
+            if front_cart_data:
+                if not back_user_data:
+                    self.create_cart(user_id, front_cart_data)
+                    return
+                else:
+                    self.cart_collection.update_one({"customer": user_id},
+                                                    {"$set": {
+                                                        "products": front_cart_data['products'],
+                                                        "total": front_cart_data['total'],
+                                                        "add_bonuses": front_cart_data.get('add_bonuses')
+                                                    }})
+                    return
             else:
-                self.cart_collection.update_one({"customer": user_id},
-                                                {"$set": {
-                                                    "products": front_cart_data['products'],
-                                                    "total": front_cart_data['total'],
-                                                    "add_bonuses": front_cart_data['add_bonuses']
-                                                }})
-                return self.get_cart_data(user_id)
-        else:
-            if back_user_data:
-                logger.info(f'Данные для корзины пользователя с id {user_id} загружены из mongo_db.')
-                return self.get_cart_data(user_id)
-            else:
-                return None
+                if back_user_data:
+                    logger.info(f'Данные для корзины пользователя с id {user_id} загружены из mongo_db.')
+                    return self.get_cart_data(user_id)['products']
+        except Exception as e:
+            logger.error(f"Произошла ошибка при синхронизации корзины. Данные корзины frontend: {front_cart_data}\n"
+                         f"Данные корзины из бд: {back_user_data}\n"
+                         f"ID пользователя: {user_id}\n"
+                         f"ERROR:{e}\n")
+            return
+
 
     def check_cart_data(self, front_data, user_id):
         """
