@@ -236,8 +236,9 @@ def check_crm_changes():
                                 if product['product_id'] in product_for_create:
                                     # Получаем данные о товаре
                                     prod_data = client.get(f"{insales_url}products/{product['product_id']}.json").json()
-
-                                    # Проверяем, существует ли товар в базе
+                                    bonus = float(prod_data['variants'][0]['price_in_site_currency']) * 0.1 if \
+                                    prod_data['variants'][0]['price_in_site_currency'] < 4000 else float(
+                                        prod_data['variants'][0]['price_in_site_currency']) * 0.05                                    # Проверяем, существует ли товар в базе
                                     product_obj, created = Product.objects.get_or_create(
                                         product_id=prod_data['id'],
                                         defaults={
@@ -245,7 +246,7 @@ def check_crm_changes():
                                             'description': prod_data['description'],
                                             'price': float(prod_data['variants'][0]['price_in_site_currency']),
                                             'weight': prod_data['variants'][0]['weight'],
-                                            'bonus': round(float(prod_data['variants'][0]['price_in_site_currency']) * 0.01),
+                                            'bonus': round(bonus),
                                         }
                                     )
 
