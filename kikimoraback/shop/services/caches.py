@@ -1,6 +1,6 @@
 from django.core.cache import cache
-from .models import *
-from .serializers import DiscountSerializer
+from ..models import *
+from ..serializers import DiscountSerializer
 from rest_framework.renderers import JSONRenderer
 from django.db.models import QuerySet
 

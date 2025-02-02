@@ -1,7 +1,6 @@
 from django.utils import timezone
-from django.db.models import Q, Prefetch
+from django.db.models import Prefetch
 from .caches import get_discount_cash, get_limit_product_cash
-from .models import ProductPhoto
 import logging
 
 logger = logging.getLogger('shop')
