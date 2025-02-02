@@ -104,7 +104,6 @@ class PaymentYookassa:
             "payment_mode": "prepayment",
             "payment_subject": "service",
         })
-        pprint(items)
         return items
 
     def send_payment_request(self, user_data, cart, order_id, delivery_data, bonuses):
