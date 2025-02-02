@@ -1,11 +1,10 @@
-from pymongo import MongoClient, ASCENDING
+from pymongo import ASCENDING
 from ..MongoIntegration.db_connection import MongoDBClient
-from collections import defaultdict
 from datetime import datetime
 import logging
-from ..caches import active_products_cash, get_limit_product_cash, get_discount_cash, get_promo_cash, user_bonus_cash
-from ..models import Product, Subcategory
-import json
+from ..services.caches import active_products_cash
+from ..tasks import update_price_cache
+
 logger = logging.getLogger('shop')
 
 
@@ -41,90 +40,92 @@ class Cart:
 
     def sync_cart_data(self, user_id, front_cart_data):
         back_user_data = self.get_cart_data(user_id)
-        if front_cart_data:
-            if not back_user_data:
-                self.create_cart(user_id, front_cart_data)
-                return self.get_cart_data(user_id)
+        try:
+            if front_cart_data:
+                if not back_user_data:
+                    self.create_cart(user_id, front_cart_data)
+                    return
+                else:
+                    self.cart_collection.update_one({"customer": user_id},
+                                                    {"$set": {
+                                                        "products": front_cart_data['products'],
+                                                        "total": front_cart_data['total'],
+                                                        "add_bonuses": front_cart_data.get('add_bonuses')
+                                                    }})
+                    return
             else:
-                self.cart_collection.update_one({"customer": user_id},
-                                                {"$set": {
-                                                    "products": front_cart_data['products'],
-                                                    "total": front_cart_data['total'],
-                                                    "add_bonuses": front_cart_data['add_bonuses']
-                                                }})
-                return self.get_cart_data(user_id)
-        else:
-            if back_user_data:
-                logger.info(f'Данные для корзины пользователя с id {user_id} загружены из mongo_db.')
-                return self.get_cart_data(user_id)
-            else:
-                return None
+                if back_user_data:
+                    logger.info(f'Данные для корзины пользователя с id {user_id} загружены из mongo_db.')
+                    return self.get_cart_data(user_id)['products']
+        except Exception as e:
+            logger.error(f"Произошла ошибка при синхронизации корзины. Данные корзины frontend: {front_cart_data}\n"
+                         f"Данные корзины из бд: {back_user_data}\n"
+                         f"ID пользователя: {user_id}\n"
+                         f"ERROR:{e}\n")
+            return
+
 
     def check_cart_data(self, front_data, user_id):
+        """
+        Проверяет данные корзины, переданные от фронтенда, и возвращает актуальные данные.
+
+        Args:
+            front_data (dict): Данные корзины от фронтенда.
+            user_id (int): ID пользователя.
+
+        Returns:
+            dict: Словарь с актуальными данными корзины.
+        """
         deleted_products = []
         price_mismatches = []
         total_db = 0
         bonuses_to_add = 0
-        minus_double_check_price = defaultdict(float)
         updated_cart = {'products': []}
 
         if not front_data:
-            logger.warning(f'Корзина пользователя с id {user_id} пришла пустой от frontend.')
+            logger.warning(f'Корзина пользователя с id {user_id} пришла пустой от фронтенда.')
             return None
 
-        # Кэшируем скидки и товары
-        active_discounts = get_discount_cash()
-        limit_products = get_limit_product_cash()
-        product_ids = [product['product_id'] for product in front_data['products']]
-
-        product_db_data = active_products_cash().filter(product_id__in=product_ids)
-
+        # Получаем кэшированные данные о ценах, скидках и фотографиях
+        cached_data = update_price_cache()
+        product_cash = active_products_cash()
+        price_map = cached_data['price_map']
         # Пройдем по всем товарам в корзине
         for product in front_data['products']:
-            product_data = next((item for item in product_db_data if item.product_id == product['product_id']), None)
+            product_id = product['product_id']
 
-            if not product_data:
+            # Проверяем, есть ли товар в кэше
+            if product_id not in price_map:
                 deleted_products.append(product['name'])
                 continue
-            bonuses_to_add += product_data.bonus * product['quantity']
-            limit_product = limit_products.filter(product_id=product['product_id']).first()
 
-            if limit_product:
-                price = limit_product.price
-            # Ищем скидку: сначала для подкатегории, затем индивидуальную
-            else:
-                discount = active_discounts.filter(subcategory__in=product_data.subcategory.all()).first()
-                product_discount = active_discounts.filter(product_id=product['product_id']).first()
-                price = product_data.price
-                if product_discount:
-                    discount = product_discount
-
-                    # Рассчитываем актуальную цену с учётом скидок
-                if discount:
-                    if discount.discount_type == 'percentage':
-                        price -= price * (discount.value / 100)
-                    else:
-                        price -= discount.value
+            # Получаем актуальную цену и бонусы из кэша
+            final_price = price_map[product_id]
+            product_bonus = product_cash.get(product_id=product['product_id']).bonus
+            bonuses_to_add += product_bonus * product['quantity']
 
             # Сравниваем цену с переданной от фронтенда
-            if price != product['price']:
+            if final_price != product['price']:
                 price_mismatches.append({
-                    'product_id': product['product_id'],
+                    'product_id': product_id,
                     'name': product['name'],
                     'old_price': product['price'],
-                    'new_price': price,
+                    'new_price': final_price,
                 })
 
+            # Обновляем данные корзины
             updated_cart['products'].append({
-                'product_id': product['product_id'],
+                'product_id': product_id,
                 'name': product['name'],
-                'price': price,
+                'price': final_price,
+                'bonus': product_bonus,
                 'quantity': product['quantity'],
             })
 
-            total_db += price * product['quantity']
-            minus_double_check_price[product['product_id']] = price * product['quantity']
+            # Считаем общую сумму
+            total_db += final_price * product['quantity']
 
+        # Проверяем, совпадает ли итоговая сумма
         if total_db != front_data['total']:
             logger.warning(
                 f'Итоговая сумма не совпадает. Пересчитанная сумма: {total_db}, переданная сумма: {front_data["total"]}.'
@@ -145,7 +146,7 @@ class Cart:
                                                 "delivery_data.method": "Доставка",
                                                 "delivery_data.street": delivery_data['street'],
                                                 "delivery_data.building": delivery_data['houseNumber'],
-                                                "delivery_data.apartment": delivery_data.get('apartment'),
+                                                "delivery_data.apartment": delivery_data['appartmentNumber'],
                                                 "delivery_data.date":  datetime.strptime(delivery_data['date'], "%Y-%m-%d"),
                                                 "delivery_data.time": delivery_data['time'],
                                                 "delivery_data.cost":  delivery_data['deliveryCost'],
@@ -180,19 +181,18 @@ class Cart:
                                             })
             return
 
-    def apply_promo(self, promo, user_id):
-        promo_data = get_promo_cash().objects.filter(code=promo)
-        cart = self.get_cart_data(user_id)
-        if not promo_data:
-            return None
-        if promo_data.type == 'delivery':
-            return {'delivery_free': True}
-        if promo.promo_product in cart['products']:
-            ...
-        if not promo_data.min_sum:
-            ...
+    def apply_promo(self, user_id, promo_data):
+        print("____________________________________")
+        print(promo_data)
+        self.cart_collection.update_one({"customer": user_id},
+                                        {"$set":
+                                             {"promo_data.promo_id": promo_data['promocode_id'],
+                                              "promo_data.type": promo_data['type'],
+                                              "promo_data.one_time": promo_data['one_time'],
+                                              "promo_data.value": promo_data.get('discount_value')}})
+        return
 
-    def add_payement_data(self, payment_id, user_id, order_number, bonuses):
+    def add_payment_data(self, payment_id, user_id, order_number, bonuses):
         self.cart_collection.update_one({"customer": user_id}, {'$set': {'payment_id': payment_id,
                                                                          'order_number': order_number,
                                                                          'bonuses_deducted': bonuses}})

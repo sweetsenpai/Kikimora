@@ -18,6 +18,7 @@ urlpatterns = [
     # USER DATA
     path('api/user/', views_api.UserDataView.as_view(), name='api-user-data'),
     path('api/user/<int:user_id>', views_api.UserDataView.as_view(), name='api-admin-user-data'),
+    path('api/user/order_history', views_api.UsersOrder.as_view(), name='api-order-history'),
     # PRODUCTS
     path('api/categories/', views_api.CategoryList.as_view(), name='category-list'),
     path('api/product/<int:product_id>/', views_api.ProductApi.as_view(), name='product'),
@@ -36,6 +37,8 @@ urlpatterns = [
     # CART
     path('api/check_cart', views_api.CheckCart.as_view(), name='ckeck-cart'),
     path('api/sync_cart', views_api.SyncCart.as_view(), name='sunc-cart'),
+    # PROMOCODE
+    path('api/promo', views_api.PromoCode.as_view(), name='prom-api'),
     # PAYMENT
     path('api/payment', views_api.Payment.as_view(), name='payment'),
     path('api/yookassa/test', views_api.TestWebhook.as_view(), name='webhook'),

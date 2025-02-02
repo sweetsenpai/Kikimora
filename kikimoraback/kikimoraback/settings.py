@@ -215,13 +215,14 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
+            'level': 'DEBUG',  # Установите уровень обработчика на DEBUG
         },
         'info_file': {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs/info.log'),
             'level': 'INFO',
             'formatter': 'verbose',
-            'maxBytes': 1024*1024*5,
+            'maxBytes': 1024 * 1024 * 5,
             'backupCount': 3,
         },
         'error_file': {
@@ -229,7 +230,7 @@ LOGGING = {
             'filename': os.path.join(BASE_DIR, 'logs/error.log'),
             'level': 'ERROR',
             'formatter': 'verbose',
-            'maxBytes': 1024*1024*5,
+            'maxBytes': 1024 * 1024 * 5,
             'backupCount': 3,
         },
         'critical_file': {
@@ -237,7 +238,7 @@ LOGGING = {
             'filename': os.path.join(BASE_DIR, 'logs/critical.log'),
             'level': 'CRITICAL',
             'formatter': 'verbose',
-            'maxBytes': 1024*1024*5,
+            'maxBytes': 1024 * 1024 * 5,
             'backupCount': 3,
         },
     },

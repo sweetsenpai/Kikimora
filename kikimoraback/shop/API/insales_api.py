@@ -8,8 +8,6 @@ import logging
 
 load_dotenv()
 logger = logging.getLogger('shop')
-# cart_db = MongoClient("mongodb://localhost:27017/")["kikimora"]["cart"]
-# data = cart_db.find_one({'customer': 1})
 
 
 def prep_time(time_string: str) -> dict:
@@ -22,14 +20,15 @@ def prep_time(time_string: str) -> dict:
             'to_hour': to_hour,
             'to_minutes': to_minute}
 
-
+# TODO при формировании заказа с доставкой не ставиться корректная цена из бд.
+# TODO решить как отображать бонусы использованные при оформлении заказа.
 def send_new_order(data):
     if data['delivery_data']['method'] == 'Самовывоз':
         addres = "11-ая Красноармейская, д.11 стр. 3 Мастерская Кикимора"
         delivery_variant = os.getenv("SELF_DELIVERY_CODE")
     else:
         addres = f"{data['delivery_data']['street']}, " \
-                 f"{data['delivery_data']['building']}," \
+                 f"{data['delivery_data']['building']}, кв." \
                  f"{data['delivery_data']['apartment']}"
         delivery_variant = os.getenv("DELIVERY_CODE")
 
@@ -69,9 +68,11 @@ def send_new_order(data):
             'delivery_from_minutes': time_rang['from_minutes'],
             'delivery_to_hour': time_rang['to_hour'],
             'delivery_to_minutes': time_rang['to_minutes'],
+            'delivery_price': data['delivery_data']['cost'],
             'financial_status': 'paid',
             'comment': data['comment'],
-            'discount': f"В счет заказа использованно {data['bonuses_deducted']} бонусов",
+            "manager_comment": f"ID оплаты: {data['payment_id']}\nНачислено бонусов: {data.get('add_bonuses', 0)}, списано бонусов: {data.get('bonuses_deducted', 0)}",
+
         }
     }
 

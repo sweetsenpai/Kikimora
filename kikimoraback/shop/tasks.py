@@ -1,18 +1,18 @@
 from celery import shared_task
-from django.conf import settings
 from django.core.mail import EmailMessage
 from django.db import transaction
-from django.utils import timezone
+from .services.caches import *
 from .models import *
+from functools import wraps
+from .services.price_calculation import calculate_prices
+from .MongoIntegration.Order import Order
+from .API.insales_api import send_new_order
 import httpx
 import re
 import os
 import logging
-import pymongo
-from .MongoIntegration.Cart import Cart
 from dotenv import load_dotenv
 import pymongo
-import datetime
 
 load_dotenv()
 
@@ -90,7 +90,7 @@ def new_order_email(order_data):
         <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6;">
                 <h1 style="color: #4CAF50;">Спасибо за заказ!</h1>
-                <p>Ваш заказ №<b>1488</b> принят в работу.</p>
+                <p>Ваш заказ №<b>{order_data['insales']}</b> принят в работу.</p>
                 <p>Детали заказа:</p>
                 <table style="border-collapse: collapse; width: 100%; text-align: left;">
                     <thead>
@@ -125,7 +125,7 @@ def new_order_email(order_data):
 
     # Создаем сообщение
     email_message = EmailMessage(
-        subject=f"Кикимора заказ №1488",
+        subject=f"Кикимора заказ №{order_data['insales']}",
         body=html_content,
         from_email='settings.EMAIL_HOST_USER',
         to=[order_data['customer_data']['email']],
@@ -276,7 +276,7 @@ def check_crm_changes():
 
         logger.info(
             f"Successfully added {len(new_subcategories)} subcategories, {len(new_products)} products, and {len(new_photos)} photos.")
-
+        update_price_cache(forced=True)
     except Exception as e:
         logger.error(f"Error in `check_crm_changes`: {e}")
         raise
@@ -287,3 +287,111 @@ def clean_up_mongo():
     collection = pymongo.MongoClient(os.getenv("MONGOCON"))['kikimora']['cart']
     result = collection.delete_many({"unregistered": True})
     logger.info(f"Удалено {result.deleted_count} корзин с меткой unregistered.")
+
+
+def cache_result(cache_key: str, timeout: int = None):
+    """
+    Декоратор для кэширования.
+
+    :param cache_key: Ключ для хранения результата в кэше.
+    :param timeout: Время жизни кэша в секундах. Если None, кэш будет вечным.
+    """
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Извлекаем параметр forced из kwargs, если он есть
+            forced = kwargs.pop('forced', False)
+
+            # Проверяем, есть ли результаты в кэше
+            cached_result = cache.get(cache_key)
+            if cached_result is not None and not forced:
+                return cached_result
+            # Кэшируем полученные данные и сохраняем
+            result = func(*args, **kwargs)
+            cache.set(cache_key, result, timeout=timeout)
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+@shared_task
+@cache_result("all_products_prices", timeout=None)
+def update_price_cache(forced=False):
+    """
+    Фоновая задача для предрасчета цен товаров.
+    :param forced: Используется для принудительного создания нового кэша, даже если он есть. По умолчанию false.
+    """
+    products = active_products_cash()
+    result = calculate_prices(products)
+
+    # Создаем список товаров с скидками
+    products_with_discounts = [
+        product_id for product_id, discounts in result['discounts_map'].items() if discounts
+    ]
+
+    # Сохраняем список товаров с скидками в отдельном кэше
+    cache.set("products_with_discounts", products_with_discounts, timeout=None)
+
+    logger.info("Кэширование цен товаров прошло успешно.")
+    return result
+# TODO релизовать задачу для обновления всех свзяанных кэшей
+# @shared_task
+# def update_related_caches():
+#     """
+#     Обновляет все связанные кэши.
+#     """
+#     cache.delete("all_products_prices")
+#     cache.delete("products_with_discounts")
+#
+#     from .tasks import update_price_cache
+#     update_price_cache.delay(forced=True)
+#
+#     logger.info("Все связанные кэши успешно обновлены.")
+
+
+@shared_task(bind=True, max_retries=3)
+def process_payment_succeeded(self, payment_id):
+    try:
+        user_order = Order()
+        if not user_order.ping():
+            logger.error(f"Ошибка подключения к базе данных при обработке платежа {payment_id}.")
+            return
+
+        user_order_data = user_order.get_order_by_payment(payment_id)
+
+        # Начисление бонусов
+        if user_order_data['add_bonuses']:
+            UserBonusSystem.add_bonus(user_order_data['customer'], user_order_data['add_bonuses'])
+
+        # Отправка заказа в InSales
+        insales_order_new = send_new_order(user_order_data)
+        if insales_order_new:
+            user_order.insert_insales_number(payment_id=payment_id, insales_order_number=insales_order_new)
+            user_order_data['insales'] = insales_order_new
+
+            del user_order_data['_id']
+            # Просто удалил поле _id воизбежания ошибки при сериализации=)
+
+            new_order_email.delay(user_order_data)
+        else:
+            logger.error(f"Не удалось загрузить заказ {payment_id} в CRM.")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке успешного платежа {payment_id}: {e}")
+        self.retry(countdown=2 ** self.request.retries)  # Повторная попытка через экспоненциальное время ожидания
+
+
+@shared_task(bind=True, max_retries=3)
+def process_payment_canceled(self, payment_id):
+    try:
+        user_order = Order()
+        user_order_data = user_order.get_order_by_payment(payment_id)
+
+        # Возврат бонусов
+        if user_order_data['bonuses_deducted']:
+            UserBonusSystem.add_bonus(user_order_data['customer'], user_order_data['bonuses_deducted'])
+    except Exception as e:
+        logger.error(f"Ошибка при обработке отмененного платежа {payment_id}: {e}")
+        self.retry(countdown=2 ** self.request.retries)

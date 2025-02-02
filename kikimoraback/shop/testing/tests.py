@@ -1,6 +1,6 @@
 from django.test import TestCase
-from .forms import DiscountForm
-from .models import Category, Subcategory, Product, Discount
+from kikimoraback.shop.forms import DiscountForm
+from kikimoraback.shop.models import Category, Subcategory, Product, Discount
 
 
 class DiscountFormTest(TestCase):
