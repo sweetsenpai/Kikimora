@@ -68,9 +68,11 @@ def send_new_order(data):
             'delivery_from_minutes': time_rang['from_minutes'],
             'delivery_to_hour': time_rang['to_hour'],
             'delivery_to_minutes': time_rang['to_minutes'],
+            'delivery_price': data['delivery_data']['cost'],
             'financial_status': 'paid',
             'comment': data['comment'],
-            'discount': f"В счет заказа использованно {data['bonuses_deducted']} бонусов",
+            "manager_comment": f"Начислено бонусов: {data.get('add_bonuses', 0)}, списано бонусов: {data.get('bonuses_deducted', 0)}",
+
         }
     }
 

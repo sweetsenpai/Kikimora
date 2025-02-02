@@ -1,15 +1,10 @@
-from pymongo import MongoClient, ASCENDING
+from pymongo import ASCENDING
 from ..MongoIntegration.db_connection import MongoDBClient
-from collections import defaultdict
 from datetime import datetime
 import logging
-from ..caches import active_products_cash, \
-                    get_limit_product_cash, \
-                    get_discount_cash, user_bonus_cash
-from ..models import Product, Subcategory
+from ..services.caches import active_products_cash
 from ..tasks import update_price_cache
-from ..serializers import ProductSerializer
-import json
+
 logger = logging.getLogger('shop')
 
 

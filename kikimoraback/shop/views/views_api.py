@@ -1,33 +1,22 @@
 from django.http import JsonResponse
-from django.views import View
-from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import AnonymousUser
-from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework import viewsets
-from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.pagination import PageNumberPagination
 from celery.result import AsyncResult
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import generics, status
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth import authenticate
-from django.db import transaction
-from ..models import *
 from ..serializers import *
-from ..caches import *
+from ..services.caches import *
 import json
 import requests
 import uuid
-import re
 import os
 from ..MongoIntegration.Cart import Cart
 from ..MongoIntegration.Order import Order
@@ -37,9 +26,7 @@ from yookassa.domain.notification import WebhookNotificationEventType, WebhookNo
 from yookassa.domain.common import SecurityHelper
 from dotenv import load_dotenv
 import logging
-import random
-from yookassa import Webhook
-from ..tasks import new_order_email, update_price_cache
+from ..tasks import new_order_email, update_price_cache, process_payment_canceled, process_payment_succeeded
 
 load_dotenv()
 logger = logging.getLogger('shop')
@@ -87,6 +74,40 @@ class ProductViewSet(viewsets.ViewSet):
             context=context
         )
 
+        return paginator.get_paginated_response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='with-discounts')
+    def with_discounts(self, request):
+        """
+        Возвращает все товары, к которым применены скидки.
+        """
+        # Получаем список ID товаров с скидками из кэша
+        products_with_discounts_ids = cache.get("products_with_discounts", [])
+
+        # Получаем полные данные о товарах по их ID
+        products_with_discounts = Product.objects.filter(product_id__in=products_with_discounts_ids)
+
+        # Пагинация результатов
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(products_with_discounts, request)
+
+        # Получаем кэшированные данные для контекста
+        cached_data = update_price_cache()
+
+        context = {
+            'price_map': cached_data['price_map'],
+            'discounts_map': cached_data['discounts_map'],
+            'photos_map': cached_data['photos_map']
+        }
+
+        # Сериализуем данные
+        serializer = self.serializer_class(
+            result_page,
+            many=True,
+            context=context
+        )
+
+        # Возвращаем пагинированный ответ
         return paginator.get_paginated_response(serializer.data)
 
 
@@ -489,7 +510,8 @@ class Payment(APIView):
                                       "Попробуйте перезагрузить страниц."},
                             status=status.HTTP_503_SERVICE_UNAVAILABLE)
         user_cart.add_payment_data(user_id=user_id, payment_id=response['id'], order_number=order_number, bonuses=bonuses)
-
+        order.create_order_on_cart(user_cart.get_cart_data(user_id=user_id))
+        user_cart.delete_cart(user_id=user_id)
         return Response(
             {"detail": "Redirecting to payment", "redirect_url": response['confirmation']['confirmation_url']},
             status=status.HTTP_302_FOUND
@@ -507,71 +529,36 @@ def get_client_ip(request):
 
 @csrf_exempt
 def yookassa_webhook(request):
-    # TODO: возможно стоит добавить работу со статусами заказов при оплате. Пока такой функционал не требуется.
     ip = get_client_ip(request)
     if not SecurityHelper().is_ip_trusted(ip):
-        logger.warning("Поптыка получить доступ к api оплаты из незарегистрированного источника.")
+        logger.warning("Попытка получить доступ к API оплаты из незарегистрированного источника.")
         return HttpResponse(status=400)
 
     event_json = json.loads(request.body)
     try:
         notification_object = WebhookNotificationFactory().create(event_json)
         response_object = notification_object.object
-        user_cart = Cart()
-        user_order = Order()
+
         if notification_object.event == WebhookNotificationEventType.PAYMENT_SUCCEEDED:
             payment_id = response_object.id
-            if not user_cart.ping():
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            user_cart_data = user_cart.get_cart_data(payment_id=payment_id)
-            try:
-                UserBonusSystem.add_bonus(user_cart_data['customer'], user_cart_data['add_bonuses'])
-            except Exception as e:
-                logger.error(f"Ошибка при начислении баллов пользователю с id {user_cart_data['customer']}.\n Ошибка: {e}")
-
-            user_order.create_order_on_cart(user_cart_data)
-            if send_new_order(user_cart_data):
-                new_order_email(user_cart_data)
-                user_cart.delete_cart(payment_id=payment_id)
-                return Response(status=status.HTTP_200_OK)
-            else:
-                logging.error('Не удалось загрузить новый заказ в crm!')
-                return Response(status=status.HTTP_400_BAD_REQUEST)
+            process_payment_succeeded.delay(payment_id)
         elif notification_object.event == WebhookNotificationEventType.PAYMENT_CANCELED:
             payment_id = response_object.id
-            user_cart_data = user_cart.get_cart_data(payment_id=payment_id)
-            if user_cart_data['bonuses_deducted']:
-                try:
-                    UserBonusSystem.add_bonus(user_id=user_cart_data['customer'], bonuses=user_cart_data['bonuses_deducted'])
-                except Exception as e:
-                    logger.error(f"Ошибка при позвращении пользователю id {user_cart_data['customer']} бонусов. Ошибка:{e}")
+            process_payment_canceled.delay(payment_id)
+
+        return Response(status=status.HTTP_200_OK)  # Быстрый ответ YooKassa
 
     except Exception as e:
-        logger.error(f"Ошибка при обработке вебхука Yookassa: {str(e)}, данные: {event_json}")
+        logger.error(f"Ошибка при обработке вебхука YooKassa: {str(e)}, данные: {event_json}")
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class TestWebhook(APIView):
-# TODO: решить что-то с номерами заказов которые формирует crm
     def post(self, request):
-        payment_id = "2f2c3dce-000f-5000-8000-14aa51f73808"
-        user_cart = Cart()
-        user_order = Order()
-        if not user_cart.ping():
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        user_cart_data = user_cart.get_cart_data(payment_id=payment_id)
-        new_order_number = send_new_order(user_cart_data)
-        if new_order_number:
-            print("НОМЕР НОВОГО ЗАКАЗА:", new_order_number)
-            user_order.create_order_on_cart(user_cart_data)
-            new_order_email(user_cart_data)
-            user_cart.delete_cart(payment_id=payment_id)
-
-            try:
-                UserBonusSystem.add_bonus(user_cart_data['customer'], user_cart_data['add_bonuses'])
-            except Exception as e:
-                logger.error(f"Ошибка при начислении баллов пользователю с id {user_cart_data['customer']}.\n Ошибка: {e}")
+        payment_id = "2f31a656-000f-5000-a000-13342c36154e"
+        try:
+            process_payment_succeeded(payment_id)
             return Response(status=status.HTTP_200_OK)
-        else:
-            logging.error('Не удалось загрузить новый заказ в crm!')
+        except Exception as e:
+            logger.debug(f"Ошибка при обработке вебхука YooKassa: {str(e)}")
             return Response(status=status.HTTP_400_BAD_REQUEST)
