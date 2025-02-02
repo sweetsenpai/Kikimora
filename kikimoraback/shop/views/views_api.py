@@ -27,7 +27,7 @@ from yookassa.domain.common import SecurityHelper
 from dotenv import load_dotenv
 import logging
 from ..tasks import new_order_email, update_price_cache, process_payment_canceled, process_payment_succeeded
-
+from bson import json_util
 load_dotenv()
 logger = logging.getLogger('shop')
 logger.setLevel(logging.DEBUG)
@@ -562,3 +562,19 @@ class TestWebhook(APIView):
         except Exception as e:
             logger.debug(f"Ошибка при обработке вебхука YooKassa: {str(e)}")
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class UsersOrder(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request):
+        try:
+            user = request.user
+            if not user:
+                return Response({"error: Пользователь ненайден"}, status=status.HTTP_404_NOT_FOUND)
+            orders = Order().get_users_orders(user.user_id)
+            return Response(status=status.HTTP_200_OK, data={'orders': orders})
+        except Exception as e:
+            logger.error(f"Вовремя выдачи истории заказов пользователя произошла непредвиденная ошибка.\nERROR:{e}")
+            return Response(status=status.HTTP_503_SERVICE_UNAVAILABLE)
