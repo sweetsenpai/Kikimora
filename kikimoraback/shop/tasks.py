@@ -373,6 +373,8 @@ def process_payment_succeeded(self, payment_id):
             user_order_data['insales'] = insales_order_new
 
             del user_order_data['_id']
+            # Просто удалил поле _id воизбежания ошибки при сериализации=)
+
             new_order_email.delay(user_order_data)
         else:
             logger.error(f"Не удалось загрузить заказ {payment_id} в CRM.")

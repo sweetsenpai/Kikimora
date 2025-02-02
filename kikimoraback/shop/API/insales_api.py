@@ -71,7 +71,7 @@ def send_new_order(data):
             'delivery_price': data['delivery_data']['cost'],
             'financial_status': 'paid',
             'comment': data['comment'],
-            "manager_comment": f"Начислено бонусов: {data.get('add_bonuses', 0)}, списано бонусов: {data.get('bonuses_deducted', 0)}",
+            "manager_comment": f"ID оплаты: {data['payment_id']}\nНачислено бонусов: {data.get('add_bonuses', 0)}, списано бонусов: {data.get('bonuses_deducted', 0)}",
 
         }
     }

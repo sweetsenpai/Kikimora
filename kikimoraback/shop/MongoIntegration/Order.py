@@ -5,6 +5,7 @@ import logging
 import datetime
 import hashlib
 import json
+from bson import json_util
 from dotenv import load_dotenv
 import os
 load_dotenv()
@@ -35,16 +36,17 @@ class Order:
         order_hash = hashlib.md5(hash_string.encode()).hexdigest()
         return int(str(int(order_hash, 16))[-6:])
 
-    def get_users_orders(self, user_id)-> dict|bool:
+    def get_users_orders(self, user_id):
         """
         Возвращает все заказы пользователя.
         Args:
             user_id: ID пользователя
         """
-        users_orders = self.order_collection.find({"customer": user_id})
-        if not users_orders:
-            return False
-        return json.load(users_orders)
+        user_orders_cursor = self.order_collection.find({"customer": user_id},
+                                                        {"_id": 0,
+                                                         "customer": 0,
+                                                         "payment_id": 0}).sort("created_at", -1)
+        return list(user_orders_cursor)
 
     def get_order_by_payment(self, payment_id=str)-> dict|bool:
         """
