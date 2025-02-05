@@ -107,7 +107,26 @@ class ProductViewSet(viewsets.ViewSet):
             context=context
         )
 
-        # Возвращаем пагинированный ответ
+        return paginator.get_paginated_response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='all-products')
+    def all_products(self, request):
+        cached_data = update_price_cache()
+        products = active_products_cash()
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(products, request)
+        context = {
+            'price_map': cached_data['price_map'],
+            'discounts_map': cached_data['discounts_map'],
+            'photos_map': cached_data['photos_map']
+        }
+
+        serializer = self.serializer_class(
+            result_page,
+            many=True,
+            context=context
+        )
+
         return paginator.get_paginated_response(serializer.data)
 
 
@@ -212,7 +231,6 @@ class UserDataView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
     serializer_class = UserDataSerializer
-    # TODO: вынести  проверку пользователя в отдельную функцию
 
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -228,7 +246,7 @@ class UserDataView(APIView):
             return Response({"error": "Пользователь не найден."}, status=404)
         return Response(status=status.HTTP_200_OK,data=serializer.data)
 
-    def putch(self, request, **kwargs):
+    def patch(self, request, **kwargs):
         user = request.user
         user_id = kwargs.get('user_id', user.user_id)
         new_password = request.data.get('new_password')
@@ -255,6 +273,8 @@ class UserDataView(APIView):
                 user.save()
             return Response(status=status.HTTP_200_OK, data=serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# TODO: обработка кастомного времени
 
 
 class YandexCalculation(APIView):
