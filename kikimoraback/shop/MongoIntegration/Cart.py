@@ -206,5 +206,3 @@ class Cart:
         else:
             self.cart_collection.delete_one({"customer": user_id})
 
-    def create_indexes(self):
-        self.cart_collection.create_index([("customer", ASCENDING)])
