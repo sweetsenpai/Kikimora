@@ -4,7 +4,8 @@ from django.contrib.auth.views import LoginView, LogoutView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
 product_by_subcategory = views_api.ProductViewSet.as_view({'get': 'by_subcategory'})
-product_by_category = views_api.ProductViewSet.as_view({'get': 'by_category'})
+products_with_discounts = views_api.ProductViewSet.as_view({'get': 'with_discounts'})
+all_products = views_api.ProductViewSet.as_view({'get': 'all_products'})
 
 urlpatterns = [
     # API
@@ -23,7 +24,8 @@ urlpatterns = [
     path('api/categories/', views_api.CategoryList.as_view(), name='category-list'),
     path('api/product/<int:product_id>/', views_api.ProductApi.as_view(), name='product'),
     path('api/products/subcategory/<int:subcategory_id>/', product_by_subcategory, name='products-by-subcategory'),
-    path('api/products/category/<int:category_id>/', product_by_category, name='products-by-category'),
+    path('api/products/discounts', products_with_discounts, name='products-with-discounts'),
+    path('api/products/all', all_products, name='all-products'),
     path('api/autocomplete/product/', views_api.ProductAutocompleteView.as_view(), name='product-autocomplete-api'),
     path('api/menu/subcategory/', views_api.MenuSubcategory.as_view(), name='sub-menu'),
     # PRICE CHANGERS
