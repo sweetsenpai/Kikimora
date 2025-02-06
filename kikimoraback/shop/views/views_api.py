@@ -30,7 +30,7 @@ import logging
 from ..tasks import new_order_email, update_price_cache, process_payment_canceled, \
     process_payment_succeeded, send_confirmation_email
 from ..services.email_verification import verify_email_token
-
+import time
 from bson import json_util
 load_dotenv()
 logger = logging.getLogger('shop')
@@ -47,12 +47,33 @@ class MenuSubcategory(generics.ListAPIView):
     serializer_class = MenuSubcategorySerializer
 
 
-class ProductApi(generics.ListAPIView):
+class ProductApi(generics.RetrieveAPIView):
     serializer_class = ProductSerializer
 
-    def get_queryset(self):
+    def get_object(self):
         product_id = self.kwargs.get('product_id')
-        return Product.objects.filter(product_id=product_id)
+
+        # Получаем один товар по ID
+        try:
+            cache_key = f'single_product_{product_id}'
+            single_product_cache = cache.get(cache_key)
+            if not single_product_cache:
+                single_product_cache = active_products_cash().get(product_id=product_id)
+                cache.set(cache_key, single_product_cache, timeout=60*15)
+        except Product.DoesNotExist:
+            raise NotFound(detail="Product not found")
+
+        # Возвращаем объект продукта
+        return single_product_cache
+
+    def get_serializer_context(self):
+        # Добавляем контекст для сериализатора
+        cached_data = update_price_cache()
+        return {
+            'price_map': cached_data['price_map'],
+            'discounts_map': cached_data['discounts_map'],
+            'photos_map': cached_data['photos_map']
+        }
 
 
 class ProductViewSet(viewsets.ViewSet):
@@ -249,8 +270,8 @@ class VerifyEmailView(APIView):
                     })
             except CustomUser.DoesNotExist:
                 pass
-            return render(request, 'email_confirmed.html', {
-                'website_url': settings.WEBSITE_URL,
+            return render(request, 'emails/email_confirmed.html', {
+                'website_url': os.getenv("WEBSITE_URL"),
                 'message': 'Недействительная ссылка для подтверждения.'
             })
 
