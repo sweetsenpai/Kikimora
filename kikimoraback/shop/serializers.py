@@ -87,9 +87,8 @@ class ProductCardSerializer(serializers.ModelSerializer):
     #     return hasattr(obj, 'limittimeproduct')
 
 
-
 class ProductSerializer(serializers.ModelSerializer):
-    photos = ProductPhotoSerializer(many=True, read_only=True)
+    photos = serializers.SerializerMethodField()
     final_price = serializers.SerializerMethodField()
     discounts = serializers.SerializerMethodField()
     # has_limited_offer = serializers.SerializerMethodField()
