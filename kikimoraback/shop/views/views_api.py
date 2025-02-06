@@ -56,8 +56,9 @@ class ProductApi(generics.ListAPIView):
 
 
 class ProductViewSet(viewsets.ViewSet):
-    serializer_class = ProductSerializer
+    serializer_class = ProductCardSerializer
     pagination_class = PageNumberPagination
+    page_size = 8
 
     @action(detail=False, methods=['get'], url_path='subcategory/(?P<subcategory_id>[^/.]+)')
     def by_subcategory(self, request, subcategory_id=None):
@@ -86,10 +87,10 @@ class ProductViewSet(viewsets.ViewSet):
         Возвращает все товары, к которым применены скидки.
         """
         # Получаем список ID товаров с скидками из кэша
-        products_with_discounts_ids = cache.get("products_with_discounts", [])
+
 
         # Получаем полные данные о товарах по их ID
-        products_with_discounts = Product.objects.filter(product_id__in=products_with_discounts_ids)
+        products_with_discounts = get_discounted_product_data()
 
         # Пагинация результатов
         paginator = self.pagination_class()
@@ -130,7 +131,6 @@ class ProductViewSet(viewsets.ViewSet):
             many=True,
             context=context
         )
-
         return paginator.get_paginated_response(serializer.data)
 
 

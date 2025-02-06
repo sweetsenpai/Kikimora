@@ -23,7 +23,7 @@ class UserDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('email', 'user_fio', 'phone', 'bd', 'bonus', 'address')
+        fields = ('email', 'user_fio', 'phone', 'bd', 'bonus', 'address', 'is_email_verified')
 
     def get_bonus(self, obj):
         user_bonus = UserBonusSystem.objects.filter(user_bonus=obj).first()
@@ -52,6 +52,40 @@ class ProductPhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductPhoto
         fields = ['photo_id', 'product', 'photo_url', 'is_main', 'photo_description']
+
+
+class ProductCardSerializer(serializers.ModelSerializer):
+    photos = serializers.SerializerMethodField()
+    final_price = serializers.SerializerMethodField()
+    discounts = serializers.SerializerMethodField()
+    # has_limited_offer = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = [
+            'product_id',
+            'name',
+            'price',
+            'bonus',
+            'weight',
+            'final_price',
+            'discounts',
+            # 'has_limited_offer'
+            'photos',
+
+        ]
+
+    def get_final_price(self, obj):
+        return self.context.get('price_map', {}).get(obj.product_id, obj.price)
+
+    def get_discounts(self, obj):
+        return self.context.get('discounts_map', {}).get(obj.product_id, [])
+
+    def get_photos(self, obj):
+        return self.context.get('photos_map', {}).get(obj.product_id, [])
+    # def get_has_limited_offer(self, obj):
+    #     return hasattr(obj, 'limittimeproduct')
+
 
 
 class ProductSerializer(serializers.ModelSerializer):
