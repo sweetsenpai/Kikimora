@@ -1,6 +1,7 @@
 from celery import shared_task
 from django.core.mail import EmailMessage
 from django.db import transaction
+from django.template.loader import render_to_string
 from .services.caches import *
 from .models import *
 from functools import wraps
@@ -13,6 +14,7 @@ import os
 import logging
 from dotenv import load_dotenv
 import pymongo
+from .services.email_verification import generate_email_token
 
 load_dotenv()
 
@@ -21,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 @shared_task
 def new_admin_mail(password, email):
-    # Создаем HTML-контент письма
     html_content = f"""
     <html>
         <body>
@@ -112,11 +113,11 @@ def new_order_email(order_data):
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
                 <footer style="text-align: center; color: #888; font-size: 14px;">
                     <p>С уважением, команда мастерской "Кикимора"</p>
-                    <p>Контакты: <a href="mailto:info@kikimora.ru" style="color: #4CAF50; text-decoration: none;">info@kikimora.ru</a> | Телефон: <a href="tel:+79992099638" style="color: #4CAF50; text-decoration: none;">+7(999) 209-96-38</a></p>
-                    <p>Адрес: Санкт-Петербург, ул. 11-я Красноармейская, 11, строение 3</p>
+                    <p>Контакты: <a href="mailto:{os.getenv("KIKIMORA_EMAIL")}" style="color: #4CAF50; text-decoration: none;">{os.getenv("KIKIMORA_EMAIL")}</a> | Телефон: <a href="tel:{os.getenv("KIKIMORA_PHONE_RAW")}" style="color: #4CAF50; text-decoration: none;">{os.getenv("KIKIMORA_PHONE")}</a></p>
+                    <p>Адрес: {os.getenv("KIKIMORA_ADDRESS")}</p>
                     <p>Следите за нами: 
-                        <a href="https://vk.com/kikimora" style="color: #4CAF50; text-decoration: none;">ВКонтакте</a> | 
-                        <a href="https://instagram.com/kikimora" style="color: #4CAF50; text-decoration: none;">Instagram</a>
+                        <a href="{os.getenv("KIKIMORA_VK")}" style="color: #4CAF50; text-decoration: none;">ВКонтакте</a> | 
+                        <a href="{os.getenv("KIKIMORA_INSTAGRAM")}" style="color: #4CAF50; text-decoration: none;">Instagram</a>
                     </p>
                 </footer>
             </body>
@@ -138,6 +139,28 @@ def new_order_email(order_data):
     email_message.send(fail_silently=False)
 
     return
+
+
+@shared_task
+def send_confirmation_email(user):
+    token = generate_email_token(user.user_id)
+    verification_url = f"{os.getenv('MAIN_DOMAIN')}api/v1/verify-email/{token}/"
+
+    # Рендеринг HTML-шаблона
+    html_content = render_to_string('emails/email_verification.html', {
+        'user': user,
+        'verification_url': verification_url,
+    })
+
+    # Создаем сообщение
+    email_message = EmailMessage(
+        subject='Подтверждение email',
+        body=html_content,
+        from_email='settings.EMAIL_HOST_USER',
+        to=[user.email],
+    )
+    email_message.content_subtype = "html"
+    email_message.send(fail_silently=False)
 
 
 @shared_task

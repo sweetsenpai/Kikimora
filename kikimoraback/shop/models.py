@@ -47,14 +47,17 @@ class AccountManager(BaseUserManager):
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     user_id = models.AutoField(primary_key=True)
-    email = models.EmailField(help_text="Ваш email", unique=True, db_index=True)
+    email = models.EmailField(help_text="Ваш email", unique=True, db_index=True,
+                              error_messages={'unique': 'Пользователь с таким email уже существует.'})
     user_fio = models.CharField(max_length=200, help_text='Ф.И.О.', db_index=True)
-    phone = models.CharField(max_length=12, help_text='Номер телефона', unique=True, db_index=True)
+    phone = models.CharField(max_length=12, help_text='Номер телефона', unique=True, db_index=True,
+                             error_messages={'unique': 'Пользователь с таким номером телефона уже существует.'})
     bd = models.DateField(default=timezone.now, help_text='Дата рождения')
     is_staff = models.BooleanField(default=False, help_text='')
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(default=timezone.now)
     last_login = models.DateTimeField(null=True)
+    is_email_verified = models.BooleanField(default=False)
 
     objects = AccountManager()
 
@@ -89,17 +92,17 @@ class UserBonusSystem(models.Model):
         except CustomUser.DoesNotExist:
             logger.error(f"Пользователь с id {user_id} не найден. Неудалось начислить баллы за заказ.")
             raise ValueError(f"Пользователь с id {user_id} не найден.")
-
-        try:
-            bonus_record, created = cls.objects.get_or_create(user_bonus=user)
-            if not created:
-                bonus_record.bonus_ammount += bonuses
-                bonus_record.save()
-            else:
-                bonus_record.bonus_ammount = bonuses
-                bonus_record.save()
-        except Exception as e:
-            raise ValueError(f"Ошибка при начислении бонусов: {e}")
+        if user.is_email_verified:
+            try:
+                bonus_record, created = cls.objects.get_or_create(user_bonus=user)
+                if not created:
+                    bonus_record.bonus_ammount += bonuses
+                    bonus_record.save()
+                else:
+                    bonus_record.bonus_ammount = bonuses
+                    bonus_record.save()
+            except Exception as e:
+                raise ValueError(f"Ошибка при начислении бонусов: {e}")
 
     @classmethod
     def deduct_bonuses(cls, user_id, bonuses):
@@ -110,17 +113,17 @@ class UserBonusSystem(models.Model):
             user = CustomUser.objects.get(user_id=user_id)
         except CustomUser.DoesNotExist:
             raise ValueError(f"Пользователь с id {user_id} не найден.")
+        if user.is_email_verified:
+            try:
+                bonus_record = cls.objects.get(user_bonus=user)
+            except cls.DoesNotExist:
+                raise ValueError(f"Запись о бонусах для пользователя с id {user_id} не найдена.")
 
-        try:
-            bonus_record = cls.objects.get(user_bonus=user)
-        except cls.DoesNotExist:
-            raise ValueError(f"Запись о бонусах для пользователя с id {user_id} не найдена.")
-
-        if bonus_record.bonus_ammount < bonuses:
-            raise ValueError(f"Ошибка при списании бонусов: Невозможно списать бонусов больше, чем есть у пользователя id {user_id}. Бонусов есть: {bonus_record.bonus_ammount}."
-                             f"'\n Бонусов для списания:{bonuses}")
-        bonus_record.bonus_ammount -= bonuses
-        bonus_record.save()
+            if bonus_record.bonus_ammount < bonuses:
+                raise ValueError(f"Ошибка при списании бонусов: Невозможно списать бонусов больше, чем есть у пользователя id {user_id}. Бонусов есть: {bonus_record.bonus_ammount}."
+                                 f"'\n Бонусов для списания:{bonuses}")
+            bonus_record.bonus_ammount -= bonuses
+            bonus_record.save()
 
 
 class UserAddress(models.Model):

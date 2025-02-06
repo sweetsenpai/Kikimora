@@ -12,6 +12,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import generics, status
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth import authenticate
+from django.shortcuts import render
 from ..serializers import *
 from ..services.caches import *
 import json
@@ -26,7 +27,10 @@ from yookassa.domain.notification import WebhookNotificationEventType, WebhookNo
 from yookassa.domain.common import SecurityHelper
 from dotenv import load_dotenv
 import logging
-from ..tasks import new_order_email, update_price_cache, process_payment_canceled, process_payment_succeeded
+from ..tasks import new_order_email, update_price_cache, process_payment_canceled, \
+    process_payment_succeeded, send_confirmation_email
+from ..services.email_verification import verify_email_token
+
 from bson import json_util
 load_dotenv()
 logger = logging.getLogger('shop')
@@ -194,7 +198,6 @@ class Login(APIView):
 
             response.set_cookie("access_token", str(refresh.access_token), httponly=True, secure=True, samesite='Strict')
             response.set_cookie("refresh_token", str(refresh), httponly=True, secure=True, samesite='Strict')
-
             return response
         else:
             return Response(
@@ -209,7 +212,6 @@ class RegisterUserView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             refresh = RefreshToken.for_user(user)
-
             response = JsonResponse({
                 "message": "Пользователь успешно зарегистрирован.",
                 "tokens": {
@@ -222,9 +224,35 @@ class RegisterUserView(APIView):
             response.set_cookie("access_token", str(refresh.access_token), httponly=True, secure=True, samesite='Strict')
             response.set_cookie("refresh_token", str(refresh), httponly=True, secure=True, samesite='Strict')
 
+            send_confirmation_email(user)
+
             return response
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VerifyEmailView(APIView):
+    def get(self, request, token):
+        user_id = verify_email_token(token)
+        if user_id:
+            try:
+                user = CustomUser.objects.get(user_id=user_id)
+                if not user.is_email_verified:
+                    user.is_email_verified = True
+                    user.save()
+                    return render(request, 'emails/email_confirmed.html',
+                                  {'website_url': os.getenv("WEBSITE_URL")})
+                else:
+                    return render(request, 'emails/email_confirmed.html', {
+                        'website_url': os.getenv("WEBSITE_URL"),
+                        'message': 'Email уже был подтвержден ранее.'
+                    })
+            except CustomUser.DoesNotExist:
+                pass
+            return render(request, 'email_confirmed.html', {
+                'website_url': settings.WEBSITE_URL,
+                'message': 'Недействительная ссылка для подтверждения.'
+            })
 
 
 class UserDataView(APIView):

@@ -10,40 +10,41 @@ all_products = views_api.ProductViewSet.as_view({'get': 'all_products'})
 urlpatterns = [
     # API
     # TOKEN
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('api/v1/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/v1/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     # REGISTRATION and LOGIN
-    path('api/login/', views_api.Login.as_view(), name='api-login'),
-    path('api/register/', views_api.RegisterUserView.as_view(), name='api-register'),
+    path('api/v1/login/', views_api.Login.as_view(), name='api-login'),
+    path('api/v1/register/', views_api.RegisterUserView.as_view(), name='api-register'),
+    path('api/v1/verify-email/<str:token>/', views_api.VerifyEmailView.as_view(), name='verify-email'),
     # USER DATA
-    path('api/user/', views_api.UserDataView.as_view(), name='api-user-data'),
-    path('api/user/<int:user_id>', views_api.UserDataView.as_view(), name='api-admin-user-data'),
-    path('api/user/order_history', views_api.UsersOrder.as_view(), name='api-order-history'),
+    path('api/v1/user/', views_api.UserDataView.as_view(), name='api-user-data'),
+    path('api/v1/user/<int:user_id>', views_api.UserDataView.as_view(), name='api-admin-user-data'),
+    path('api/v1/user/order_history', views_api.UsersOrder.as_view(), name='api-order-history'),
     # PRODUCTS
-    path('api/categories/', views_api.CategoryList.as_view(), name='category-list'),
-    path('api/product/<int:product_id>/', views_api.ProductApi.as_view(), name='product'),
-    path('api/products/subcategory/<int:subcategory_id>/', product_by_subcategory, name='products-by-subcategory'),
-    path('api/products/discounts', products_with_discounts, name='products-with-discounts'),
-    path('api/products/all', all_products, name='all-products'),
-    path('api/autocomplete/product/', views_api.ProductAutocompleteView.as_view(), name='product-autocomplete-api'),
-    path('api/menu/subcategory/', views_api.MenuSubcategory.as_view(), name='sub-menu'),
+    path('api/v1/categories/', views_api.CategoryList.as_view(), name='category-list'),
+    path('api/v1/product/<int:product_id>/', views_api.ProductApi.as_view(), name='product'),
+    path('api/v1/products/subcategory/<int:subcategory_id>/', product_by_subcategory, name='products-by-subcategory'),
+    path('api/v1/products/discounts', products_with_discounts, name='products-with-discounts'),
+    path('api/v1/products/all', all_products, name='all-products'),
+    path('api/v1/autocomplete/product/', views_api.ProductAutocompleteView.as_view(), name='product-autocomplete-api'),
+    path('api/v1/menu/subcategory/', views_api.MenuSubcategory.as_view(), name='sub-menu'),
     # PRICE CHANGERS
-    path('api/discount', views_api.DiscountProductActiveList.as_view(), name='api-discount'),
-    path('api/discounts/stop/<int:discount_id>/', views_api.StopDiscountView.as_view(), name='stop_discount_api'),
-    path('api/limitproduct', views_api.LimitProduct.as_view(), name='api-limitproduct'),
+    path('api/v1/discount', views_api.DiscountProductActiveList.as_view(), name='api-discount'),
+    path('api/v1/discounts/stop/<int:discount_id>/', views_api.StopDiscountView.as_view(), name='stop_discount_api'),
+    path('api//v1limitproduct', views_api.LimitProduct.as_view(), name='api-limitproduct'),
     # CRM WORK
-    path('api/delete_day_product/<int:limittimeproduct_id>/', views_api.DeleteDayProduct.as_view(), name='delete_day_product'),
+    path('api/v1/delete_day_product/<int:limittimeproduct_id>/', views_api.DeleteDayProduct.as_view(), name='delete_day_product'),
     # DELIVERY
-    path('api/calculate_delivery', views_api.YandexCalculation.as_view(), name='calculate-delivery'),
+    path('api/v1/calculate_delivery', views_api.YandexCalculation.as_view(), name='calculate-delivery'),
     # CART
-    path('api/check_cart', views_api.CheckCart.as_view(), name='ckeck-cart'),
-    path('api/sync_cart', views_api.SyncCart.as_view(), name='sunc-cart'),
+    path('api/v1/check_cart', views_api.CheckCart.as_view(), name='ckeck-cart'),
+    path('api/v1/sync_cart', views_api.SyncCart.as_view(), name='sunc-cart'),
     # PROMOCODE
-    path('api/promo', views_api.PromoCode.as_view(), name='prom-api'),
+    path('api/v1/promo', views_api.PromoCode.as_view(), name='prom-api'),
     # PAYMENT
-    path('api/payment', views_api.Payment.as_view(), name='payment'),
-    path('api/yookassa/test', views_api.TestWebhook.as_view(), name='webhook'),
+    path('api/v1/payment', views_api.Payment.as_view(), name='payment'),
+    path('api/v1/yookassa/test', views_api.TestWebhook.as_view(), name='webhook'),
     # HOME
     path('apanel', views_admin.AdminHomePageView.as_view(), name='admin_home'),
     path('apanel/login', views_admin.AdminLogin.as_view(), name='admin_login'),

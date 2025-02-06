@@ -37,11 +37,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ('email', 'user_fio', 'phone', 'bd', 'password')
 
-    def validate_email(self, value):
-        if CustomUser.objects.filter(email=value).exists():
-            raise ValidationError("Пользователь с таким email уже существует.")
-        return value
-
     def create(self, validated_data):
         user = CustomUser.objects.create_user(
             email=validated_data['email'],
