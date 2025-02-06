@@ -16,10 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from debug_toolbar.toolbar import debug_toolbar_urls
 from django.views.generic import RedirectView
 # from shop.views import apanel_staff <- Правильный импорт
 # TODO поправить редирект, чтобы небыло поддомена
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('shop.urls')),
-]
+]+ debug_toolbar_urls()
