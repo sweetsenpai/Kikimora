@@ -1,6 +1,9 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, update_last_login
+from django.db.models import F
+from django.contrib.auth import authenticate
+from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -10,9 +13,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import generics, status
-from django.contrib.auth.models import update_last_login
-from django.contrib.auth import authenticate
-from django.shortcuts import render
 from ..serializers import *
 from ..services.caches import *
 import json
@@ -30,8 +30,8 @@ import logging
 from ..tasks import new_order_email, update_price_cache, process_payment_canceled, \
     process_payment_succeeded, send_confirmation_email
 from ..services.email_verification import verify_email_token
-import time
 from bson import json_util
+from pprint import pprint
 load_dotenv()
 logger = logging.getLogger('shop')
 logger.setLevel(logging.DEBUG)
@@ -76,16 +76,59 @@ class ProductApi(generics.RetrieveAPIView):
         }
 
 
+def sort_producst(products_set, query_params: str):
+    """
+    Функция для сортировки товаров по цене или весу, по возрастанию или убыванию.
+    Args:
+        products_set: QuerySet товаров
+        query_params: Фильтр, который будет применен для этой функции
+    """
+    # Конечно в будующем лучше реализовать кеширование результатов работы этой функции,
+    # но пока этого достаточно
+    if query_params == 'price_asc':
+        products_set = products_set.order_by('price')
+    if query_params == 'price_des':
+        products_set = products_set.order_by('-price')
+    if query_params == 'weight_asc':
+        products_set = products_set.order_by('weight')
+    if query_params == 'weight_des':
+        products_set = products_set.order_by('-weight')
+    return products_set
+
+
 class ProductViewSet(viewsets.ViewSet):
     serializer_class = ProductCardSerializer
     pagination_class = PageNumberPagination
     page_size = 8
 
+    @action(detail=False, methods=['get'], url_path='all-products')
+    def all_products(self, request):
+        cached_data = update_price_cache()
+        products = active_products_cash()
+        sort_by = request.query_params.get('sort_by', None)
+        if sort_by:
+            products = sort_producst(products, query_params=sort_by)
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(products, request)
+        context = {
+            'price_map': cached_data['price_map'],
+            'discounts_map': cached_data['discounts_map'],
+            'photos_map': cached_data['photos_map']
+        }
+        serializer = self.serializer_class(
+            result_page,
+            many=True,
+            context=context
+        )
+        return paginator.get_paginated_response(serializer.data)
+
     @action(detail=False, methods=['get'], url_path='subcategory/(?P<subcategory_id>[^/.]+)')
     def by_subcategory(self, request, subcategory_id=None):
         cached_data = update_price_cache()
         products = active_products_cash(subcategory_id)
-
+        sort_by = request.query_params.get('sort_by', None)
+        if sort_by:
+            products = sort_producst(products, sort_by)
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(products, request)
         context = {
@@ -133,25 +176,6 @@ class ProductViewSet(viewsets.ViewSet):
             context=context
         )
 
-        return paginator.get_paginated_response(serializer.data)
-
-    @action(detail=False, methods=['get'], url_path='all-products')
-    def all_products(self, request):
-        cached_data = update_price_cache()
-        products = active_products_cash()
-        paginator = self.pagination_class()
-        result_page = paginator.paginate_queryset(products, request)
-        context = {
-            'price_map': cached_data['price_map'],
-            'discounts_map': cached_data['discounts_map'],
-            'photos_map': cached_data['photos_map']
-        }
-
-        serializer = self.serializer_class(
-            result_page,
-            many=True,
-            context=context
-        )
         return paginator.get_paginated_response(serializer.data)
 
 
@@ -270,7 +294,7 @@ class VerifyEmailView(APIView):
                     })
             except CustomUser.DoesNotExist:
                 pass
-            return render(request, 'emails/email_confirmed.html', {
+            return render(request, 'emails/docker-compose down email_confirmed.html', {
                 'website_url': os.getenv("WEBSITE_URL"),
                 'message': 'Недействительная ссылка для подтверждения.'
             })
