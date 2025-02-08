@@ -8,11 +8,12 @@ from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from celery.result import AsyncResult
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import generics, status
+from rest_framework.filters import SearchFilter
+from celery.result import AsyncResult
 from ..serializers import *
 from ..services.caches import *
 import json
@@ -178,6 +179,31 @@ class ProductViewSet(viewsets.ViewSet):
 
         return paginator.get_paginated_response(serializer.data)
 
+    @action(detail=False, methods=['get'], url_path='search-product')
+    def search_product(self, request):
+        """
+        Метод для поиска по товарам
+        """
+        query = request.query_params.get('query', None)
+        if not query:
+            return Response({"detail": "Парметр 'query' обязателен."}, status=400)
+
+        cached_data = update_price_cache()
+        products = active_products_cash().filter(name__icontains=query)
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(products, request)
+        context = {
+            'price_map': cached_data['price_map'],
+            'discounts_map': cached_data['discounts_map'],
+            'photos_map': cached_data['photos_map']
+        }
+
+        serializer = ProductSearchSerializer(result_page,
+                                             many=True,
+                                             context=context)
+
+        return Response(serializer.data)
+
 
 class ProductAutocompleteView(APIView):
     def get(self, request, *args, **kwargs):
@@ -294,7 +320,7 @@ class VerifyEmailView(APIView):
                     })
             except CustomUser.DoesNotExist:
                 pass
-            return render(request, 'emails/docker-compose down email_confirmed.html', {
+            return render(request, 'emails/email_confirmed.html', {
                 'website_url': os.getenv("WEBSITE_URL"),
                 'message': 'Недействительная ссылка для подтверждения.'
             })
@@ -385,8 +411,19 @@ class YandexCalculation(APIView):
         default_error_msg = "Сейчас серфис доставки не доступен.\nВы можете оформить доставку самостоятельно или обратиться в магазин."
 
         if yandex_response.ok:
-            return Response(status=status.HTTP_200_OK, data={'price': round(float(yandex_data['price'])+200),
-                                                             'distance_meters': yandex_data['distance_meters']})
+            distance_meters = yandex_data['distance_meters']
+            price = round(float(yandex_data['price']))
+            print(price)
+            print(distance_meters)
+            if distance_meters<= 5000:
+                price+= 100
+                print("+++++++++++++++++++++++++++++++")
+            if distance_meters > 5000:
+                price += 200
+            if distance_meters>10000:
+                price+= 100
+            return Response(status=status.HTTP_200_OK, data={'price': price,
+                                                             'distance_meters': distance_meters})
         elif yandex_response.status_code == 400:
             logger.error(f'Ошибка во время расчета стоимости заказ.\nAddres:{address}\n ERROR:{yandex_data}')
             return Response({"error": "Не удалось расчитать стоимость доставки.\n"

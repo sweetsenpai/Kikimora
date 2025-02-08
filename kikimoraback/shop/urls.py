@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 product_by_subcategory = views_api.ProductViewSet.as_view({'get': 'by_subcategory'})
 products_with_discounts = views_api.ProductViewSet.as_view({'get': 'with_discounts'})
 all_products = views_api.ProductViewSet.as_view({'get': 'all_products'})
-
+serach_product = views_api.ProductViewSet.as_view({'get': 'search_product'})
 urlpatterns = [
     # API
     # TOKEN
@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/v1/products/subcategory/<int:subcategory_id>/', product_by_subcategory, name='products-by-subcategory'),
     path('api/v1/products/discounts', products_with_discounts, name='products-with-discounts'),
     path('api/v1/products/all', all_products, name='all-products'),
+    path('api/v1/products/search', serach_product, name='search_products'),
     path('api/v1/autocomplete/product/', views_api.ProductAutocompleteView.as_view(), name='product-autocomplete-api'),
     path('api/v1/menu/subcategory/', views_api.MenuSubcategory.as_view(), name='sub-menu'),
     # PRICE CHANGERS

@@ -87,6 +87,27 @@ class ProductCardSerializer(serializers.ModelSerializer):
     #     return hasattr(obj, 'limittimeproduct')
 
 
+class ProductSearchSerializer(serializers.ModelSerializer):
+    photos = serializers.SerializerMethodField()
+    final_price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = [
+            'product_id',
+            'name',
+            'final_price',
+            'photos',
+
+        ]
+
+    def get_final_price(self, obj):
+        return self.context.get('price_map', {}).get(obj.product_id, obj.price)
+
+    def get_photos(self, obj):
+        return self.context.get('photos_map', {}).get(obj.product_id, [])
+
+
 class ProductSerializer(serializers.ModelSerializer):
     photos = serializers.SerializerMethodField()
     final_price = serializers.SerializerMethodField()
