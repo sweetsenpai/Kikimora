@@ -135,13 +135,16 @@ class PaymentYookassa:
             logger.error(f"Во время формирования платежа произошла ошибка на уровне загрузки данных в юкасу.\n"
                          f"Данные для чека:{recipient_data}\n"
                          f"ERROR:e")
+            return False
         try:
             logger.info(f"Платеж {order_id} успешно создан.")
             return payement.json()
         except KeyError as e:
             logger.error(f"Ошибка при извлечении данных из ответа yookassa: {e}")
         except Exception as e:
-            logger.critical(f"Не удалось создать оплату для клиента. Данные корзины:{cart}\n ОШИБКА: {e}")
+            logger.critical(f"Не удалось создать оплату для клиента. \nДанные корзины:{cart}"
+                            f"\nЧЕК:{recipient_data}"
+                            f"\nОШИБКА: {e}")
         return False
 
 
