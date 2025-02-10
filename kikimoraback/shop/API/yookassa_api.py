@@ -106,32 +106,10 @@ class PaymentYookassa:
         return items
 
     def send_payment_request(self, user_data, cart, order_id, delivery_data, bonuses):
-        pprint({
-                "amount": {
-                    "value": cart['total'] - bonuses ,
-                    "currency": "RUB"
-                },
-                "confirmation": {
-                    "type": "redirect",
-                    "return_url": os.getenv("PAYMENT_BACK_URL")
-                },
-                "capture": True,
-                "description": f"Оплата №{order_id}",
-                "receipt": {
-                    "customer": {
-                        "full_name": user_data['fio'],
-                        "email": user_data['email'],
-                        "phone": user_data['phone'],
-                    },
-                    "items": self.item_check_builder(cart, delivery_data, bonuses),
-
-                }
-            })
         bonuses = bonuses or 0
-        payement = \
-            Payment.create({
+        recipient_data = {
                 "amount": {
-                    "value": cart['total'] - bonuses ,
+                    "value": cart['total'] - bonuses,
                     "currency": "RUB"
                 },
                 "confirmation": {
@@ -149,7 +127,14 @@ class PaymentYookassa:
                     "items": self.item_check_builder(cart, delivery_data, bonuses),
 
                 }
-            })
+            }
+        try:
+            payement = \
+                Payment.create(recipient_data)
+        except Exception as e:
+            logger.error(f"Во время формирования платежа произошла ошибка на уровне загрузки данных в юкасу.\n"
+                         f"Данные для чека:{recipient_data}\n"
+                         f"ERROR:e")
         try:
             logger.info(f"Платеж {order_id} успешно создан.")
             return payement.json()
