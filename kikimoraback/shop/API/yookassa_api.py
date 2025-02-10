@@ -29,7 +29,7 @@ class PaymentYookassa:
                     - total (float|Decimal): общая стоимость корзины.
                 delivery_data (dict): Данные о доставке. Ожидает ключи:
                     - deliveryMethod (str): способ доставки.
-                    - deliveryCost (float|Decimal): стоимость доставки.
+                    - cost (float|Decimal): стоимость доставки.
                 bonuses (float|Decimal): Количество бонусов для списания.
 
             Returns:
@@ -90,30 +90,48 @@ class PaymentYookassa:
                     # чтобы избежать ошибки когда при большом числе товаров
                     # цена товара становиться отрицательной
                     items.append(create_item(product, remaining_bonuses/product['quantity']))
-
         # Добавляем доставку
-        delivery_cost = delivery_data['deliveryCost']
         items.append({
-            "description": delivery_data['deliveryMethod'],
+            "description": delivery_data['method'],
             "quantity": 1,
             "amount": {
-                "value": delivery_cost,
+                "value": delivery_data['cost'],
                 "currency": "RUB"
             },
             "vat_code": "1",
             "payment_mode": "prepayment",
             "payment_subject": "service",
         })
+
         return items
 
     def send_payment_request(self, user_data, cart, order_id, delivery_data, bonuses):
+        pprint({
+                "amount": {
+                    "value": cart['total'] - bonuses ,
+                    "currency": "RUB"
+                },
+                "confirmation": {
+                    "type": "redirect",
+                    "return_url": os.getenv("PAYMENT_BACK_URL")
+                },
+                "capture": True,
+                "description": f"Оплата №{order_id}",
+                "receipt": {
+                    "customer": {
+                        "full_name": user_data['fio'],
+                        "email": user_data['email'],
+                        "phone": user_data['phone'],
+                    },
+                    "items": self.item_check_builder(cart, delivery_data, bonuses),
 
+                }
+            })
         bonuses = bonuses or 0
-
         payement = \
             Payment.create({
                 "amount": {
-                    "value": cart['total'] - bonuses,
+                    "value": cart['total'] - bonuses ,
                     "currency": "RUB"
                 },
                 "confirmation": {

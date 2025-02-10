@@ -12,6 +12,11 @@ logger = logging.getLogger('shop')
 
 def prep_time(time_string: str) -> dict:
     """Парсит временной диапазон в формате 'HH:MM-HH:MM'."""
+    if time_string =='custom':
+        return {'from_hour': 0,
+                'from_minutes': 0,
+                'to_hour': 0,
+                'to_minutes': 0}
     time_list = time_string.split("-")
     from_hour, from_minute = map(int, time_list[0].split(":"))
     to_hour, to_minute = map(int, time_list[1].split(":"))
@@ -20,8 +25,7 @@ def prep_time(time_string: str) -> dict:
             'to_hour': to_hour,
             'to_minutes': to_minute}
 
-# TODO при формировании заказа с доставкой не ставиться корректная цена из бд.
-# TODO решить как отображать бонусы использованные при оформлении заказа.
+
 def send_new_order(data):
     if data['delivery_data']['method'] == 'Самовывоз':
         addres = "11-ая Красноармейская, д.11 стр. 3 Мастерская Кикимора"
@@ -46,6 +50,9 @@ def send_new_order(data):
         "order": {
             "custom_status_permalink": "v-obrabotke",
             "order_lines_attributes": product_list,
+            "client_transaction": {
+                              "amount": data['bonuses_deducted']*100,
+                              "description": "Списание бонусов за заказ"},
             "client": {
                 "name": data['customer_data']['fio'],
                 "email": data['customer_data']['email'],
@@ -81,5 +88,5 @@ def send_new_order(data):
     if response.status_code == 201:
         return response.json()['number']
     else:
-        logger.critical(f"по какой-то причине не удалось загрузить заказ в CRM! Ответ CRM:{response.json()}")
+        logger.critical(f"по какой-то причине не удалось загрузить заказ в CRM!\nORDER_DATA:{order_request}\nОтвет CRM:{response.json()}")
         return False

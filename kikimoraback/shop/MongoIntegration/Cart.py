@@ -64,7 +64,6 @@ class Cart:
                          f"ERROR:{e}\n")
             return
 
-
     def check_cart_data(self, front_data, user_id):
         """
         Проверяет данные корзины, переданные от фронтенда, и возвращает актуальные данные.
@@ -149,7 +148,7 @@ class Cart:
                                                 "delivery_data.apartment": delivery_data['appartmentNumber'],
                                                 "delivery_data.date":  datetime.strptime(delivery_data['date'], "%Y-%m-%d"),
                                                 "delivery_data.time": delivery_data['time'],
-                                                "delivery_data.cost":  delivery_data['deliveryCost'],
+                                                "delivery_data.cost":  delivery_data['deliveryCost'] + 1000 if delivery_data['time'] == 'custom' else delivery_data['deliveryCost'],
 
                                                 "customer_data.fio": customer_data['fio'],
                                                 "customer_data.phone": customer_data['phone'],
@@ -160,7 +159,7 @@ class Cart:
 
                                             },
                                             "$inc": {
-                                                "total": delivery_data['deliveryCost']
+                                                "total": delivery_data['deliveryCost']+ 1000 if delivery_data['time'] == 'custom' else delivery_data['deliveryCost']
                                             },
                                              })
         else:
@@ -169,7 +168,7 @@ class Cart:
                                                 "delivery_data.method": "Самовывоз",
                                                 "delivery_data.date": datetime.strptime(delivery_data['date'], "%Y-%m-%d"),
                                                 "delivery_data.time": delivery_data['time'],
-                                                "delivery_data.cost": 0,
+                                                "delivery_data.cost": 1000 if delivery_data['time'] == 'custom' else 0,
 
                                                 "customer_data.fio": customer_data['fio'],
                                                 "customer_data.phone": customer_data['phone'],
@@ -177,13 +176,15 @@ class Cart:
 
                                                 "comment": comment,
                                                 "date_of_creation": datetime.now()
-                                            }
+                                            },
+                                            "$inc": {
+                                                "total": 1000 if delivery_data['time'] == 'custom' else 0
+
+                                                },
                                             })
             return
 
     def apply_promo(self, user_id, promo_data):
-        print("____________________________________")
-        print(promo_data)
         self.cart_collection.update_one({"customer": user_id},
                                         {"$set":
                                              {"promo_data.promo_id": promo_data['promocode_id'],

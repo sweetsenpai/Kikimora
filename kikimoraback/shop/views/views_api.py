@@ -413,11 +413,9 @@ class YandexCalculation(APIView):
         if yandex_response.ok:
             distance_meters = yandex_data['distance_meters']
             price = round(float(yandex_data['price']))
-            print(price)
-            print(distance_meters)
+
             if distance_meters<= 5000:
                 price+= 100
-                print("+++++++++++++++++++++++++++++++")
             if distance_meters > 5000:
                 price += 200
             if distance_meters>10000:
@@ -618,8 +616,9 @@ class Payment(APIView):
             return Response({"error": "Ошибка подключения Корзины."}, status=status.HTTP_400_BAD_REQUEST)
         order = Order()
         user_cart.add_delivery(user_id, delivery_data, user_data, comment)
-        cart_data = user_cart.get_cart_data(user_id=user_id)
 
+        cart_data = user_cart.get_cart_data(user_id=user_id)
+        delivery_data = cart_data['delivery_data']
         order_number = order.get_neworder_num(user_id)
 
         if bonuses:
@@ -685,7 +684,7 @@ def yookassa_webhook(request):
 
 class TestWebhook(APIView):
     def post(self, request):
-        payment_id = "2f31a656-000f-5000-a000-13342c36154e"
+        payment_id = "2f3c3595-000f-5000-b000-15240262da0a"
         try:
             process_payment_succeeded(payment_id)
             return Response(status=status.HTTP_200_OK)
