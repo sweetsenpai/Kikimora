@@ -98,6 +98,7 @@ class ProductSearchSerializer(serializers.ModelSerializer):
             'name',
             'final_price',
             'photos',
+            'weight'
 
         ]
 
