@@ -684,7 +684,7 @@ def yookassa_webhook(request):
 
 class TestWebhook(APIView):
     def post(self, request):
-        payment_id = "2f3c3595-000f-5000-b000-15240262da0a"
+        payment_id = "2f3c3b0a-000f-5000-9000-1c5f664e2afd"
         try:
             process_payment_succeeded(payment_id)
             return Response(status=status.HTTP_200_OK)

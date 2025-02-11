@@ -419,3 +419,8 @@ def process_payment_canceled(self, payment_id):
     except Exception as e:
         logger.error(f"Ошибка при обработке отмененного платежа {payment_id}: {e}")
         self.retry(countdown=2 ** self.request.retries)
+
+
+@shared_task(bind=True, max_retries=3)
+def add_discount_to_insales_order(self, order_id, discount):
+    return

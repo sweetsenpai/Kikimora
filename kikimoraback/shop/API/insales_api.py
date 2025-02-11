@@ -48,11 +48,8 @@ def send_new_order(data):
 
     order_request = {
         "order": {
-            "custom_status_permalink": "v-obrabotke",
+            "custom_status_permalink": "novyy",
             "order_lines_attributes": product_list,
-            "client_transaction": {
-                              "amount": data['bonuses_deducted']*100,
-                              "description": "Списание бонусов за заказ"},
             "client": {
                 "name": data['customer_data']['fio'],
                 "email": data['customer_data']['email'],
@@ -64,6 +61,13 @@ def send_new_order(data):
                 "date": "12.02.2024",
                 "time": "13:00",
                 "full_locality_name": "Санкт-Петербург"
+            },
+            "discount": {
+                'type_id': 2,
+                'description': 'Баллов использовано в счет заказа',
+                'amount': data.get('bonuses_deducted', 0),
+                'full_amount': data.get('bonuses_deducted', 0),
+                'discount': str(float(data.get('bonuses_deducted', 0)))
             },
             "shipping_price": data['delivery_data']['cost'],
             "payment_gateway_id": os.getenv("PAYMENT_GETAWAY_ID"),

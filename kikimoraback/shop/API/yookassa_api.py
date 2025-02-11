@@ -117,7 +117,7 @@ class PaymentYookassa:
                     "return_url": os.getenv("PAYMENT_BACK_URL")
                 },
                 "capture": True,
-                "description": f"Оплата №{order_id}",
+                "description": f"Оплата №{order_id} для {user_data['phone']}",
                 "receipt": {
                     "customer": {
                         "full_name": user_data['fio'],
