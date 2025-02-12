@@ -23,7 +23,7 @@ class UserBehavior(TaskSet):
 
         # Отправка POST-запроса к endpoint /api/check_cart
         response = self.client.get(
-            "api/products/subcategory/30624807/",
+            "api/v1/products/all",
             data=json.dumps(data),
             headers={"Content-Type": "application/json"},
             cookies=self.cookies

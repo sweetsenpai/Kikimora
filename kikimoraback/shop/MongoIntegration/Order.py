@@ -45,7 +45,7 @@ class Order:
         user_orders_cursor = self.order_collection.find({"customer": user_id},
                                                         {"_id": 0,
                                                          "customer": 0,
-                                                         "payment_id": 0}).sort("created_at", -1)
+                                                         "payment_id": 0}).sort("insales")
         return list(user_orders_cursor)
 
     def get_order_by_payment(self, payment_id=str)-> dict|bool:

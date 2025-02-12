@@ -29,7 +29,7 @@ class PaymentYookassa:
                     - total (float|Decimal): общая стоимость корзины.
                 delivery_data (dict): Данные о доставке. Ожидает ключи:
                     - deliveryMethod (str): способ доставки.
-                    - deliveryCost (float|Decimal): стоимость доставки.
+                    - cost (float|Decimal): стоимость доставки.
                 bonuses (float|Decimal): Количество бонусов для списания.
 
             Returns:
@@ -90,28 +90,24 @@ class PaymentYookassa:
                     # чтобы избежать ошибки когда при большом числе товаров
                     # цена товара становиться отрицательной
                     items.append(create_item(product, remaining_bonuses/product['quantity']))
-
         # Добавляем доставку
-        delivery_cost = delivery_data['deliveryCost']
         items.append({
-            "description": delivery_data['deliveryMethod'],
+            "description": delivery_data['method'],
             "quantity": 1,
             "amount": {
-                "value": delivery_cost,
+                "value": delivery_data['cost'],
                 "currency": "RUB"
             },
             "vat_code": "1",
             "payment_mode": "prepayment",
             "payment_subject": "service",
         })
+
         return items
 
     def send_payment_request(self, user_data, cart, order_id, delivery_data, bonuses):
-
         bonuses = bonuses or 0
-
-        payement = \
-            Payment.create({
+        recipient_data = {
                 "amount": {
                     "value": cart['total'] - bonuses,
                     "currency": "RUB"
@@ -121,7 +117,7 @@ class PaymentYookassa:
                     "return_url": os.getenv("PAYMENT_BACK_URL")
                 },
                 "capture": True,
-                "description": f"Оплата №{order_id}",
+                "description": f"Оплата №{order_id} для {user_data['phone']}",
                 "receipt": {
                     "customer": {
                         "full_name": user_data['fio'],
@@ -131,14 +127,24 @@ class PaymentYookassa:
                     "items": self.item_check_builder(cart, delivery_data, bonuses),
 
                 }
-            })
+            }
+        try:
+            payement = \
+                Payment.create(recipient_data)
+        except Exception as e:
+            logger.error(f"Во время формирования платежа произошла ошибка на уровне загрузки данных в юкасу.\n"
+                         f"Данные для чека:{recipient_data}\n"
+                         f"ERROR:e")
+            return False
         try:
             logger.info(f"Платеж {order_id} успешно создан.")
             return payement.json()
         except KeyError as e:
             logger.error(f"Ошибка при извлечении данных из ответа yookassa: {e}")
         except Exception as e:
-            logger.critical(f"Не удалось создать оплату для клиента. Данные корзины:{cart}\n ОШИБКА: {e}")
+            logger.critical(f"Не удалось создать оплату для клиента. \nДанные корзины:{cart}"
+                            f"\nЧЕК:{recipient_data}"
+                            f"\nОШИБКА: {e}")
         return False
 
 

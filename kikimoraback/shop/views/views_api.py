@@ -1,17 +1,19 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, update_last_login
+from django.db.models import F
+from django.contrib.auth import authenticate
+from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from celery.result import AsyncResult
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import generics, status
-from django.contrib.auth.models import update_last_login
-from django.contrib.auth import authenticate
+from rest_framework.filters import SearchFilter
+from celery.result import AsyncResult
 from ..serializers import *
 from ..services.caches import *
 import json
@@ -26,8 +28,11 @@ from yookassa.domain.notification import WebhookNotificationEventType, WebhookNo
 from yookassa.domain.common import SecurityHelper
 from dotenv import load_dotenv
 import logging
-from ..tasks import new_order_email, update_price_cache, process_payment_canceled, process_payment_succeeded
+from ..tasks import new_order_email, update_price_cache, process_payment_canceled, \
+    process_payment_succeeded, send_confirmation_email
+from ..services.email_verification import verify_email_token
 from bson import json_util
+from pprint import pprint
 load_dotenv()
 logger = logging.getLogger('shop')
 logger.setLevel(logging.DEBUG)
@@ -43,23 +48,88 @@ class MenuSubcategory(generics.ListAPIView):
     serializer_class = MenuSubcategorySerializer
 
 
-class ProductApi(generics.ListAPIView):
+class ProductApi(generics.RetrieveAPIView):
     serializer_class = ProductSerializer
 
-    def get_queryset(self):
+    def get_object(self):
         product_id = self.kwargs.get('product_id')
-        return Product.objects.filter(product_id=product_id)
+
+        # Получаем один товар по ID
+        try:
+            cache_key = f'single_product_{product_id}'
+            single_product_cache = cache.get(cache_key)
+            if not single_product_cache:
+                single_product_cache = active_products_cash().get(product_id=product_id)
+                cache.set(cache_key, single_product_cache, timeout=60*15)
+        except Product.DoesNotExist:
+            raise NotFound(detail="Product not found")
+
+        # Возвращаем объект продукта
+        return single_product_cache
+
+    def get_serializer_context(self):
+        # Добавляем контекст для сериализатора
+        cached_data = update_price_cache()
+        return {
+            'price_map': cached_data['price_map'],
+            'discounts_map': cached_data['discounts_map'],
+            'photos_map': cached_data['photos_map']
+        }
+
+
+def sort_producst(products_set, query_params: str):
+    """
+    Функция для сортировки товаров по цене или весу, по возрастанию или убыванию.
+    Args:
+        products_set: QuerySet товаров
+        query_params: Фильтр, который будет применен для этой функции
+    """
+    # Конечно в будующем лучше реализовать кеширование результатов работы этой функции,
+    # но пока этого достаточно
+    if query_params == 'price_asc':
+        products_set = products_set.order_by('price')
+    if query_params == 'price_des':
+        products_set = products_set.order_by('-price')
+    if query_params == 'weight_asc':
+        products_set = products_set.order_by('weight')
+    if query_params == 'weight_des':
+        products_set = products_set.order_by('-weight')
+    return products_set
 
 
 class ProductViewSet(viewsets.ViewSet):
-    serializer_class = ProductSerializer
+    serializer_class = ProductCardSerializer
     pagination_class = PageNumberPagination
+    page_size = 8
+
+    @action(detail=False, methods=['get'], url_path='all-products')
+    def all_products(self, request):
+        cached_data = update_price_cache()
+        products = active_products_cash()
+        sort_by = request.query_params.get('sort_by', None)
+        if sort_by:
+            products = sort_producst(products, query_params=sort_by)
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(products, request)
+        context = {
+            'price_map': cached_data['price_map'],
+            'discounts_map': cached_data['discounts_map'],
+            'photos_map': cached_data['photos_map']
+        }
+        serializer = self.serializer_class(
+            result_page,
+            many=True,
+            context=context
+        )
+        return paginator.get_paginated_response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='subcategory/(?P<subcategory_id>[^/.]+)')
     def by_subcategory(self, request, subcategory_id=None):
         cached_data = update_price_cache()
         products = active_products_cash(subcategory_id)
-
+        sort_by = request.query_params.get('sort_by', None)
+        if sort_by:
+            products = sort_producst(products, sort_by)
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(products, request)
         context = {
@@ -82,10 +152,10 @@ class ProductViewSet(viewsets.ViewSet):
         Возвращает все товары, к которым применены скидки.
         """
         # Получаем список ID товаров с скидками из кэша
-        products_with_discounts_ids = cache.get("products_with_discounts", [])
+
 
         # Получаем полные данные о товарах по их ID
-        products_with_discounts = Product.objects.filter(product_id__in=products_with_discounts_ids)
+        products_with_discounts = get_discounted_product_data()
 
         # Пагинация результатов
         paginator = self.pagination_class()
@@ -107,8 +177,32 @@ class ProductViewSet(viewsets.ViewSet):
             context=context
         )
 
-        # Возвращаем пагинированный ответ
         return paginator.get_paginated_response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='search-product')
+    def search_product(self, request):
+        """
+        Метод для поиска по товарам
+        """
+        query = request.query_params.get('query', None)
+        if not query:
+            return Response({"detail": "Парметр 'query' обязателен."}, status=400)
+
+        cached_data = update_price_cache()
+        products = active_products_cash().filter(name__icontains=query)
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(products, request)
+        context = {
+            'price_map': cached_data['price_map'],
+            'discounts_map': cached_data['discounts_map'],
+            'photos_map': cached_data['photos_map']
+        }
+
+        serializer = ProductSearchSerializer(result_page,
+                                             many=True,
+                                             context=context)
+
+        return Response(serializer.data)
 
 
 class ProductAutocompleteView(APIView):
@@ -175,7 +269,6 @@ class Login(APIView):
 
             response.set_cookie("access_token", str(refresh.access_token), httponly=True, secure=True, samesite='Strict')
             response.set_cookie("refresh_token", str(refresh), httponly=True, secure=True, samesite='Strict')
-
             return response
         else:
             return Response(
@@ -190,7 +283,6 @@ class RegisterUserView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             refresh = RefreshToken.for_user(user)
-
             response = JsonResponse({
                 "message": "Пользователь успешно зарегистрирован.",
                 "tokens": {
@@ -203,16 +295,41 @@ class RegisterUserView(APIView):
             response.set_cookie("access_token", str(refresh.access_token), httponly=True, secure=True, samesite='Strict')
             response.set_cookie("refresh_token", str(refresh), httponly=True, secure=True, samesite='Strict')
 
+            send_confirmation_email(user)
+
             return response
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VerifyEmailView(APIView):
+    def get(self, request, token):
+        user_id = verify_email_token(token)
+        if user_id:
+            try:
+                user = CustomUser.objects.get(user_id=user_id)
+                if not user.is_email_verified:
+                    user.is_email_verified = True
+                    user.save()
+                    return render(request, 'emails/email_confirmed.html',
+                                  {'website_url': os.getenv("WEBSITE_URL")})
+                else:
+                    return render(request, 'emails/email_confirmed.html', {
+                        'website_url': os.getenv("WEBSITE_URL"),
+                        'message': 'Email уже был подтвержден ранее.'
+                    })
+            except CustomUser.DoesNotExist:
+                pass
+            return render(request, 'emails/email_confirmed.html', {
+                'website_url': os.getenv("WEBSITE_URL"),
+                'message': 'Недействительная ссылка для подтверждения.'
+            })
 
 
 class UserDataView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
     serializer_class = UserDataSerializer
-    # TODO: вынести  проверку пользователя в отдельную функцию
 
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -228,7 +345,7 @@ class UserDataView(APIView):
             return Response({"error": "Пользователь не найден."}, status=404)
         return Response(status=status.HTTP_200_OK,data=serializer.data)
 
-    def putch(self, request, **kwargs):
+    def patch(self, request, **kwargs):
         user = request.user
         user_id = kwargs.get('user_id', user.user_id)
         new_password = request.data.get('new_password')
@@ -255,6 +372,8 @@ class UserDataView(APIView):
                 user.save()
             return Response(status=status.HTTP_200_OK, data=serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# TODO: обработка кастомного времени
 
 
 class YandexCalculation(APIView):
@@ -292,8 +411,17 @@ class YandexCalculation(APIView):
         default_error_msg = "Сейчас серфис доставки не доступен.\nВы можете оформить доставку самостоятельно или обратиться в магазин."
 
         if yandex_response.ok:
-            return Response(status=status.HTTP_200_OK, data={'price': round(float(yandex_data['price'])),
-                                                             'distance_meters': yandex_data['distance_meters']})
+            distance_meters = yandex_data['distance_meters']
+            price = round(float(yandex_data['price']))
+
+            if distance_meters<= 5000:
+                price+= 100
+            if distance_meters > 5000:
+                price += 200
+            if distance_meters>10000:
+                price+= 100
+            return Response(status=status.HTTP_200_OK, data={'price': price,
+                                                             'distance_meters': distance_meters})
         elif yandex_response.status_code == 400:
             logger.error(f'Ошибка во время расчета стоимости заказ.\nAddres:{address}\n ERROR:{yandex_data}')
             return Response({"error": "Не удалось расчитать стоимость доставки.\n"
@@ -488,8 +616,9 @@ class Payment(APIView):
             return Response({"error": "Ошибка подключения Корзины."}, status=status.HTTP_400_BAD_REQUEST)
         order = Order()
         user_cart.add_delivery(user_id, delivery_data, user_data, comment)
-        cart_data = user_cart.get_cart_data(user_id=user_id)
 
+        cart_data = user_cart.get_cart_data(user_id=user_id)
+        delivery_data = cart_data['delivery_data']
         order_number = order.get_neworder_num(user_id)
 
         if bonuses:
@@ -555,7 +684,7 @@ def yookassa_webhook(request):
 
 class TestWebhook(APIView):
     def post(self, request):
-        payment_id = "2f31a656-000f-5000-a000-13342c36154e"
+        payment_id = "2f3c3b0a-000f-5000-9000-1c5f664e2afd"
         try:
             process_payment_succeeded(payment_id)
             return Response(status=status.HTTP_200_OK)

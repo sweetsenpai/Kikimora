@@ -36,6 +36,9 @@ djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
 dnspython==2.6.1
 exceptiongroup==1.2.2
+Flask==3.1.0
+Flask-Cors==5.0.0
+Flask-Login==0.6.3
 gevent==24.11.1
 geventhttpclient==2.3.3
 greenlet==3.1.1
@@ -67,6 +70,7 @@ python-crontab==3.2.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-snappy==0.7.2
+pyzmq==26.2.0
 redis==4.5.5
 requests==2.32.3
 selenium==4.27.1

@@ -60,6 +60,16 @@ def get_products_sub_cash(cash_key, subcategory_id=None):
     return product_sub_cash
 
 
+def get_discounted_product_data():
+    cache_key = 'get_discounted_product_data'
+    dp_data = cache.get(cache_key)
+    if not dp_data:
+        products_with_discounts_ids = cache.get("products_with_discounts", [])
+        dp_data = active_products_cash().filter(product_id__in=products_with_discounts_ids)
+        cache.set(cache_key, dp_data, timeout=60*15)
+    return dp_data
+
+
 def get_discount_cash():
     cash_key = "discount"
     disc_cash = cache.get(cash_key)

@@ -1,5 +1,6 @@
 from django.utils import timezone
 from django.db.models import Prefetch
+from ..models import ProductPhoto
 from .caches import get_discount_cash, get_limit_product_cash
 import logging
 
@@ -33,7 +34,10 @@ def calculate_prices(products):
         Prefetch('limittimeproduct_set',
                  queryset=get_limit_product_cash(),
                  to_attr='active_limittimeproduct'),
-        'photos',
+        Prefetch(
+            'photos',
+            queryset=ProductPhoto.objects.all(),  # Все фото для товаров
+            to_attr='prefetched_photos')
     )
 
     price_map = {}
@@ -104,7 +108,7 @@ def calculate_prices(products):
                 'is_main': photo.is_main,
                 'photo_description': photo.photo_description
             }
-            for photo in product.photos.all()  # Используем prefetched photos
+            for photo in product.prefetched_photos  # Используем prefetched данные
         ]
     return {'price_map': price_map,
             'discounts_map': discounts_map,

@@ -12,6 +12,11 @@ logger = logging.getLogger('shop')
 
 def prep_time(time_string: str) -> dict:
     """Парсит временной диапазон в формате 'HH:MM-HH:MM'."""
+    if time_string =='custom':
+        return {'from_hour': 0,
+                'from_minutes': 0,
+                'to_hour': 0,
+                'to_minutes': 0}
     time_list = time_string.split("-")
     from_hour, from_minute = map(int, time_list[0].split(":"))
     to_hour, to_minute = map(int, time_list[1].split(":"))
@@ -20,8 +25,7 @@ def prep_time(time_string: str) -> dict:
             'to_hour': to_hour,
             'to_minutes': to_minute}
 
-# TODO при формировании заказа с доставкой не ставиться корректная цена из бд.
-# TODO решить как отображать бонусы использованные при оформлении заказа.
+
 def send_new_order(data):
     if data['delivery_data']['method'] == 'Самовывоз':
         addres = "11-ая Красноармейская, д.11 стр. 3 Мастерская Кикимора"
@@ -44,7 +48,7 @@ def send_new_order(data):
 
     order_request = {
         "order": {
-            "custom_status_permalink": "v-obrabotke",
+            "custom_status_permalink": "novyy",
             "order_lines_attributes": product_list,
             "client": {
                 "name": data['customer_data']['fio'],
@@ -57,6 +61,13 @@ def send_new_order(data):
                 "date": "12.02.2024",
                 "time": "13:00",
                 "full_locality_name": "Санкт-Петербург"
+            },
+            "discount": {
+                'type_id': 2,
+                'description': 'Баллов использовано в счет заказа',
+                'amount': data.get('bonuses_deducted', 0),
+                'full_amount': data.get('bonuses_deducted', 0),
+                'discount': str(float(data.get('bonuses_deducted', 0)))
             },
             "shipping_price": data['delivery_data']['cost'],
             "payment_gateway_id": os.getenv("PAYMENT_GETAWAY_ID"),
@@ -81,5 +92,5 @@ def send_new_order(data):
     if response.status_code == 201:
         return response.json()['number']
     else:
-        logger.critical(f"по какой-то причине не удалось загрузить заказ в CRM! Ответ CRM:{response.json()}")
+        logger.critical(f"по какой-то причине не удалось загрузить заказ в CRM!\nORDER_DATA:{order_request}\nОтвет CRM:{response.json()}")
         return False
