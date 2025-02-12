@@ -15,7 +15,8 @@ services:
       - CELERY_BROKER=redis://redis:6379/0
     depends_on:
       - redis
-
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"
   celery:
     build:
       context: .
