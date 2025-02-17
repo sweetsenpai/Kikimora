@@ -55,16 +55,16 @@ urlpatterns = [
     path('apanel/staff/<int:admin_id>/', views_admin.admin_account, name='admin_account'),
     path('apanel/staff/create_new_admin/', views_admin.AdminCreateView.as_view(), name='admin_create'),
     # CATEGORY
-    path('categories', views_admin.AdminCategoryView.as_view(), name='admin_category_view'),
-    path('change_visability_category/<int:category_id>/', views_admin.toggle_visibility_category, name='change_visability_category'),
+    path('apanel/categories', views_admin.AdminCategoryView.as_view(), name='admin_category_view'),
+    path('api/v1/change_visability_category/<int:category_id>/', views_admin.toggle_visibility_category, name='change_visability_category'),
     # SUBCATEGORY
-    path('category/<int:category_id>/subcategories/', views_admin.AdminSubcategoryListView.as_view(), name='subcategory_list'),
-    path('change_visibility_subcat/<int:subcategory_id>/', views_admin.toggle_visibility_subcat, name='change_visibility_subcat'),
+    path('apanel/category/<int:category_id>/subcategories/', views_admin.AdminSubcategoryListView.as_view(), name='subcategory_list'),
+    path('api/v1/change_visibility_subcat/<int:subcategory_id>/', views_admin.toggle_visibility_subcat, name='change_visibility_subcat'),
     # PRODUCT
-    path('category/<int:category_id>/subcategories/<int:subcategory_id>', views_admin.AdminProdactListView.as_view(),
+    path('apanel/category/<int:category_id>/subcategories/<int:subcategory_id>', views_admin.AdminProdactListView.as_view(),
          name='prodact_list'),
-    path('change_visibility_product/<int:product_id>/', views_admin.toggle_visibility_product, name='change_visibility_product'),
-    path('product/<int:product_id>', views_admin.ProductUpdateView.as_view(), name='product_update'),
+    path('api/v1/change_visibility_product/<int:product_id>/', views_admin.toggle_visibility_product, name='change_visibility_product'),
+    path('apanel/product/<int:product_id>', views_admin.ProductUpdateView.as_view(), name='product_update'),
     # DISCOUNT
     path('discounts', views_admin.AdminDiscountListView.as_view(), name='discounts'),
     path('discounts/new_discount', views_admin.AdminNewDiscount.as_view(), name='new_discount'),

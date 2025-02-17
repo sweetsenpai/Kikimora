@@ -1,6 +1,6 @@
 function toggleVisibilityCategory(category_id) {
     $.ajax({
-        url: window.location.origin + `/change_visability_category/${category_id}/`, // Проверьте, что URL корректный
+        url: window.location.origin + `/api/v1/change_visability_category/${category_id}/`, // Проверьте, что URL корректный
         type: 'POST',
         data: {
             'csrfmiddlewaretoken': getCookie('csrftoken'),

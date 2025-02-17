@@ -28,8 +28,8 @@
             {% for product in products %}
             <tr id="product-{{ product.product_id }}">
                 <th scope="row">{{ product.product_id }}</th>
-                <td onclick="window.location='/product/{{ product.product_id }}';">{{ product.name }}</td>
-                <td onclick="window.location='/product/{{ product.product_id }}';">
+                <td onclick="window.location='/apanel/product/{{ product.product_id }}';">{{ product.name }}</td>
+                <td onclick="window.location='/apanel/product/{{ product.product_id }}';">
                     {% if product.prefetched_photos %}
                         <img class="rounded mx-auto d-block"
                              src="{{ product.prefetched_photos.0.photo_url }}"
@@ -39,7 +39,7 @@
                         Нет фото
                     {% endif %}
                 </td>
-                <td onclick="window.location='/product/{{ product.product_id }}';">{{ product.price }} ₽</td>
+                <td onclick="window.location='/apanel/product/{{ product.product_id }}';">{{ product.price }} ₽</td>
                 <td>
                     <button type="button"
                             class="btn {% if product.visibility %}btn-warning{% else %}btn-primary{% endif %}"

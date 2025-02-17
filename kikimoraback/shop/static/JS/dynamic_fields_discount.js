@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const productSelect = document.getElementById('product');
 
     // Fetch categories on page load
-    fetch('/api/categories/')
+    fetch('/api/v1/categories/')
         .then(response => response.json())
         .then(data => {
             data.forEach(category => {

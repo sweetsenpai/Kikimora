@@ -56,16 +56,14 @@ class ProductApi(generics.RetrieveAPIView):
 
         # Получаем один товар по ID
         try:
-            cache_key = f'single_product_{product_id}'
-            single_product_cache = cache.get(cache_key)
-            if not single_product_cache:
-                single_product_cache = active_products_cash().get(product_id=product_id)
-                cache.set(cache_key, single_product_cache, timeout=60*15)
+
+            single_product = active_products_cash().get(product_id=product_id)
+            cache.set(cache_key, single_product_cache, timeout=60*15)
         except Product.DoesNotExist:
             raise NotFound(detail="Product not found")
 
         # Возвращаем объект продукта
-        return single_product_cache
+        return single_product
 
     def get_serializer_context(self):
         # Добавляем контекст для сериализатора
