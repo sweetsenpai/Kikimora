@@ -1,6 +1,6 @@
 function toggleVisibilitySubcat(subcategory_id) {
     $.ajax({
-        url: window.location.origin + `/change_visibility_subcat/${subcategory_id}/`,
+        url: window.location.origin + `/api/v1/change_visibility_subcat/${subcategory_id}/`,
         type: 'POST',
         data: {
             'csrfmiddlewaretoken': getCookie('csrftoken'),

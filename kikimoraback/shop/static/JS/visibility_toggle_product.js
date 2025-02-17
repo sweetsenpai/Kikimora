@@ -1,6 +1,6 @@
 function toggleVisibilityProduct(product_id) {
     $.ajax({
-        url: window.location.origin + `/change_visibility_product/${product_id}/`,
+        url: window.location.origin + `/api/v1/change_visibility_product/${product_id}/`,
         type: 'POST',
         data: {
             'csrfmiddlewaretoken': getCookie('csrftoken'),

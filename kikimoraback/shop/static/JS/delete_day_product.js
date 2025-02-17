@@ -6,7 +6,7 @@ $(document).ready(function() {
 
         if (confirm('Вы уверены, что хотите удалить этот товар дня?')) {
             $.ajax({
-                url: `/api/delete_day_product/${productId}/`,
+                url: `/api/v1/delete_day_product/${productId}/`,
                 type: 'DELETE',
                 headers: {
                     'X-CSRFToken': getCookie('csrftoken')

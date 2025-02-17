@@ -21,7 +21,7 @@ $(document).on('click', '#submit-button', function(event) {
                         data: formElement.serialize(),
                         success: function(response) {
                             if (response.status === 'success') {
-                                window.location.href = '/discounts';  // Перенаправляем пользователя на /discounts
+                                window.location.href = '/apanel/discounts';  // Перенаправляем пользователя на /discounts
                             } else {
                                 console.error("Ошибка:", response.errors);
                             }

@@ -6,7 +6,7 @@ $(document).on('click', '.stop-discount', function(event) {
 
     $.ajax({
         type: 'POST',
-        url: '/api/discounts/stop/' + discountId + '/',
+        url: '/api/v1/discounts/stop/' + discountId + '/',
         data: {
             csrfmiddlewaretoken: '{{ csrf_token }}'
         },
