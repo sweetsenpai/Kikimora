@@ -20,7 +20,7 @@ $(document).on('click', '#submit-button', function(event) {
                     // Ваш AJAX-запрос здесь
                     $.ajax({
                         type: "POST",
-                        url: "/staff/create_new_admin/",
+                        url: "/apanel/staff/create_new_admin/",
                         data: formElement.serialize() + '&csrfmiddlewaretoken=' + $('input[name="csrfmiddlewaretoken"]').val(),
                         success: function(response) {
                             console.log("Ответ от сервера:", response);

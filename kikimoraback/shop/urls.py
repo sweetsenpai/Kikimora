@@ -51,9 +51,9 @@ urlpatterns = [
     path('apanel/login', views_admin.AdminLogin.as_view(), name='admin_login'),
     path('apanel/logout', LogoutView.as_view(next_page='admin_login'), name='admin_logout'),
     # STAFF
-    path('staff', views_admin.StaffListView.as_view(), name='staff'),
-    path('staff/<int:admin_id>/', views_admin.admin_account, name='admin_account'),
-    path('staff/create_new_admin/', views_admin.AdminCreateView.as_view(), name='admin_create'),
+    path('apanel/staff', views_admin.StaffListView.as_view(), name='staff'),
+    path('apanel/staff/<int:admin_id>/', views_admin.admin_account, name='admin_account'),
+    path('apanel/staff/create_new_admin/', views_admin.AdminCreateView.as_view(), name='admin_create'),
     # CATEGORY
     path('categories', views_admin.AdminCategoryView.as_view(), name='admin_category_view'),
     path('change_visability_category/<int:category_id>/', views_admin.toggle_visibility_category, name='change_visability_category'),

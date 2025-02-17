@@ -12,7 +12,7 @@ from django.views.generic import ListView, TemplateView, FormView
 from django.views.generic.edit import CreateView, UpdateView
 
 from django.utils import timezone
-
+from django.utils.crypto import get_random_string
 
 from django.template import loader
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
@@ -77,12 +77,7 @@ class StaffListView(StaffCheckRequiredMixin, ListView):
     context_object_name = 'admins'
 
     def get_queryset(self):
-        cache_key = 'staff_list'
-        staff_list = cache.get(cache_key)
-        if not staff_list:
-            staff_list = CustomUser.objects.filter(is_staff=True).order_by('user_id').values()
-            cache.set(cache_key, staff_list, timeout=60*15)
-        return staff_list
+        return CustomUser.objects.filter(is_staff=True).order_by('user_id').values()
 
     def post(self, request, *args, **kwargs):
         email = request.POST.get('email')
@@ -120,12 +115,13 @@ class AdminCreateView(StaffCheckRequiredMixin, FormView):
 @user_passes_test(is_staff_or_superuser)
 def admin_account(request, admin_id):
     if request.method=="POST":
-
+        print("__________________________")
         ex_admin = get_object_or_404(CustomUser, user_id=admin_id)
+        print(ex_admin)
         ex_admin.is_staff = False
         ex_admin.is_superuser = False
         ex_admin.save()
-        return JsonResponse({'status': 'success', 'redirect_url': '/staff'})
+        return JsonResponse({'status': 'success', 'redirect_url': '/apanel/staff'})
 
     admin_data = {'admin': CustomUser.objects.get(user_id=admin_id)}
     return render(request, template_name='master/admin_page.html', context=admin_data)
