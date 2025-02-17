@@ -8,7 +8,7 @@ services:
     container_name: django
     restart: always
     expose:
-      - "8000"
+      - "8001:8000" # Меняем внешний порт на 8001, чтобы не конфликтовать с nginx
     volumes:
       - static_volume:/kikimoraback/static
       - media_volume:/kikimoraback/media
@@ -40,19 +40,6 @@ services:
     restart: always
     expose:
       - "6379"
-
-  nginx:
-    image: nginx:latest
-    container_name: nginx
-    restart: always
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - static_volume:/kikimoraback/static
-      - media_volume:/kikimoraback/media
-    depends_on:
-      - django
 
 volumes:
   static_volume:
