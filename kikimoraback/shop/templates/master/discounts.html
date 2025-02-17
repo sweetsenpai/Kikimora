@@ -22,21 +22,21 @@
             {% for discount in discounts %}
             <tr>
                 <th scope="row">{{ discount.discount_id }}</th>
-                <td onclick="window.location='discounts/{{ discount.discount_id }}';">{{ discount.get_discount_type_display }}</td>
+                <td onclick="window.location='/apanel/discounts/{{ discount.discount_id }}';">{{ discount.get_discount_type_display }}</td>
                 {% if discount.get_discount_type_display == 'Процентная' %}
-                <td onclick="window.location='discounts/{{ discount.discount_id }}';">{{ discount.value }}%</td>
+                <td onclick="window.location='/apanel/discounts/{{ discount.discount_id }}';">{{ discount.value }}%</td>
                 {% else %}
-                <td onclick="window.location='discounts/{{ discount.discount_id }}';">{{ discount.value }} ₽</td>
+                <td onclick="window.location='/apanel/discounts/{{ discount.discount_id }}';">{{ discount.value }} ₽</td>
                 {% endif %}
                 {% if discount.category %}
-                <td onclick="window.location='discounts/{{ discount.discount_id }}';">{{ discount.category.name }}</td>
+                <td onclick="window.location='/apanel/discounts/{{ discount.discount_id }}';">{{ discount.category.name }}</td>
                 {% elif discount.subcategory %}
-                <td onclick="window.location='discounts/{{ discount.discount_id }}';">{{ discount.subcategory.name }}</td>
+                <td onclick="window.location='/apanel/discounts/{{ discount.discount_id }}';">{{ discount.subcategory.name }}</td>
                 {% else %}
-                <td onclick="window.location='discounts/{{ discount.discount_id }}';">{{ discount.product.name }}</td>
+                <td onclick="window.location='/apanel/discounts/{{ discount.discount_id }}';">{{ discount.product.name }}</td>
                 {% endif %}
-                <td onclick="window.location='discounts/{{ discount.discount_id }}';">{{ discount.start }}</td>
-                <td onclick="window.location='discounts/{{ discount.discount_id }}';">{{ discount.end }}</td>
+                <td onclick="window.location='/apanel/discounts/{{ discount.discount_id }}';">{{ discount.start }}</td>
+                <td onclick="window.location='/apanel/discounts/{{ discount.discount_id }}';">{{ discount.end }}</td>
 <!--                <td>-->
 <!--                {% if discount.end > current_time %}-->
 <!--                    <button type="button" class="btn btn-warning stop-discount" data-discount-id="{{ discount.discount_id }}">Остановить</button>-->

@@ -66,9 +66,9 @@ urlpatterns = [
     path('api/v1/change_visibility_product/<int:product_id>/', views_admin.toggle_visibility_product, name='change_visibility_product'),
     path('apanel/product/<int:product_id>', views_admin.ProductUpdateView.as_view(), name='product_update'),
     # DISCOUNT
-    path('discounts', views_admin.AdminDiscountListView.as_view(), name='discounts'),
-    path('discounts/new_discount', views_admin.AdminNewDiscount.as_view(), name='new_discount'),
-    path('discounts/<int:discount_id>', views_admin.delete_discount, name='delete_discount'),
+    path('apanel/discounts', views_admin.AdminDiscountListView.as_view(), name='discounts'),
+    path('apanel/discounts/new_discount', views_admin.AdminNewDiscount.as_view(), name='new_discount'),
+    path('apanel/discounts/<int:discount_id>', views_admin.delete_discount, name='delete_discount'),
     # PROMOCODS
     path('promocods', views_admin.AdminPromocodeListView.as_view(), name='promocods'),
     path('promocods/new_promocode', views_admin.AdminNewPromo.as_view(), name='new_promo'),
