@@ -70,12 +70,12 @@ urlpatterns = [
     path('apanel/discounts/new_discount', views_admin.AdminNewDiscount.as_view(), name='new_discount'),
     path('apanel/discounts/<int:discount_id>', views_admin.delete_discount, name='delete_discount'),
     # PROMOCODS
-    path('promocods', views_admin.AdminPromocodeListView.as_view(), name='promocods'),
-    path('promocods/new_promocode', views_admin.AdminNewPromo.as_view(), name='new_promo'),
-    path('promocods/<int:promo_id>', views_admin.delete_promo, name='promocods'),
+    path('apanel/promocods', views_admin.AdminPromocodeListView.as_view(), name='promocods'),
+    path('apanel/promocods/new_promocode', views_admin.AdminNewPromo.as_view(), name='new_promo'),
+    path('apanel/promocods/<int:promo_id>', views_admin.delete_promo, name='promocods'),
 
     # LIMITE TIME PRODUCTS
-    path('day_products', views_admin.AdminLimitTimeProduct.as_view(), name='day_products'),
-    path('day_products/<int:product_id>/', views_admin.AdminLimitTimeProductForm.as_view(), name='day_products_form')
+    path('apanel/day_products', views_admin.AdminLimitTimeProduct.as_view(), name='day_products'),
+    path('apanel/day_products/<int:product_id>/', views_admin.AdminLimitTimeProductForm.as_view(), name='day_products_form')
 ]
 
