@@ -1,28 +1,28 @@
+version: "3.8"
+
 services:
   django:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: django
-    ports:
-      - "8000:8000"
-    command: bash -c "python manage.py makemigrations shop && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
-
+    restart: always
+    expose:
+      - "8000"
     volumes:
-      - .:/kikimoraback
+      - static_volume:/kikimoraback/static
+      - media_volume:/kikimoraback/media
     environment:
-      - DEBUG=1
+      - DJANGO_SECRET_KEY=секретный_ключ
+      - DJANGO_DEBUG=False
       - CELERY_BROKER=redis://redis:6379/0
     depends_on:
       - redis
-    extra_hosts:
-      - "host.docker.internal:172.17.0.1"
+
   celery:
     build:
       context: .
-    command: celery -A kikimoraback worker -l INFO
-    volumes:
-      - .:/kikimoraback
+    command: celery -A kikimoraback worker --loglevel=info
     depends_on:
       - django
       - redis
@@ -30,18 +30,30 @@ services:
   celery-beat:
     build:
       context: .
-    command: celery -A kikimoraback beat -l INFO
-    volumes:
-      - .:/kikimoraback
+    command: celery -A kikimoraback beat --loglevel=info
     depends_on:
       - django
       - redis
 
   redis:
     image: redis:latest
+    restart: always
+    expose:
+      - "6379"
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: always
     ports:
-      - "6379:6379"
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 3s
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - static_volume:/kikimoraback/static
+      - media_volume:/kikimoraback/media
+    depends_on:
+      - django
+
+volumes:
+  static_volume:
+  media_volume:
