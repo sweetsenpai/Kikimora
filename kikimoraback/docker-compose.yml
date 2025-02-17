@@ -41,18 +41,6 @@ services:
     expose:
       - "6379"
 
-  nginx:
-    image: nginx:latest
-    container_name: nginx
-    restart: always
-    ports:
-      - "80:80"
-    volumes:
-      - static_volume:/kikimoraback/static
-      - media_volume:/kikimoraback/media
-    depends_on:
-      - django
-
 volumes:
   static_volume:
   media_volume:
