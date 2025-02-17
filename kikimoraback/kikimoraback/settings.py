@@ -93,6 +93,8 @@ TEMPLATES = [
     },
 ]
 
+APPEND_SLASH = True
+
 WSGI_APPLICATION = 'kikimoraback.wsgi.application'
 
 
