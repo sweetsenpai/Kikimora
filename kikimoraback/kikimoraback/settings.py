@@ -213,9 +213,7 @@ STATIC_URL = '/backend-static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 if not DEBUG:
-    STATICFILES_DIRS = [
-        os.path.join(BASE_DIR, "shop/static"),  # Путь к статическим файлам в приложении shop
-    ]
+    STATICFILES_DIRS = []
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
