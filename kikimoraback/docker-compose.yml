@@ -9,8 +9,8 @@ services:
     expose:
       - "8000"
     volumes:
-      - ./static:/kikimoraback/static  # Монтируем статические файлы на хост
-      - ./media:/kikimoraback/media     # Монтируем медиа-файлы на хост
+      - /var/www/kikimora/static:/kikimoraback/static  # Монтируем статические файлы на хост
+      - /var/www/kikimora/media:/kikimoraback/media     # Монтируем медиа-файлы на хост
     environment:
       - DJANGO_SECRET_KEY=секретный_ключ
       - DJANGO_DEBUG=False
