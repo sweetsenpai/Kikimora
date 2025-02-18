@@ -58,7 +58,6 @@ class ProductApi(generics.RetrieveAPIView):
         try:
 
             single_product = active_products_cash().get(product_id=product_id)
-            cache.set(cache_key, single_product_cache, timeout=60*15)
         except Product.DoesNotExist:
             raise NotFound(detail="Product not found")
 
