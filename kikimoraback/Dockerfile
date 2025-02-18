@@ -17,10 +17,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Копируем код проекта
 COPY . .
 
+# Копируем скрипт entrypoint.sh
+COPY entrypoint.sh entrypoint.sh
+RUN chmod +x entrypoint.sh
+
+# Собираем статические файлы
 RUN python manage.py collectstatic --noinput
 
 # Открываем порт (если нужно)
 EXPOSE 8000
 
-# Запускаем сервер через gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "kikimoraback.wsgi:application"]
+# Устанавливаем entrypoint.sh как точку входа
+ENTRYPOINT ["entrypoint.sh"]
