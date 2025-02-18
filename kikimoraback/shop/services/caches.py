@@ -5,7 +5,6 @@ from rest_framework.renderers import JSONRenderer
 from django.db.models import QuerySet
 
 
-
 def user_bonus_cash():
     cash_key = 'bonus'
     bonus_cash = cache.get(cash_key)
