@@ -217,69 +217,69 @@ def delete_limite_time_product(product_id):
 def check_crm_changes():
     logger.info("Task `check_crm_changes` started.")
     insales_url = os.getenv("INSALES_URL")
-    sub_page = 1
     new_subcategories = []
     new_products = []
     new_photos = []
 
     try:
         with httpx.Client() as client:
-            while True:
                 # Получаем данные о подкатегориях (коллекциях)
-                sub_response = client.get(f"{insales_url}collections.json", params={'page': sub_page}).json()
-                if not sub_response:
-                    break
+            sub_response = client.get(f"{insales_url}collections.json", params={'parent_id': 30736737}).json()
+            if not sub_response:
+                logger.error("Не удалось получить ответ от insales при обновлении БД.")
 
-                for subcat in sub_response:
-                    if "сайт" in subcat['title']:
-                        # Проверяем, существует ли подкатегория в базе данных
-                        subcategory, created = Subcategory.objects.get_or_create(
-                            subcategory_id=subcat['id'],
-                            defaults={
-                                'name': subcat['title'].replace('сайт', '').strip(),
-                                'category': Category.objects.get(category_id=1)
-                            }
-                        )
-                        if created:
-                            new_subcategories.append(subcategory)
+            for subcat in sub_response:
+                # Проверяем, существует ли подкатегория в базе данных
+                subcategory, created = Subcategory.objects.get_or_create(
+                    subcategory_id=subcat['id'],
+                    defaults={
+                        'name': subcat['title'],
+                        'category': Category.objects.get(category_id=1),
+                        'permalink': subcat['permalink']
+                    }
+                )
+                if created:
+                    new_subcategories.append(subcategory)
 
-                        # Получаем товары из коллекции
-                        prod_response = client.get(f"{insales_url}collects.json", params={'collection_id': subcat['id']}).json()
-                        if prod_response:
-                            if not created:
-                                product_in_db = set(subcategory.products.values_list('product_id', flat=True))
-                                product_in_crm = {item['product_id'] for item in prod_response}
-                                prod_for_delete = product_in_db - product_in_crm
-                                product_for_create = product_in_crm - prod_for_delete
-                                if prod_for_delete:
-                                    for prod_id in prod_for_delete:
-                                        Product.objects.get(product_id=prod_id).subcategory.remove(subcategory)
+                # Получаем товары из коллекции
+                prod_response = client.get(f"{insales_url}collects.json", params={'collection_id': subcat['id']}).json()
+                product_for_create = []
+                if prod_response:
+                    if not created:
+                        product_in_db = set(subcategory.products.values_list('product_id', flat=True))
+                        product_in_crm = {item['product_id'] for item in prod_response}
+                        prod_for_delete = product_in_db - product_in_crm
+                        product_for_create = product_in_crm - prod_for_delete
+                        if prod_for_delete:
+                            for prod_id in prod_for_delete:
+                                Product.objects.get(product_id=prod_id).subcategory.remove(subcategory)
 
-                            for product in prod_response:
-                                if product['product_id'] in product_for_create:
-                                    # Получаем данные о товаре
-                                    prod_data = client.get(f"{insales_url}products/{product['product_id']}.json").json()
-                                    bonus = float(prod_data['variants'][0]['price_in_site_currency']) * 0.1 if \
-                                    prod_data['variants'][0]['price_in_site_currency'] < 4000 else float(
-                                        prod_data['variants'][0]['price_in_site_currency']) * 0.05                                    # Проверяем, существует ли товар в базе
-                                    product_obj, created = Product.objects.get_or_create(
-                                        product_id=prod_data['id'],
-                                        defaults={
-                                            'name': re.sub(r'\s*\(.*?\)\s*', '', prod_data['title']),
-                                            'description': prod_data['description'],
-                                            'price': float(prod_data['variants'][0]['price_in_site_currency']),
-                                            'weight': prod_data['variants'][0]['weight'],
-                                            'bonus': round(bonus),
-                                        }
-                                    )
-
-                                    if created:
-                                        # Привязываем подкатегорию к товару
-                                        product_obj.subcategory.add(subcategory)
-                                        new_products.append(product_obj)
-
-                                        # Добавляем фотографии товара
-                                        for image in prod_data['images']:
+                    for product in prod_response:
+                        if product['product_id'] in product_for_create:
+                            # Получаем данные о товаре
+                            prod_data = client.get(f"{insales_url}products/{product['product_id']}.json").json()
+                            bonus = float(prod_data['variants'][0]['price_in_site_currency']) * 0.1 if \
+                            float(prod_data['variants'][0]['price_in_site_currency']) < 4000 else float(
+                                prod_data['variants'][0]['price_in_site_currency']) * 0.05
+                            try:
+                                product_obj, created = Product.objects.get_or_create(
+                                    product_id=prod_data['id'],
+                                    defaults={
+                                        'name': re.sub(r'\s*\(.*?\)\s*', '', prod_data['title']),
+                                        'description': prod_data['description'],
+                                        'price': float(prod_data['variants'][0]['price_in_site_currency']),
+                                        'weight': prod_data['variants'][0]['weight'],
+                                        'bonus': round(bonus),
+                                        'permalink': prod_data['permalink'],
+                                    }
+                                )
+                                if created:
+                                    # Привязываем подкатегорию к товару
+                                    product_obj.subcategory.add(subcategory)
+                                    new_products.append(product_obj)
+                                    # Добавляем фотографии товара
+                                    for image in prod_data['images']:
+                                        if image['external_id']:
                                             new_photos.append(
                                                 ProductPhoto(
                                                     product=product_obj,
@@ -287,10 +287,15 @@ def check_crm_changes():
                                                     is_main=(image['position'] == 1)
                                                 )
                                             )
-                                    else:
-                                        product_obj.subcategory.add(subcategory)
 
-                sub_page += 1
+                                else:
+                                    product_obj.subcategory.add(subcategory)
+
+                            except Exception as e:
+                                logger.error(f"Во время записи нового товара в БД произошла ошибка."
+                                             f"\n PRODUCT DATA: {prod_data}"
+                                             f"\n ERROR: {e}")
+                                pass
 
         # Используем транзакцию и bulk_create для массовой вставки товаров, подкатегорий и фотографий
         with transaction.atomic():
