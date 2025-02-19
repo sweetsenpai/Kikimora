@@ -29,7 +29,10 @@ from ..tasks import new_admin_mail, delete_limite_time_product, deactivate_expir
 from ..services.caches import active_products_cash, subcategory_cash, get_products_sub_cash
 
 from celery.result import AsyncResult
+import logging
 
+logger = logging.getLogger('shop')
+logger.setLevel(logging.DEBUG)
 
 def is_staff_or_superuser(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
@@ -69,6 +72,7 @@ class AdminLogin(LoginView):
 
 
 class AdminHomePageView(StaffCheckRequiredMixin, TemplateView):
+    logger.info("Test logs")
     template_name = 'master/home.html'
 
 
