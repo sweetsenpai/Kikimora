@@ -32,6 +32,7 @@ SECRET_KEY = os.getenv('DJANGO_KEY')
 DEBUG = False
 
 ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = ["http://82.146.57.177"]
 
 
 # Application definition
@@ -69,8 +70,7 @@ MIDDLEWARE = [
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 
 ]
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
+CORS_ALLOWED_ORIGINS = ['*',  # замените на адрес вашего фронтенда
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -274,17 +274,17 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console', 'info_file', 'error_file'],
-        'level': 'INFO',
+        'level': 'DEBUG',
     },
     'loggers': {
         'django': {
             'handlers': ['console', 'info_file', 'error_file'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': False,
         },
         'celery': {
             'handlers': ['console', 'info_file', 'error_file'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': True,
         },
         'shop': {
