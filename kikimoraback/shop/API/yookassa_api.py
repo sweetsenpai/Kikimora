@@ -134,7 +134,7 @@ class PaymentYookassa:
         except Exception as e:
             logger.error(f"Во время формирования платежа произошла ошибка на уровне загрузки данных в юкасу.\n"
                          f"Данные для чека:{recipient_data}\n"
-                         f"ERROR:e")
+                         f"ERROR:{e}")
             return False
         try:
             logger.info(f"Платеж {order_id} успешно создан.")

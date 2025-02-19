@@ -32,6 +32,7 @@ SECRET_KEY = os.getenv('DJANGO_KEY')
 DEBUG = False
 
 ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = ["http://82.146.57.177"]
 
 
 # Application definition
@@ -39,6 +40,7 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
+    'shop.apps.ShopConfig',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -46,7 +48,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'django_celery_beat',
-    'shop.apps.ShopConfig',
     # 'debug_toolbar'
 ]
 
@@ -69,8 +70,7 @@ MIDDLEWARE = [
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 
 ]
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
+CORS_ALLOWED_ORIGINS = ['*',  # замените на адрес вашего фронтенда
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -249,7 +249,7 @@ LOGGING = {
         },
         'info_file': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/info.log'),
+            'filename': '/logs/info.log',  # Абсолютный путь внутри контейнера
             'level': 'INFO',
             'formatter': 'verbose',
             'maxBytes': 1024 * 1024 * 5,
@@ -257,7 +257,7 @@ LOGGING = {
         },
         'error_file': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/error.log'),
+            'filename': '/logs/error.log',
             'level': 'ERROR',
             'formatter': 'verbose',
             'maxBytes': 1024 * 1024 * 5,
@@ -265,7 +265,7 @@ LOGGING = {
         },
         'critical_file': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/critical.log'),
+            'filename': '/logs/critical.log',
             'level': 'CRITICAL',
             'formatter': 'verbose',
             'maxBytes': 1024 * 1024 * 5,
@@ -274,17 +274,17 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console', 'info_file', 'error_file'],
-        'level': 'INFO',
+        'level': 'DEBUG',
     },
     'loggers': {
         'django': {
             'handlers': ['console', 'info_file', 'error_file'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': False,
         },
         'celery': {
             'handlers': ['console', 'info_file', 'error_file'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': True,
         },
         'shop': {
