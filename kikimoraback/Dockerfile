@@ -17,6 +17,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Копируем код проекта
 COPY . .
 
+RUN mkdir -p /logs && touch /logs/critical.log /logs/error.log /logs/info.log
+
+
 RUN python manage.py collectstatic --noinput
 
 # Открываем порт (если нужно)
