@@ -249,7 +249,7 @@ LOGGING = {
         },
         'info_file': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/info.log'),
+            'filename': '/logs/info.log',  # Абсолютный путь внутри контейнера
             'level': 'INFO',
             'formatter': 'verbose',
             'maxBytes': 1024 * 1024 * 5,
@@ -257,7 +257,7 @@ LOGGING = {
         },
         'error_file': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/error.log'),
+            'filename': '/logs/error.log',
             'level': 'ERROR',
             'formatter': 'verbose',
             'maxBytes': 1024 * 1024 * 5,
@@ -265,7 +265,7 @@ LOGGING = {
         },
         'critical_file': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/critical.log'),
+            'filename': '/logs/critical.log',
             'level': 'CRITICAL',
             'formatter': 'verbose',
             'maxBytes': 1024 * 1024 * 5,
