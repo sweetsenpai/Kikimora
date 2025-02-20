@@ -274,7 +274,7 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console', 'info_file', 'error_file'],
-        'level': 'DEBUG',
+        'level': 'INFO',
     },
     'loggers': {
         'django': {
@@ -284,7 +284,7 @@ LOGGING = {
         },
         'celery': {
             'handlers': ['console', 'info_file', 'error_file'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': True,
         },
         'shop': {
