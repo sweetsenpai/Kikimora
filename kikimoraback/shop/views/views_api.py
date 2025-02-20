@@ -48,6 +48,24 @@ class MenuSubcategory(generics.ListAPIView):
     serializer_class = MenuSubcategorySerializer
 
 
+class DiscountCreationSuncategoryMenu(generics.ListAPIView):
+    queryset = Subcategory.objects.all()
+    serializer_class = MenuDiscountSubcategorySerializer
+
+
+class DiscountCreationRelatedProducts(APIView):
+    def get(self, request, subcategory_id=None):
+        if not subcategory_id:
+            return Response({'error': "Необходимо передать id подкатегории"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            subcategory = Subcategory.objects.filter(subcategory_id=subcategory_id).prefetch_related('products').first()
+            products = subcategory.products.all()
+            serializer = MenuDiscountProductSerializer(products, many=True)
+            return Response(serializer.data)
+        except AttributeError:
+            return Response({'error': f'Категории с id {subcategory_id} не существует.'}, status=status.HTTP_404_NOT_FOUND)
+
+
 class ProductApi(generics.RetrieveAPIView):
     serializer_class = ProductSerializer
 

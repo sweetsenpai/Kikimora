@@ -1,52 +1,41 @@
 document.addEventListener("DOMContentLoaded", function() {
-    const categorySelect = document.getElementById('category');
     const subcategorySelect = document.getElementById('subcategory');
     const productSelect = document.getElementById('product');
 
-    // Fetch categories on page load
-    fetch('/api/v1/categories/')
+    // Загружаем подкатегории при загрузке страницы
+    fetch('/api/v1/menu/discount_subcategory_menu/')
         .then(response => response.json())
         .then(data => {
-            data.forEach(category => {
+            subcategorySelect.innerHTML = '<option value="">Выберите...</option>'; // Очищаем перед добавлением
+            data.forEach(subcategory => {
                 let option = document.createElement('option');
-                option.value = category.category_id;
-                option.textContent = category.name;
-                categorySelect.appendChild(option);
+                option.value = subcategory.subcategory_id;
+                option.textContent = subcategory.name;
+                subcategorySelect.appendChild(option);
             });
-        });
+        })
+        .catch(error => console.error('Ошибка загрузки подкатегорий:', error));
 
-    // Fetch subcategories when a category is selected
-    categorySelect.addEventListener('change', function() {
-        const categoryId = this.value;
-
-        fetch(`/api/subcategories/?category=${categoryId}`)
-            .then(response => response.json())
-            .then(data => {
-                subcategorySelect.innerHTML = '<option value="">Выберите...</option>'; // Clear previous options
-                productSelect.innerHTML = '<option value="">Выберите...</option>'; // Clear previous options
-                data.forEach(subcategory => {
-                    let option = document.createElement('option');
-                    option.value = subcategory.subcategory_id;
-                    option.textContent = subcategory.name;
-                    subcategorySelect.appendChild(option);
-                });
-            });
-    });
-
-    // Fetch products when a subcategory is selected
+    // Загружаем продукты при выборе подкатегории
     subcategorySelect.addEventListener('change', function() {
         const subcategoryId = this.value;
 
-        fetch(`/api/products/?subcategory=${subcategoryId}`)
+        if (!subcategoryId) {
+            productSelect.innerHTML = '<option value="">Выберите...</option>'; // Если ничего не выбрано
+            return;
+        }
+
+        fetch(`/api/v1/menu/discount_product_menu/${subcategoryId}/`)
             .then(response => response.json())
             .then(data => {
-                productSelect.innerHTML = '<option value="">Выберите...</option>'; // Clear previous options
+                productSelect.innerHTML = '<option value="">Выберите...</option>'; // Очищаем перед добавлением
                 data.forEach(product => {
                     let option = document.createElement('option');
                     option.value = product.product_id;
                     option.textContent = product.name;
                     productSelect.appendChild(option);
                 });
-            });
+            })
+            .catch(error => console.error('Ошибка загрузки продуктов:', error));
     });
 });

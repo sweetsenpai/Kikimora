@@ -153,6 +153,23 @@ class MenuSubcategorySerializer(serializers.ModelSerializer):
             'text']
 
 
+class MenuDiscountProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields=[
+            'product_id',
+            'name'
+        ]
+
+
+class MenuDiscountSubcategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subcategory
+        fields = [
+            'subcategory_id',
+            'name']
+
+
 class SubcategorySerializer(serializers.ModelSerializer):
     products = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Product.objects.all()

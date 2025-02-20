@@ -30,6 +30,8 @@ urlpatterns = [
     path('api/v1/products/search', serach_product, name='search_products'),
     path('api/v1/autocomplete/product/', views_api.ProductAutocompleteView.as_view(), name='product-autocomplete-api'),
     path('api/v1/menu/subcategory/', views_api.MenuSubcategory.as_view(), name='sub-menu'),
+    path('api/v1/menu/discount_subcategory_menu/', views_api.DiscountCreationSuncategoryMenu.as_view(), name='sub-disc-menu'),
+    path('api/v1/menu/discount_product_menu/<int:subcategory_id>/', views_api.DiscountCreationRelatedProducts.as_view(), name='prod-disc-menu'),
     # PRICE CHANGERS
     path('api/v1/discount', views_api.DiscountProductActiveList.as_view(), name='api-discount'),
     path('api/v1/discounts/stop/<int:discount_id>/', views_api.StopDiscountView.as_view(), name='stop_discount_api'),
