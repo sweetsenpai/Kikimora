@@ -68,7 +68,7 @@ class AdminCreationForm(forms.ModelForm):
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError("Данный email уже существует в базе данных.")
+            raise ValidationError("Пользователь с таким email уже существует.")
         return email
 
     def clean_phone(self):
@@ -76,8 +76,9 @@ class AdminCreationForm(forms.ModelForm):
         if not re.match(r'^\+?[1-9]\d{1,14}$', phone):
             raise ValidationError("Введите корректный номер телефона.")
         if CustomUser.objects.filter(phone=phone).exists():
-            raise ValidationError("Данный номер телефона уже в базе данных.")
+            raise ValidationError("Пользователь с таким номером телефона уже существует.")
         return phone
+
 
 
 class CategoryCreationForm(forms.ModelForm):

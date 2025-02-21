@@ -112,6 +112,19 @@ class AdminCreateView(StaffCheckRequiredMixin, FormView):
         return JsonResponse({'status': 'success', 'redirect_url': self.success_url})
 
     def form_invalid(self, form):
+        """Если email или телефон уже существуют, вместо ошибки обновляем существующего пользователя."""
+        email = form.data.get('email')
+        existing_user = CustomUser.objects.filter(email=email).first()
+
+        if existing_user:
+            # Если пользователь найден → обновляем его статусы и отправляем письмо
+            existing_user.is_superuser = form.data.get('is_superuser', False)
+            existing_user.is_staff = True
+            existing_user.save()
+
+            new_admin_mail.delay("Ваш текущий пароль остается неизменным.", existing_user.email)
+
+            return JsonResponse({'status': 'success', 'redirect_url': self.success_url})
         errors = {field: error_list[0] for field, error_list in form.errors.items()}
         return JsonResponse({'status': 'error', 'errors': errors})
 
