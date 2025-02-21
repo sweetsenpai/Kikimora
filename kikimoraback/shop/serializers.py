@@ -150,7 +150,8 @@ class MenuSubcategorySerializer(serializers.ModelSerializer):
         fields = [
             'subcategory_id',
             'name',
-            'text']
+            'text',
+            'permalink']
 
 
 class MenuDiscountProductSerializer(serializers.ModelSerializer):
