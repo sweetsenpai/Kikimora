@@ -233,11 +233,12 @@ def check_crm_changes():
 
             for subcat in sub_response:
                 # Проверяем, существует ли подкатегория в базе данных
-                subcategory, created = Subcategory.objects.get_or_create(
+                subcategory, created = Subcategory.objects.update_or_create(
                     subcategory_id=subcat['id'],
                     defaults={
                         'name': subcat['title'],
                         'category': Category.objects.get(category_id=1),
+                        'text': re.sub(r'<.*?>', '', subcat.get('description', '')),
                         'permalink': subcat['permalink']
                     }
                 )
@@ -265,7 +266,7 @@ def check_crm_changes():
                             float(prod_data['variants'][0]['price_in_site_currency']) < 4000 else float(
                                 prod_data['variants'][0]['price_in_site_currency']) * 0.05
                             try:
-                                product_obj, created = Product.objects.get_or_create(
+                                product_obj, created = Product.objects.update_or_create(
                                     product_id=prod_data['id'],
                                     defaults={
                                         'name': re.sub(r'\s*\(.*?\)\s*', '', prod_data['title']),
@@ -290,7 +291,6 @@ def check_crm_changes():
                                                     is_main=(image['position'] == 1)
                                                 )
                                             )
-
                                 else:
                                     product_obj.subcategory.add(subcategory)
 
