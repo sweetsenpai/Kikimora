@@ -8,6 +8,7 @@ from functools import wraps
 from .services.price_calculation import calculate_prices
 from .MongoIntegration.Order import Order
 from .API.insales_api import send_new_order
+import kikimoraback.settings as settings
 import httpx
 import re
 import os
@@ -42,12 +43,14 @@ def new_admin_mail(password, email):
     email_message = EmailMessage(
         subject="Готов вкалывать?",
         body=html_content,
-        from_email='settings.EMAIL_HOST_USER',
+        from_email=os.getenv("EMAIL"),
         to=[email],
     )
-
-    email_message.content_subtype = "html"
-    email_message.send(fail_silently=False)
+    try:
+        email_message.content_subtype = "html"
+        email_message.send(fail_silently=False)
+    except Exception as e:
+        logger.error(f'Во время отправки письма новому администратору произошла ошибка.\nERROR:{e}')
     return
 
 
@@ -128,7 +131,7 @@ def new_order_email(order_data):
     email_message = EmailMessage(
         subject=f"Кикимора заказ №{order_data['insales']}",
         body=html_content,
-        from_email='settings.EMAIL_HOST_USER',
+        from_email=os.getenv("EMAIL"),
         to=[order_data['customer_data']['email']],
     )
 
@@ -156,7 +159,7 @@ def send_confirmation_email(user):
     email_message = EmailMessage(
         subject='Подтверждение email',
         body=html_content,
-        from_email='settings.EMAIL_HOST_USER',
+        from_email=os.getenv("EMAIL"),
         to=[user.email],
     )
     email_message.content_subtype = "html"
