@@ -147,7 +147,7 @@ def new_order_email(order_data):
 @shared_task
 def send_confirmation_email(user):
     token = generate_email_token(user.user_id)
-    verification_url = f"{os.getenv('MAIN_DOMAIN')}api/v1/verify-email/{token}/"
+    verification_url = f"{os.getenv('MAIN_DOMAIN')}/api/v1/verify-email/{token}/"
 
     # Рендеринг HTML-шаблона
     html_content = render_to_string('emails/email_verification.html', {
