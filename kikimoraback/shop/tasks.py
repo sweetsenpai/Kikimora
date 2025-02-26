@@ -233,12 +233,17 @@ def check_crm_changes():
 
             for subcat in sub_response:
                 # Проверяем, существует ли подкатегория в базе данных
+                text = subcat.get('description', '')
+                if isinstance(text, str):
+                    text= ''
+                else:
+                    text = re.sub(r'<.*?>', '', text)
                 subcategory, created = Subcategory.objects.update_or_create(
                     subcategory_id=subcat['id'],
                     defaults={
                         'name': subcat['title'],
                         'category': Category.objects.get(category_id=1),
-                        'text': re.sub(r'<.*?>', '', subcat.get('description', '')),
+                        'text': text,
                         'permalink': subcat['permalink']
                     }
                 )
