@@ -12,7 +12,7 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
 
 app.conf.beat_schedule = {
-    'check-crm-changes-every-hour': {
+    'check-crm-changes-every-15-minute': {
         'task': 'shop.tasks.check_crm_changes',
         'schedule': crontab(minute='*/15'),
     },
