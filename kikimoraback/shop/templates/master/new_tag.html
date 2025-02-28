@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+{% load static %}
+<head>
+  <script src="{% static 'JS/color-modes.js' %}"></script>
+  <link rel="icon" type="image/x-icon" href="{% static 'images/tag-icon.svg' %}">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Создание нового тега</title>
+  <link href="{% static 'CSS/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'CSS/forms.css' %}" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="{% static 'JS/tag_form.js' %}"></script>
+</head>
+<body class="bg-body-tertiary">
+  <div class="container">
+    <main>
+      <div class="py-5 text-center">
+        <img class="d-block mx-auto mb-4" src="{% static 'images/tag-icon.svg' %}" alt="" width="80">
+        <h2>Создание нового тега</h2>
+      </div>
+      <div class="row g-1 justify-content-center">
+        <div class="col-md-6 col-lg-6">
+          <h4 class="mb-3">Данные тега</h4>
+          <div id="errorContainer" class="alert alert-danger" role="alert" style="display: none;"></div>
+          <form method="post" class="needs-validation" novalidate>
+            {% csrf_token %}
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="text" class="form-label">Название тега</label>
+                <input type="text" class="form-control" id="text" name="text" placeholder="Введите название тега" required>
+              </div>
+            </div>
+            <hr class="my-4">
+            <button class="w-100 btn btn-primary btn-lg" type="submit">Создать тег</button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

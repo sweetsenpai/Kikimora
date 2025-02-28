@@ -188,4 +188,10 @@ class LimiteTimeProductForm(forms.ModelForm):
             if price <=0:
                 raise ValidationError({'price': 'Поле цены не может быть меньше или равно нулю!'})
         except TypeError:
-            raise  ValidationError({'price': 'Поле цены не может быть пустым!'})
+            raise ValidationError({'price': 'Поле цены не может быть пустым!'})
+
+
+class TagForm(forms.ModelForm):
+    class Meta:
+        model = ProductTag
+        fields = ["text"]

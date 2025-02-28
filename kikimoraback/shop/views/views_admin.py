@@ -273,9 +273,15 @@ class AdminTagView(StaffCheckRequiredMixin, ListView):
         return ProductTag.objects.all()
 
 
-class AdminNewTag(StaffCheckRequiredMixin, FormView):
-    ...
+class AdminNewTag(StaffCheckRequiredMixin, CreateView):
+    template_name = 'master/new_tag.html'
+    form_class = TagForm
+    success_url = reverse_lazy("tags")
 
+    def form_invalid(self, form):
+
+        print("❌ Ошибка валидации:", form.errors)  # Лог для отладки
+        return self.render_to_response(self.get_context_data(form=form))
 
 class AdminDiscountListView(StaffCheckRequiredMixin, ListView):
     model = Discount
