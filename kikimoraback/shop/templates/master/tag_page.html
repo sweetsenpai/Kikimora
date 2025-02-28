@@ -1,0 +1,32 @@
+{% extends 'master/base.html' %}
+{% block title %}Теги{% endblock %}
+{% block active9 %} active {% endblock active9 %}
+{% block content %}
+{% load static %}
+
+<h1 style="margin-top:-5%;margin-bottom:3%;">Теги</h1>
+<button type="button" class="btn btn-success" style="margin-top:-4%;" onclick="window.location='/apanel/tags/new_tag';">Создать новый тег</button>
+
+    <form method="post">
+      {% csrf_token %}
+    </form>
+      <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Текст</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for tag in tags %}
+              <tr onclick="window.location='/apanel/tag/{{ tag.tag_id }}/';" >
+                <th scope="row">{{ tag.tag_id }}</th>
+                  <td>{{ tag.text }}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+      </div>
+
+{% endblock %}
