@@ -233,20 +233,25 @@ def check_crm_changes():
 
             for subcat in sub_response:
                 # Проверяем, существует ли подкатегория в базе данных
-                text = subcat.get('description', '')
-                if isinstance(text, str):
-                    text= ''
-                else:
-                    text = re.sub(r'<.*?>', '', text)
-                subcategory, created = Subcategory.objects.update_or_create(
-                    subcategory_id=subcat['id'],
-                    defaults={
-                        'name': subcat['title'],
-                        'category': Category.objects.get(category_id=1),
-                        'text': text,
-                        'permalink': subcat['permalink']
-                    }
-                )
+                try:
+                    text = subcat.get('description', '')
+                    if isinstance(text, str):
+                        text = re.sub(r'<.*?>', '', text)
+                    else:
+                        text=''
+                    subcategory, created = Subcategory.objects.update_or_create(
+                        subcategory_id=subcat['id'],
+                        defaults={
+                            'name': subcat['title'],
+                            'category': Category.objects.get(category_id=1),
+                            'text': text,
+                            'permalink': subcat['permalink']
+                        }
+                    )
+                except Exception as e:
+                    logger.error(f"Во время создания новой категории произошла ошибка."
+                                 f"\nERROR: {e}"
+                                 f"\nSUBCATEGORY DATA:{subcat}")
                 if created:
                     new_subcategories.append(subcategory)
 
