@@ -318,7 +318,8 @@ def check_crm_changes():
 
         logger.info(
             f"Successfully added {len(new_subcategories)} subcategories, {len(new_products)} products, and {len(new_photos)} photos.")
-        update_price_cache(forced=True)
+        if len(new_subcategories) + len(new_products) + len(new_photos) > 0:
+            update_price_cache(forced=True)
     except Exception as e:
         logger.error(f"Error in `check_crm_changes`: {e}")
         raise
