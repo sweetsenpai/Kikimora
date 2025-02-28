@@ -147,6 +147,12 @@
   <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
   <path d="M8 13.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11m0 .5A6 6 0 1 0 8 2a6 6 0 0 0 0 12"/>
   </symbol>
+  <symbol id="tag" viewBox="0 0 16 16">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bookmark-star" viewBox="0 0 16 16">
+    <path d="M7.84 4.1a.178.178 0 0 1 .32 0l.634 1.285a.18.18 0 0 0 .134.098l1.42.206c.145.021.204.2.098.303L9.42 6.993a.18.18 0 0 0-.051.158l.242 1.414a.178.178 0 0 1-.258.187l-1.27-.668a.18.18 0 0 0-.165 0l-1.27.668a.178.178 0 0 1-.257-.187l.242-1.414a.18.18 0 0 0-.05-.158l-1.03-1.001a.178.178 0 0 1 .098-.303l1.42-.206a.18.18 0 0 0 .134-.098z"/>
+    <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1z"/>
+  </svg>
+  </symbol>
 </svg>
 <main class="d-flex flex-nowrap">
 
@@ -156,7 +162,7 @@
   <div class="d-flex flex-column flex-shrink-0 bg-body-tertiary" style="width: 4.5rem;">
     <ul class="nav nav-pills nav-flush flex-column mb-auto text-center" >
       <li class="nav-item" >
-        <a href="/apanel" class="nav-link {% block active1 %}{% endblock active1 %} py-3 border-bottom rounded-0" aria-current="page" title="Домой1" data-bs-toggle="tooltip" data-bs-placement="right">
+        <a href="/apanel" class="nav-link {% block active1 %}{% endblock active1 %} py-3 border-bottom rounded-0" aria-current="page" title="Домой" data-bs-toggle="tooltip" data-bs-placement="right">
           <svg class="bi pe-none" width="24" height="24" role="img" aria-label="Home"><use xlink:href="#home"/></svg>
         </a>
       </li>
@@ -183,6 +189,11 @@
       <li>
         <a href="/apanel/staff" class="nav-link py-3 {% block active8 %}{% endblock active8 %} border-bottom rounded-0" title="Сотрудники" data-bs-toggle="tooltip" data-bs-placement="right">
           <svg class="bi pe-none" width="24" height="24" role="img" aria-label="Customers" color="#FF1493"><use xlink:href="#people-circle"/></svg>
+        </a>
+      </li>
+      <li>
+        <a href="/apanel/tags" class="nav-link py-3 {% block active9 %}{% endblock active9 %} border-bottom rounded-0" title="Теги" data-bs-toggle="tooltip" data-bs-placement="right">
+          <svg class="bi pe-none" width="24" height="24" role="img" aria-label="Customers"><use xlink:href="#tag"/></svg>
         </a>
       </li>
     </ul>

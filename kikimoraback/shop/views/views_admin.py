@@ -265,6 +265,18 @@ class ProductUpdateView(UpdateView):
         return reverse('product_update', kwargs={'product_id': self.object.product_id})
 
 
+class AdminTagView(StaffCheckRequiredMixin, ListView):
+    template_name = 'master/tag_page.html'
+    context_object_name = 'tags'
+
+    def get_queryset(self):
+        return ProductTag.objects.all()
+
+
+class AdminNewTag(StaffCheckRequiredMixin, FormView):
+    ...
+
+
 class AdminDiscountListView(StaffCheckRequiredMixin, ListView):
     model = Discount
     template_name = 'master/discounts.html'
