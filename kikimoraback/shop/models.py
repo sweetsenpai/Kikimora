@@ -160,6 +160,11 @@ class Subcategory(models.Model):
         return f"{self.subcategory_id}, {self.name}, {self.text}, {self.category.name}"
 
 
+class ProductTag(models.Model):
+    tag_id = models.AutoField(primary_key=True)
+    text = models.CharField(max_length=10)
+
+
 class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200, help_text='Название товара', db_index=True)
@@ -170,6 +175,7 @@ class Product(models.Model):
     bonus = models.IntegerField(default=0)
     visibility = models.BooleanField(default=True, help_text='Указывает видимость в выдаче')
     permalink = models.CharField(max_length=200, default=None, null=True, db_index=True)
+    tag = models.ForeignKey(ProductTag, null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.product_id}, {self.visibility}, {self.name}, {self.description}, {self.price}, {self.weight}, {self.subcategory}"
@@ -181,12 +187,6 @@ class ProductPhoto(models.Model):
     photo_url = models.CharField(max_length=200, help_text="URL фотографии")
     is_main = models.BooleanField(default=False, help_text="Является ли эта фотография основной", null=True)
     photo_description = models.CharField(max_length=200, help_text="описание фотографии", null=True)
-
-
-class ProductTag(models.Model):
-    tag_id = models.AutoField(primary_key=True)
-    product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
-    text = models.CharField(max_length=10)
 
 
 class LimitTimeProduct(models.Model):

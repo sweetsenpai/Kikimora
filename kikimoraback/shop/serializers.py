@@ -58,6 +58,7 @@ class ProductCardSerializer(serializers.ModelSerializer):
     photos = serializers.SerializerMethodField()
     final_price = serializers.SerializerMethodField()
     discounts = serializers.SerializerMethodField()
+    tag = serializers.SerializerMethodField()
     # has_limited_offer = serializers.SerializerMethodField()
 
     class Meta:
@@ -72,6 +73,7 @@ class ProductCardSerializer(serializers.ModelSerializer):
             'discounts',
             # 'has_limited_offer'
             'photos',
+            'tag'
 
         ]
 
@@ -83,6 +85,10 @@ class ProductCardSerializer(serializers.ModelSerializer):
 
     def get_photos(self, obj):
         return self.context.get('photos_map', {}).get(obj.product_id, [])
+
+    def get_tag(self, obj):
+        return obj.tag.text if obj.tag else None
+
     # def get_has_limited_offer(self, obj):
     #     return hasattr(obj, 'limittimeproduct')
 

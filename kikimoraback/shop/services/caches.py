@@ -43,6 +43,8 @@ def active_products_cash(subcategory_id: int = None)->QuerySet:
         else:
             product_cash = Product.objects.filter(visibility=True)
 
+        product_cash = product_cash.select_related('tag')
+
         cache.set(cash_key, product_cash, timeout=60*15)
     return product_cash
 
