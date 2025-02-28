@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import logging
 logger = logging.getLogger('shop')
 
+
 class AccountManager(BaseUserManager):
     use_in_migrations = True
 
@@ -180,6 +181,12 @@ class ProductPhoto(models.Model):
     photo_url = models.CharField(max_length=200, help_text="URL фотографии")
     is_main = models.BooleanField(default=False, help_text="Является ли эта фотография основной", null=True)
     photo_description = models.CharField(max_length=200, help_text="описание фотографии", null=True)
+
+
+class ProductTag(models.Model):
+    tag_id = models.AutoField(primary_key=True)
+    product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
+    text = models.CharField(max_length=10)
 
 
 class LimitTimeProduct(models.Model):
