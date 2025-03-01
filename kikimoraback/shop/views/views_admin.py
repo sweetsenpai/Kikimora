@@ -77,7 +77,7 @@ class AdminHomePageView(StaffCheckRequiredMixin, TemplateView):
 
 
 class StaffListView(StaffCheckRequiredMixin, ListView):
-    template_name = 'master/staff.html'
+    template_name = 'master/admin/staff.html'
     context_object_name = 'admins'
 
     def get_queryset(self):
@@ -93,7 +93,7 @@ class StaffListView(StaffCheckRequiredMixin, ListView):
 
 
 class AdminCreateView(StaffCheckRequiredMixin, FormView):
-    template_name = 'master/admin_creation_page.html'
+    template_name = 'master/admin/admin_creation_page.html'
     form_class = AdminCreationForm
     success_url = reverse_lazy('staff')
 
@@ -141,11 +141,11 @@ def admin_account(request, admin_id):
         return JsonResponse({'status': 'success', 'redirect_url': '/apanel/staff'})
 
     admin_data = {'admin': CustomUser.objects.get(user_id=admin_id)}
-    return render(request, template_name='master/admin_page.html', context=admin_data)
+    return render(request, template_name='master/admin/admin_page.html', context=admin_data)
 
 
 class AdminCategoryView(StaffCheckRequiredMixin, ListView):
-    template_name = 'master/category.html'
+    template_name = 'master/product/category.html'
     context_object_name = 'categories'
     form_class = CategoryCreationForm
 
@@ -165,7 +165,7 @@ def toggle_visibility_category(request, category_id):
 
 class AdminSubcategoryListView(StaffCheckRequiredMixin, ListView):
     model = Subcategory
-    template_name = 'master/subcategory.html'
+    template_name = 'master/product/subcategory.html'
     context_object_name = 'subcategories'
 
     def get_queryset(self):
@@ -190,7 +190,7 @@ def toggle_visibility_subcat(request, subcategory_id):
 
 class AdminProdactListView(StaffCheckRequiredMixin, ListView):
     model = Product
-    template_name = 'master/products.html'
+    template_name = 'master/product/products.html'
     context_object_name = 'products'
 
     def get_queryset(self):
@@ -240,7 +240,7 @@ def toggle_visibility_product(request, product_id):
 class ProductUpdateView(UpdateView):
     model = Product
     form_class = ProductForm
-    template_name = 'master/product_form.html'
+    template_name = 'master/product/product_form.html'
     context_object_name = 'product'
 
     def get_object(self, queryset=None):
@@ -266,7 +266,7 @@ class ProductUpdateView(UpdateView):
 
 
 class AdminTagView(StaffCheckRequiredMixin, ListView):
-    template_name = 'master/tag_page.html'
+    template_name = 'master/tag/tags.html'
     context_object_name = 'tags'
 
     def get_queryset(self):
@@ -274,18 +274,14 @@ class AdminTagView(StaffCheckRequiredMixin, ListView):
 
 
 class AdminNewTag(StaffCheckRequiredMixin, CreateView):
-    template_name = 'master/new_tag.html'
+    template_name = 'master/tag/new_tag.html'
     form_class = TagForm
     success_url = reverse_lazy("tags")
 
-    def form_invalid(self, form):
-
-        print("❌ Ошибка валидации:", form.errors)  # Лог для отладки
-        return self.render_to_response(self.get_context_data(form=form))
 
 class AdminDiscountListView(StaffCheckRequiredMixin, ListView):
     model = Discount
-    template_name = 'master/discounts.html'
+    template_name = 'master/discount/discounts.html'
     context_object_name = 'discounts'
 
     def get_queryset(self):
@@ -299,7 +295,7 @@ class AdminDiscountListView(StaffCheckRequiredMixin, ListView):
 
 class AdminNewDiscount(StaffCheckRequiredMixin, FormView):
     form_class = DiscountForm
-    template_name = 'master/new_discount.html'
+    template_name = 'master/discount/new_discount.html'
     success_url = reverse_lazy('discounts')
 
     def form_valid(self, form):
@@ -321,7 +317,7 @@ class AdminNewDiscount(StaffCheckRequiredMixin, FormView):
 
 @user_passes_test(is_staff_or_superuser)
 def delete_discount(request, discount_id):
-    template_name = 'master/old_discount.html'
+    template_name = 'master/discount/old_discount.html'
     discount = get_object_or_404(Discount, pk=discount_id)
     if request.method == 'POST':
         discount.delete()
@@ -331,7 +327,7 @@ def delete_discount(request, discount_id):
 
 class AdminPromocodeListView(StaffCheckRequiredMixin, ListView):
     model = PromoSystem
-    template_name = 'master/promocods.html'
+    template_name = 'master/promo/promocods.html'
     context_object_name = 'promocodes'
 
     def get_queryset(self):
@@ -339,7 +335,7 @@ class AdminPromocodeListView(StaffCheckRequiredMixin, ListView):
 
 
 class AdminNewPromo(StaffCheckRequiredMixin, FormView):
-    template_name = 'master/new_promocode.html'
+    template_name = 'master/promo/new_promocode.html'
     success_url = reverse_lazy('promocods')
     form_class = PromocodeForm
 
@@ -362,7 +358,7 @@ class AdminNewPromo(StaffCheckRequiredMixin, FormView):
 
 @user_passes_test(is_staff_or_superuser)
 def delete_promo(request, promo_id):
-    template_name = 'master/old_promo.html'
+    template_name = 'master/promo/old_promo.html'
     promo = get_object_or_404(PromoSystem, pk=promo_id)
     if request.method == 'POST':
         if promo.task_id_start:
@@ -374,7 +370,7 @@ def delete_promo(request, promo_id):
 
 
 class AdminLimitTimeProduct(StaffCheckRequiredMixin, ListView):
-    template_name = 'master/limit_time_products.html'
+    template_name = 'master/product/limit_time_products.html'
     context_object_name = 'limit_products'
     model = LimitTimeProduct
 
@@ -383,7 +379,7 @@ class AdminLimitTimeProduct(StaffCheckRequiredMixin, ListView):
 
 
 class AdminLimitTimeProductForm(StaffCheckRequiredMixin, FormView):
-    template_name = 'master/limit_time_product_form.html'
+    template_name = 'master/product/limit_time_product_form.html'
     form_class = LimiteTimeProductForm
     success_url = reverse_lazy('day_products')
 
