@@ -48,6 +48,7 @@ urlpatterns = [
     # PAYMENT
     path('api/v1/payment', views_api.Payment.as_view(), name='payment'),
     path('api/v1/yookassa/test', views_api.TestWebhook.as_view(), name='webhook'),
+    path('api/v1/feedback', views_api.FeedBackApi.as_view(), name='feedback'),
     # HOME
     path('apanel/', views_admin.AdminHomePageView.as_view(), name='admin_home'),
     path('apanel/login/', views_admin.AdminLogin.as_view(), name='admin_login'),
