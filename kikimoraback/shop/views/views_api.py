@@ -70,14 +70,16 @@ class ProductApi(generics.RetrieveAPIView):
     serializer_class = ProductSerializer
 
     def get_object(self):
-        product_id = self.kwargs.get('product_id')
+        product_slug = self.kwargs.get('product_slug')
 
         # Получаем один товар по ID
         try:
-
-            single_product = active_products_cash().get(product_id=product_id)
+            if product_slug.isdigit():
+                single_product = active_products_cash().get(product_id=product_slug)
+            else:
+                single_product = active_products_cash().get(permalink=product_slug)
         except Product.DoesNotExist:
-            logger.error(f"Неудалось найти товаро по заданным параметрам.{product_id}")
+            logger.error(f"Неудалось найти товаро по заданным параметрам.{product_slug}")
             return Response(status=status.HTTP_404_NOT_FOUND)
         # Возвращаем объект продукта
         return single_product

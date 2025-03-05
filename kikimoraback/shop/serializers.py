@@ -73,7 +73,8 @@ class ProductCardSerializer(serializers.ModelSerializer):
             'discounts',
             # 'has_limited_offer'
             'photos',
-            'tag'
+            'tag',
+            'permalink'
 
         ]
 
@@ -100,7 +101,7 @@ class ProductSearchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            'product_id',
+            'permalink',
             'name',
             'final_price',
             'photos',

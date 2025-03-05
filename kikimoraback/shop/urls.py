@@ -23,7 +23,7 @@ urlpatterns = [
     path('api/v1/user/order_history', views_api.UsersOrder.as_view(), name='api-order-history'),
     # PRODUCTS
     path('api/v1/categories/', views_api.CategoryList.as_view(), name='category-list'),
-    path('api/v1/product/<int:product_id>/', views_api.ProductApi.as_view(), name='product'),
+    path('api/v1/product/<slug:product_slug>/', views_api.ProductApi.as_view(), name='product'),
     path('api/v1/products/subcategory/<slug:subcategory_slug>/', product_by_subcategory, name='products-by-subcategory'),
     path('api/v1/products/discounts', products_with_discounts, name='products-with-discounts'),
     path('api/v1/products/all', all_products, name='all-products'),
