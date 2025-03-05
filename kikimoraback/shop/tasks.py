@@ -266,7 +266,10 @@ def check_crm_changes():
                         product_for_create = product_in_crm - prod_for_delete
                         if prod_for_delete:
                             for prod_id in prod_for_delete:
-                                Product.objects.get(product_id=prod_id).subcategory.remove(subcategory)
+                                product = Product.objects.get(product_id=prod_id)
+                                product.subcategory.remove(subcategory)  # Удаляем связь с подкатегорией
+                                product.visibility = False  # Устанавливаем visible=False
+                                product.save()
 
                     for product in prod_response:
                         if product['product_id'] in product_for_create:
