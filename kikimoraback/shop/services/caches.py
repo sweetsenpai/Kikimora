@@ -39,7 +39,7 @@ def active_products_cash(subcategory_id: int = None)->QuerySet:
     product_cash = cache.get(cash_key)
     if not product_cash:
         if subcategory_id:
-            product_cash = Product.objects.filter(subcategory__subcategory_id=subcategory_id).order_by('name')
+            product_cash = Product.objects.filter(subcategory__subcategory_id=subcategory_id, visibility=True).order_by('name')
         else:
             product_cash = Product.objects.filter(visibility=True)
 
