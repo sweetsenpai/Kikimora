@@ -77,8 +77,8 @@ class ProductApi(generics.RetrieveAPIView):
 
             single_product = active_products_cash().get(product_id=product_id)
         except Product.DoesNotExist:
-            raise NotFound(detail="Product not found")
-
+            logger.error(f"Неудалось найти товаро по заданным параметрам.{product_id}")
+            return Response(status=status.HTTP_404_NOT_FOUND)
         # Возвращаем объект продукта
         return single_product
 
