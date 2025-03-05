@@ -1,4 +1,5 @@
 from abc import ABC
+import json
 
 from django.shortcuts import render, redirect, get_object_or_404
 
@@ -9,7 +10,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.views import LoginView
 
 from django.views.generic import ListView, TemplateView, FormView
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import CreateView, UpdateView, View
 
 from django.utils import timezone
 from django.utils.crypto import get_random_string
@@ -33,6 +34,7 @@ import logging
 
 logger = logging.getLogger('shop')
 logger.setLevel(logging.DEBUG)
+
 
 def is_staff_or_superuser(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
@@ -132,9 +134,7 @@ class AdminCreateView(StaffCheckRequiredMixin, FormView):
 @user_passes_test(is_staff_or_superuser)
 def admin_account(request, admin_id):
     if request.method=="POST":
-        print("__________________________")
         ex_admin = get_object_or_404(CustomUser, user_id=admin_id)
-        print(ex_admin)
         ex_admin.is_staff = False
         ex_admin.is_superuser = False
         ex_admin.save()
@@ -277,6 +277,48 @@ class AdminNewTag(StaffCheckRequiredMixin, CreateView):
     template_name = 'master/tag/new_tag.html'
     form_class = TagForm
     success_url = reverse_lazy("tags")
+
+
+class AdminTagEdit(StaffCheckRequiredMixin, UpdateView):
+    model = ProductTag
+    form_class = TagForm
+    template_name = 'master/tag/tag_edit.html'
+    success_url = reverse_lazy("tags")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        tag = self.object  # Текущий тег
+
+        # Формируем JSON для продуктов
+        products = list(Product.objects.filter(tag=tag).values("product_id", "name"))
+
+        # Передаём в шаблон
+        context["tag"] = tag
+        context["products_json"] = json.dumps(products)  # Точно корректный JSON
+        return context
+
+
+class UpdateTagProducts(StaffCheckRequiredMixin, View):
+    """Обновление списка товаров, связанных с тегом"""
+    def post(self, request, pk):
+        tag = get_object_or_404(ProductTag, pk=pk)
+        product_ids = request.POST.getlist("products[]")  # Получаем массив ID товаров
+
+        # Сбрасываем тег у всех товаров, которые его имели
+        Product.objects.filter(tag=tag).update(tag=None)
+
+        # Присваиваем тег только выбранным товарам
+        Product.objects.filter(product_id__in=product_ids).update(tag=tag)
+
+        return JsonResponse({"status": "success"})
+
+
+class DeleteTagView(StaffCheckRequiredMixin, View):
+    def post(self, request, pk):
+        tag = get_object_or_404(ProductTag, pk=pk)
+        Product.objects.filter(tag=tag).update(tag=None)  # Очищаем у товаров
+        tag.delete()
+        return JsonResponse({"status": "deleted"})
 
 
 class AdminDiscountListView(StaffCheckRequiredMixin, ListView):

@@ -81,6 +81,9 @@ urlpatterns = [
     path('apanel/day_products/<int:product_id>/', views_admin.AdminLimitTimeProductForm.as_view(), name='day_products_form'),
 
     path('apanel/tags', views_admin.AdminTagView.as_view(), name='tags'),
-    path('apanel/tags/new_tag', views_admin.AdminNewTag.as_view(), name='new-tag')
+    path('apanel/tags/new_tag', views_admin.AdminNewTag.as_view(), name='new-tag'),
+    path('apanel/tags/<int:pk>/edit/',  views_admin.AdminTagEdit.as_view(), name='edit_tag'),
+    path('apanel/tags/<int:pk>/update/',  views_admin.UpdateTagProducts.as_view(), name='update_tag_products'),
+    path('apanel/tags/<int:pk>/delete/',  views_admin.DeleteTagView.as_view(), name='delete_tag'),
 ]
 
