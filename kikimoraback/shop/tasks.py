@@ -147,7 +147,7 @@ def new_order_email(order_data):
 @shared_task
 def send_confirmation_email(user):
     token = generate_email_token(user.user_id)
-    verification_url = f"{os.getenv('MAIN_DOMAIN')}/api/v1/verify-email/{token}/"
+    verification_url = f"{os.getenv('MAIN_DOMAIN')}api/v1/verify-email/{token}/"
 
     # Рендеринг HTML-шаблона
     html_content = render_to_string('emails/email_verification.html', {
@@ -318,8 +318,8 @@ def check_crm_changes():
 
         logger.info(
             f"Successfully added {len(new_subcategories)} subcategories, {len(new_products)} products, and {len(new_photos)} photos.")
-        if len(new_subcategories) + len(new_products) + len(new_photos) > 0:
-            update_price_cache(forced=True)
+
+        update_price_cache(forced=True)
     except Exception as e:
         logger.error(f"Error in `check_crm_changes`: {e}")
         raise
@@ -443,3 +443,69 @@ def process_payment_canceled(self, payment_id):
 @shared_task(bind=True, max_retries=3)
 def add_discount_to_insales_order(self, order_id, discount):
     return
+
+
+@shared_task(bind=True, max_retries=3)
+def feedback_email(self, feedback_data):
+    """
+    Отправляет письмо с информацией об обратной связи на вашу почту.
+
+    :param self: Объект задачи Celery.
+    :param feedback_data: Словарь с данными формы обратной связи.
+                          Пример:
+                          {
+                              "name": "Иван Иванов",
+                              "phone": "+79991234567",
+                              "email": "user@example.com",
+                              "question": "Как оформить заказ?"
+                          }
+    """
+    try:
+        # HTML-содержимое письма
+        html_content = f"""
+            <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+                    <h1 style="color: #4CAF50;">Новое сообщение с формы обратной связи</h1>
+                    <p>Получено новое сообщение от пользователя:</p>
+                    <ul style="list-style-type: none; padding: 0;">
+                        <li><strong>Имя:</strong> {feedback_data.get("name", "Не указано")}</li>
+                        <li><strong>Телефон:</strong> {feedback_data.get("phone", "Не указан")}</li>
+                        <li><strong>Email:</strong> {feedback_data.get("email", "Не указан")}</li>
+                        <li><strong>Сообщение:</strong> {feedback_data.get("question", "Не указано")}</li>
+                    </ul>
+
+                    <!-- Подвал -->
+                    <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+                    <footer style="text-align: center; color: #888; font-size: 14px;">
+                        <p>С уважением, команда мастерской "Кикимора"</p>
+                        <p>Контакты: 
+                            <a href="mailto:{os.getenv("KIKIMORA_EMAIL")}" style="color: #4CAF50; text-decoration: none;">{os.getenv("KIKIMORA_EMAIL")}</a> | 
+                            Телефон: <a href="tel:{os.getenv("KIKIMORA_PHONE_RAW")}" style="color: #4CAF50; text-decoration: none;">{os.getenv("KIKIMORA_PHONE")}</a>
+                        </p>
+                        <p>Адрес: {os.getenv("KIKIMORA_ADDRESS")}</p>
+                        <p>Следите за нами: 
+                            <a href="{os.getenv("KIKIMORA_VK")}" style="color: #4CAF50; text-decoration: none;">ВКонтакте</a> | 
+                            <a href="{os.getenv("KIKIMORA_INSTAGRAM")}" style="color: #4CAF50; text-decoration: none;">Instagram</a>
+                        </p>
+                    </footer>
+                </body>
+            </html>
+        """
+
+        # Создаем сообщение
+        email_message = EmailMessage(
+            subject="Новое сообщение с формы обратной связи",
+            body=html_content,
+            from_email=os.getenv("EMAIL"),
+            to=[os.getenv("EMAIL")],  # Ваша почта для получения обратной связи
+        )
+
+        # Указываем, что содержимое письма в формате HTML
+        email_message.content_subtype = "html"
+
+        # Отправляем письмо
+        email_message.send(fail_silently=False)
+
+    except Exception as e:
+        logger.error(f"Во время отправки обратной связи произошла непредвиденная ошибка.\nERROR: {e}")
+        raise self.retry(exc=e, countdown=2 ** self.request.retries)  # Повторная попытка отправки
