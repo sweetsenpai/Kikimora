@@ -139,7 +139,12 @@ class ProductViewSet(viewsets.ViewSet):
         return paginator.get_paginated_response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='subcategory/(?P<subcategory_id>[^/.]+)')
-    def by_subcategory(self, request, subcategory_id=None):
+    def by_subcategory(self, request, subcategory_slug=None):
+        if not subcategory_slug.isdigit():
+            subcategory = subcategory_cash().filter(permalink=subcategory_slug).first()
+            subcategory_id = subcategory.subcategory_id
+        else:
+            subcategory_id = subcategory_slug
         cached_data = update_price_cache()
         products = active_products_cash(subcategory_id)
         sort_by = request.query_params.get('sort_by', None)

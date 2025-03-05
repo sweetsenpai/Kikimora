@@ -24,7 +24,7 @@ urlpatterns = [
     # PRODUCTS
     path('api/v1/categories/', views_api.CategoryList.as_view(), name='category-list'),
     path('api/v1/product/<int:product_id>/', views_api.ProductApi.as_view(), name='product'),
-    path('api/v1/products/subcategory/<int:subcategory_id>/', product_by_subcategory, name='products-by-subcategory'),
+    path('api/v1/products/subcategory/<slug:subcategory_slug>/', product_by_subcategory, name='products-by-subcategory'),
     path('api/v1/products/discounts', products_with_discounts, name='products-with-discounts'),
     path('api/v1/products/all', all_products, name='all-products'),
     path('api/v1/products/search', serach_product, name='search_products'),
