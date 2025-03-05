@@ -216,8 +216,8 @@ def delete_limite_time_product(product_id):
     return f'Товар дня id:{product_id} удалён.'
 
 
-@shared_task
-def check_crm_changes():
+@shared_task(bind=True, max_retries=3)
+def check_crm_changes(self):
     logger.info("Task `check_crm_changes` started.")
     insales_url = os.getenv("INSALES_URL")
     new_subcategories = []
@@ -278,6 +278,13 @@ def check_crm_changes():
                             bonus = float(prod_data['variants'][0]['price_in_site_currency']) * 0.1 if \
                             float(prod_data['variants'][0]['price_in_site_currency']) < 4000 else float(
                                 prod_data['variants'][0]['price_in_site_currency']) * 0.05
+                            weight = prod_data['variants'][0].get('weight')
+                            if not prod_data['variants'][0]['quantity'] or prod_data['variants'][0]['quantity'] == 0:
+                                avileble = False
+                            else:
+                                avileble = True
+                            if not weight:
+                                weight = 0
                             try:
                                 product_obj, created = Product.objects.update_or_create(
                                     product_id=prod_data['id'],
@@ -285,9 +292,10 @@ def check_crm_changes():
                                         'name': re.sub(r'\s*\(.*?\)\s*', '', prod_data['title']),
                                         'description': prod_data['description'],
                                         'price': float(prod_data['variants'][0]['price_in_site_currency']),
-                                        'weight': prod_data['variants'][0]['weight'],
+                                        'weight': weight,
                                         'bonus': round(bonus),
                                         'permalink': prod_data['permalink'],
+                                        'avileble': avileble
                                     }
                                 )
                                 if created:
@@ -325,7 +333,7 @@ def check_crm_changes():
         update_price_cache(forced=True)
     except Exception as e:
         logger.error(f"Error in `check_crm_changes`: {e}")
-        raise
+        self.retry(countdown=2 ** self.request.retries)
 
 
 @shared_task
