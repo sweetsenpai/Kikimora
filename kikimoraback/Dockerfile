@@ -19,10 +19,11 @@ COPY . .
 
 RUN mkdir -p /logs && touch /logs/critical.log /logs/error.log /logs/info.log
 
-
-RUN python manage.py collectstatic --noinput
-
 # Открываем порт (если нужно)
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--capture-output", "kikimoraback.wsgi:application"]
+# Копируем entrypoint.sh и даем права на выполнение
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+CMD ["/entrypoint.sh"]
