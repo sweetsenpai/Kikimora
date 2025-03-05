@@ -20,7 +20,7 @@
             </thead>
             <tbody>
             {% for tag in tags %}
-              <tr onclick="window.location='/apanel/tag/{{ tag.tag_id }}/';" >
+              <tr onclick="window.location='/apanel/tags/{{ tag.tag_id }}/edit';" >
                 <th scope="row">{{ tag.tag_id }}</th>
                   <td>{{ tag.text }}</td>
               </tr>

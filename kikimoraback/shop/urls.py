@@ -24,7 +24,7 @@ urlpatterns = [
     # PRODUCTS
     path('api/v1/categories/', views_api.CategoryList.as_view(), name='category-list'),
     path('api/v1/product/<int:product_id>/', views_api.ProductApi.as_view(), name='product'),
-    path('api/v1/products/subcategory/<int:subcategory_id>/', product_by_subcategory, name='products-by-subcategory'),
+    path('api/v1/products/subcategory/<slug:subcategory_slug>/', product_by_subcategory, name='products-by-subcategory'),
     path('api/v1/products/discounts', products_with_discounts, name='products-with-discounts'),
     path('api/v1/products/all', all_products, name='all-products'),
     path('api/v1/products/search', serach_product, name='search_products'),
@@ -48,6 +48,7 @@ urlpatterns = [
     # PAYMENT
     path('api/v1/payment', views_api.Payment.as_view(), name='payment'),
     path('api/v1/yookassa/test', views_api.TestWebhook.as_view(), name='webhook'),
+    path('api/v1/feedback', views_api.FeedBackApi.as_view(), name='feedback'),
     # HOME
     path('apanel/', views_admin.AdminHomePageView.as_view(), name='admin_home'),
     path('apanel/login/', views_admin.AdminLogin.as_view(), name='admin_login'),
@@ -81,6 +82,9 @@ urlpatterns = [
     path('apanel/day_products/<int:product_id>/', views_admin.AdminLimitTimeProductForm.as_view(), name='day_products_form'),
 
     path('apanel/tags', views_admin.AdminTagView.as_view(), name='tags'),
-    path('apanel/tags/new_tag', views_admin.AdminNewTag.as_view(), name='new-tag')
+    path('apanel/tags/new_tag', views_admin.AdminNewTag.as_view(), name='new-tag'),
+    path('apanel/tags/<int:pk>/edit/',  views_admin.AdminTagEdit.as_view(), name='edit_tag'),
+    path('apanel/tags/<int:pk>/update/',  views_admin.UpdateTagProducts.as_view(), name='update_tag_products'),
+    path('apanel/tags/<int:pk>/delete/',  views_admin.DeleteTagView.as_view(), name='delete_tag'),
 ]
 

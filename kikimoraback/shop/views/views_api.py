@@ -29,7 +29,7 @@ from yookassa.domain.common import SecurityHelper
 from dotenv import load_dotenv
 import logging
 from ..tasks import new_order_email, update_price_cache, process_payment_canceled, \
-    process_payment_succeeded, send_confirmation_email
+    process_payment_succeeded, send_confirmation_email, feedback_email
 from ..services.email_verification import verify_email_token
 from bson import json_util
 from pprint import pprint
@@ -139,7 +139,12 @@ class ProductViewSet(viewsets.ViewSet):
         return paginator.get_paginated_response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='subcategory/(?P<subcategory_id>[^/.]+)')
-    def by_subcategory(self, request, subcategory_id=None):
+    def by_subcategory(self, request, subcategory_slug=None):
+        if not subcategory_slug.isdigit():
+            subcategory = subcategory_cash().filter(permalink=subcategory_slug).first()
+            subcategory_id = subcategory.subcategory_id
+        else:
+            subcategory_id = subcategory_slug
         cached_data = update_price_cache()
         products = active_products_cash(subcategory_id)
         sort_by = request.query_params.get('sort_by', None)
@@ -218,6 +223,23 @@ class ProductViewSet(viewsets.ViewSet):
                                              context=context)
 
         return Response(serializer.data)
+
+
+class FeedBackApi(APIView):
+    def post(self, request):
+        try:
+            print(request.data)
+            feedback_data = {
+                'name': request.data.get('name'),
+                'phone': request.data.get('phone'),
+                'email': request.data.get('email'),
+                'question': request.data.get('question')
+            }
+            feedback_email.delay(feedback_data)  # Вызываем задачу через Celery
+            return Response(status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Во время отправки обратной связи произошла непредвиденная ошибка.\nERROR: {e}")
+            return Response(status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
 
 class ProductAutocompleteView(APIView):
