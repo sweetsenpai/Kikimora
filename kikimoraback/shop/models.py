@@ -175,6 +175,7 @@ class Product(models.Model):
     bonus = models.IntegerField(default=0)
     visibility = models.BooleanField(default=True, help_text='Указывает видимость в выдаче')
     permalink = models.CharField(max_length=200, default=None, null=True, db_index=True)
+    avileble = models.BooleanField(default=True)
     tag = models.ForeignKey(ProductTag, null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
