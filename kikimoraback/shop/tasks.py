@@ -263,7 +263,7 @@ def check_crm_changes(self):
                         product_in_db = set(subcategory.products.values_list('product_id', flat=True))
                         product_in_crm = {item['product_id'] for item in prod_response}
                         prod_for_delete = product_in_db - product_in_crm
-                        product_for_create = product_in_crm - prod_for_delete
+                        product_for_create = product_in_crm - product_in_db
                         if prod_for_delete:
                             for prod_id in prod_for_delete:
                                 product = Product.objects.get(product_id=prod_id)
@@ -295,7 +295,7 @@ def check_crm_changes(self):
                                         'weight': weight,
                                         'bonus': round(bonus),
                                         'permalink': prod_data['permalink'],
-                                        'avileble': avileble
+                                        'available': avileble
                                     }
                                 )
                                 if created:
@@ -308,7 +308,15 @@ def check_crm_changes(self):
                                             new_photos.append(
                                                 ProductPhoto(
                                                     product=product_obj,
-                                                    photo_url=image['external_id'],
+                                                    photo_url=image['url'],
+                                                    is_main=(image['position'] == 1)
+                                                )
+                                            )
+                                        elif image['original_url']:
+                                            new_photos.append(
+                                                ProductPhoto(
+                                                    product=product_obj,
+                                                    photo_url=image['original_url'],
                                                     is_main=(image['position'] == 1)
                                                 )
                                             )
@@ -317,11 +325,22 @@ def check_crm_changes(self):
                                     product_obj.subcategory.add(subcategory)
                                     for image in prod_data['images']:
                                         if image['external_id']:
-                                                ProductPhoto.objects.get_or_create(
-                                                    product=product_obj,
-                                                    photo_url=image['external_id'],
-                                                    is_main=(image['position'] == 1)
-                                                )
+                                            obj, created = ProductPhoto.objects.get_or_create(
+                                                photo_url=image['external_id'],
+                                                defaults={
+                                                    'product': product_obj,
+                                                    'is_main': (image['position'] == 1)
+                                                }
+                                            )
+                                        elif image['original_url']:
+                                            obj, created = ProductPhoto.objects.get_or_create(
+                                                photo_url=image['original_url'],
+                                                defaults={
+                                                    'product': product_obj,
+                                                    'is_main': (image['position'] == 1)
+                                                }
+                                            )
+
                             except Exception as e:
                                 logger.error(f"Во время записи нового товара в БД произошла ошибка."
                                              f"\n PRODUCT DATA: {prod_data}"
