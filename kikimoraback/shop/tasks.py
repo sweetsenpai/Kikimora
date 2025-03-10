@@ -313,8 +313,15 @@ def check_crm_changes(self):
                                                 )
                                             )
                                 else:
-                                    product_obj.subcategory.add(subcategory)
 
+                                    product_obj.subcategory.add(subcategory)
+                                    for image in prod_data['images']:
+                                        if image['external_id']:
+                                                ProductPhoto.objects.get_or_create(
+                                                    product=product_obj,
+                                                    photo_url=image['external_id'],
+                                                    is_main=(image['position'] == 1)
+                                                )
                             except Exception as e:
                                 logger.error(f"Во время записи нового товара в БД произошла ошибка."
                                              f"\n PRODUCT DATA: {prod_data}"
@@ -334,7 +341,6 @@ def check_crm_changes(self):
     except Exception as e:
         logger.error(f"Error in `check_crm_changes`: {e}")
         self.retry(countdown=2 ** self.request.retries)
-
 
 @shared_task
 def clean_up_mongo():
