@@ -74,7 +74,7 @@ class ProductCardSerializer(serializers.ModelSerializer):
             'photos',
             'tag',
             'permalink',
-            'avileble'
+            'available'
 
         ]
 
@@ -106,7 +106,7 @@ class ProductSearchSerializer(serializers.ModelSerializer):
             'final_price',
             'photos',
             'weight',
-            'avileble'
+            'available'
 
         ]
 
@@ -136,7 +136,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'discounts',
             # 'has_limited_offer'
             'photos',
-            'avileble'
+            'available'
 
         ]
 
