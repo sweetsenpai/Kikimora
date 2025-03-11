@@ -232,7 +232,6 @@ def check_crm_changes(self):
             if not sub_response:
                 logger.error("Не удалось получить ответ от insales при обновлении БД.")
             sub_list = [subcategory['id'] for subcategory in sub_response]
-            logger.info(f"Данные подкатегорий:{sub_list}")
             Subcategory.objects.exclude(subcategory_id__in=sub_list).delete()
             for subcat in sub_response:
                 # Проверяем, существует ли подкатегория в базе данных
