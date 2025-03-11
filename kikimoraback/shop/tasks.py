@@ -20,6 +20,7 @@ from .services.email_verification import generate_email_token
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 @shared_task
@@ -230,7 +231,9 @@ def check_crm_changes(self):
             sub_response = client.get(f"{insales_url}collections.json", params={'parent_id': 30736737}).json()
             if not sub_response:
                 logger.error("Не удалось получить ответ от insales при обновлении БД.")
-
+            sub_list = [subcategory['id'] for subcategory in sub_response]
+            logger.info(f"Данные подкатегорий:{sub_list}")
+            Subcategory.objects.exclude(subcategory_id__in=sub_list).delete()
             for subcat in sub_response:
                 # Проверяем, существует ли подкатегория в базе данных
                 try:
@@ -257,95 +260,80 @@ def check_crm_changes(self):
 
                 # Получаем товары из коллекции
                 prod_response = client.get(f"{insales_url}collects.json", params={'collection_id': subcat['id']}).json()
-                product_for_create = []
                 if prod_response:
-                    if not created:
-                        product_in_db = set(subcategory.products.values_list('product_id', flat=True))
-                        product_in_crm = {item['product_id'] for item in prod_response}
-                        prod_for_delete = product_in_db - product_in_crm
-                        product_for_create = product_in_crm - product_in_db
-                        if prod_for_delete:
-                            for prod_id in prod_for_delete:
-                                product = Product.objects.get(product_id=prod_id)
-                                product.subcategory.remove(subcategory)  # Удаляем связь с подкатегорией
-                                product.visibility = False  # Устанавливаем visible=False
-                                product.save()
-
                     for product in prod_response:
-                        if product['product_id'] in product_for_create:
-                            # Получаем данные о товаре
-                            prod_data = client.get(f"{insales_url}products/{product['product_id']}.json").json()
-                            bonus = float(prod_data['variants'][0]['price_in_site_currency']) * 0.1 if \
-                            float(prod_data['variants'][0]['price_in_site_currency']) < 4000 else float(
-                                prod_data['variants'][0]['price_in_site_currency']) * 0.05
-                            weight = prod_data['variants'][0].get('weight')
-                            if not prod_data['variants'][0]['quantity'] or prod_data['variants'][0]['quantity'] == 0:
-                                avileble = False
-                            else:
-                                avileble = True
-                            if not weight:
-                                weight = 0
-                            try:
-                                product_obj, created = Product.objects.update_or_create(
-                                    product_id=prod_data['id'],
-                                    defaults={
-                                        'name': re.sub(r'\s*\(.*?\)\s*', '', prod_data['title']),
-                                        'description': prod_data['description'],
-                                        'price': float(prod_data['variants'][0]['price_in_site_currency']),
-                                        'weight': weight,
-                                        'bonus': round(bonus),
-                                        'permalink': prod_data['permalink'],
-                                        'available': avileble
-                                    }
-                                )
-                                if created:
-                                    # Привязываем подкатегорию к товару
-                                    product_obj.subcategory.add(subcategory)
-                                    new_products.append(product_obj)
-                                    # Добавляем фотографии товара
-                                    for image in prod_data['images']:
-                                        if image['external_id']:
-                                            new_photos.append(
-                                                ProductPhoto(
-                                                    product=product_obj,
-                                                    photo_url=image['url'],
-                                                    is_main=(image['position'] == 1)
-                                                )
+                        # Получаем данные о товаре
+                        prod_data = client.get(f"{insales_url}products/{product['product_id']}.json").json()
+                        bonus = float(prod_data['variants'][0]['price_in_site_currency']) * 0.1 if \
+                        float(prod_data['variants'][0]['price_in_site_currency']) < 4000 else float(
+                            prod_data['variants'][0]['price_in_site_currency']) * 0.05
+                        weight = prod_data['variants'][0].get('weight')
+                        if not prod_data['variants'][0]['quantity'] or prod_data['variants'][0]['quantity'] == 0:
+                            avileble = False
+                        else:
+                            avileble = True
+                        if not weight:
+                            weight = 0
+                        try:
+                            product_obj, created = Product.objects.update_or_create(
+                                product_id=prod_data['id'],
+                                defaults={
+                                    'name': re.sub(r'\s*\(.*?\)\s*', '', prod_data['title']),
+                                    'description': prod_data['description'],
+                                    'price': float(prod_data['variants'][0]['price_in_site_currency']),
+                                    'weight': weight,
+                                    'bonus': round(bonus),
+                                    'permalink': prod_data['permalink'],
+                                    'available': avileble
+                                }
+                            )
+                            if created:
+                                # Привязываем подкатегорию к товару
+                                product_obj.subcategory.add(subcategory)
+                                new_products.append(product_obj)
+                                # Добавляем фотографии товара
+                                for image in prod_data['images']:
+                                    if image['external_id']:
+                                        new_photos.append(
+                                            ProductPhoto(
+                                                product=product_obj,
+                                                photo_url=image['url'],
+                                                is_main=(image['position'] == 1)
                                             )
-                                        elif image['original_url']:
-                                            new_photos.append(
-                                                ProductPhoto(
-                                                    product=product_obj,
-                                                    photo_url=image['original_url'],
-                                                    is_main=(image['position'] == 1)
-                                                )
-                                            )
-                                else:
-
-                                    product_obj.subcategory.add(subcategory)
-                                    for image in prod_data['images']:
-                                        if image['external_id']:
-                                            obj, created = ProductPhoto.objects.get_or_create(
-                                                photo_url=image['external_id'],
-                                                defaults={
-                                                    'product': product_obj,
-                                                    'is_main': (image['position'] == 1)
-                                                }
-                                            )
-                                        elif image['original_url']:
-                                            obj, created = ProductPhoto.objects.get_or_create(
+                                        )
+                                    elif image['original_url']:
+                                        new_photos.append(
+                                            ProductPhoto(
+                                                product=product_obj,
                                                 photo_url=image['original_url'],
-                                                defaults={
-                                                    'product': product_obj,
-                                                    'is_main': (image['position'] == 1)
-                                                }
+                                                is_main=(image['position'] == 1)
                                             )
+                                        )
+                            else:
+                                product_obj.subcategory.add(subcategory)
+                                for image in prod_data['images']:
+                                    if image['external_id']:
+                                        obj, created = ProductPhoto.objects.get_or_create(
+                                            photo_url=image['external_id'],
+                                            defaults={
+                                                'product': product_obj,
+                                                'is_main': (image['position'] == 1)
+                                            }
+                                        )
+                                    elif image['original_url']:
+                                        obj, created = ProductPhoto.objects.get_or_create(
+                                            photo_url=image['original_url'],
+                                            defaults={
+                                                'product': product_obj,
+                                                'is_main': (image['position'] == 1)
+                                            }
+                                        )
 
-                            except Exception as e:
-                                logger.error(f"Во время записи нового товара в БД произошла ошибка."
-                                             f"\n PRODUCT DATA: {prod_data}"
-                                             f"\n ERROR: {e}")
-                                pass
+                        except Exception as e:
+                            logger.error(f"Во время записи нового товара в БД произошла ошибка."
+                                         f"\n PRODUCT DATA: {prod_data}"
+                                         f"\n ERROR: {e}")
+                            pass
 
         # Используем транзакцию и bulk_create для массовой вставки товаров, подкатегорий и фотографий
         with transaction.atomic():
@@ -360,6 +348,7 @@ def check_crm_changes(self):
     except Exception as e:
         logger.error(f"Error in `check_crm_changes`: {e}")
         self.retry(countdown=2 ** self.request.retries)
+
 
 @shared_task
 def clean_up_mongo():
