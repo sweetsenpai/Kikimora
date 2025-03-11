@@ -74,7 +74,6 @@ class AdminLogin(LoginView):
 
 
 class AdminHomePageView(StaffCheckRequiredMixin, TemplateView):
-    logger.info("Test logs")
     template_name = 'master/home.html'
 
 
