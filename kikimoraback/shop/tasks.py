@@ -267,7 +267,7 @@ def check_crm_changes(self):
                         float(prod_data['variants'][0]['price_in_site_currency']) < 4000 else float(
                             prod_data['variants'][0]['price_in_site_currency']) * 0.05
                         weight = prod_data['variants'][0].get('weight')
-                        if not prod_data['variants'][0]['quantity'] or prod_data['variants'][0]['quantity'] == 0:
+                        if prod_data['variants'][0]['quantity'] == 0:
                             avileble = False
                         else:
                             avileble = True
