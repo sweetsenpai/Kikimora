@@ -12,11 +12,11 @@ def delete_related_products(sender, instance, **kwargs):
     """
     # Получаем все товары, привязанные к этой подкатегории
     related_products = instance.products.all()
-    # Удаляем фото товаров
+    # Удаляем все связанные с товаром записи
     ProductPhoto.objects.filter(product__in=related_products).delete()
     Discount.objects.filter(product__in=related_products).delete()
-    Discount.objects.filter(subcategory__in=instance).delete()
-    LimitTimeProduct.objects.filter(product__in=related_products).delete()
+    Discount.objects.filter(subcategory=instance).delete()
+    LimitTimeProduct.objects.filter(product_id__in=related_products).delete()
     # Удаляем сами товары
     related_products.delete()
 
