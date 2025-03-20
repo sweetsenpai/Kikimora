@@ -55,7 +55,7 @@ class ProductPhotoSerializer(serializers.ModelSerializer):
 
 
 class ProductCardSerializer(serializers.ModelSerializer):
-    photos = serializers.SerializerMethodField()
+    mini_photos = serializers.SerializerMethodField()
     final_price = serializers.SerializerMethodField()
     discounts = serializers.SerializerMethodField()
     tag = serializers.SerializerMethodField()
@@ -71,7 +71,7 @@ class ProductCardSerializer(serializers.ModelSerializer):
             'weight',
             'final_price',
             'discounts',
-            'photos',
+            'mini_photos',
             'tag',
             'permalink',
             'available'
@@ -84,8 +84,8 @@ class ProductCardSerializer(serializers.ModelSerializer):
     def get_discounts(self, obj):
         return self.context.get('discounts_map', {}).get(obj.product_id, [])
 
-    def get_photos(self, obj):
-        return self.context.get('photos_map', {}).get(obj.product_id, [])
+    def get_mini_photos(self, obj):
+        return self.context.get('mini_photo_map', {}).get(obj.product_id, [])
 
     def get_tag(self, obj):
         return obj.tag.text if obj.tag else None
@@ -95,7 +95,7 @@ class ProductCardSerializer(serializers.ModelSerializer):
 
 
 class ProductSearchSerializer(serializers.ModelSerializer):
-    photos = serializers.SerializerMethodField()
+    mini_photos = serializers.SerializerMethodField()
     final_price = serializers.SerializerMethodField()
 
     class Meta:
@@ -104,7 +104,7 @@ class ProductSearchSerializer(serializers.ModelSerializer):
             'permalink',
             'name',
             'final_price',
-            'photos',
+            'mini_photos',
             'weight',
             'available'
 
@@ -113,8 +113,8 @@ class ProductSearchSerializer(serializers.ModelSerializer):
     def get_final_price(self, obj):
         return self.context.get('price_map', {}).get(obj.product_id, obj.price)
 
-    def get_photos(self, obj):
-        return self.context.get('photos_map', {}).get(obj.product_id, [])
+    def get_mini_photos(self, obj):
+        return self.context.get('mini_photo_map', {}).get(obj.product_id, [])
 
 
 class ProductSerializer(serializers.ModelSerializer):

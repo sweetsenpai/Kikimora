@@ -224,6 +224,7 @@ def check_crm_changes(self):
     new_subcategories = []
     new_products = []
     new_photos = []
+    new_mini_photos = []
 
     try:
         with httpx.Client() as client:
@@ -308,6 +309,15 @@ def check_crm_changes(self):
                                                 is_main=(image['position'] == 1)
                                             )
                                         )
+                                    if image['large_url']:
+                                        new_mini_photos.append(
+                                            ProductPhotoMini(
+                                                product=product_obj,
+                                                photo_url=image['large_url'],
+                                                is_main=(image['position'] == 1)
+                                            )
+                                        )
+
                             else:
                                 product_obj.subcategory.add(subcategory)
                                 for image in prod_data['images']:
@@ -327,6 +337,14 @@ def check_crm_changes(self):
                                                 'is_main': (image['position'] == 1)
                                             }
                                         )
+                                    if image['large_url']:
+                                        obj, created = ProductPhotoMini.objects.get_or_create(
+                                            photo_url=image['large_url'],
+                                            defaults={
+                                                'product': product_obj,
+                                                'is_main': (image['position'] == 1)
+                                            }
+                                        )
 
                         except Exception as e:
                             logger.error(f"Во время записи нового товара в БД произошла ошибка."
@@ -339,6 +357,7 @@ def check_crm_changes(self):
             Subcategory.objects.bulk_create(new_subcategories, ignore_conflicts=True)
             Product.objects.bulk_create(new_products, ignore_conflicts=True)
             ProductPhoto.objects.bulk_create(new_photos, ignore_conflicts=True)
+            ProductPhotoMini.objects.bulk_create(new_mini_photos, ignore_conflicts=True)
 
         logger.info(
             f"Successfully added {len(new_subcategories)} subcategories, {len(new_products)} products, and {len(new_photos)} photos.")
