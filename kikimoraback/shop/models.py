@@ -190,6 +190,13 @@ class ProductPhoto(models.Model):
     photo_description = models.CharField(max_length=200, help_text="описание фотографии", null=True)
 
 
+class ProductPhotoMini(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="mini_photos")
+    photo_url = models.CharField(max_length=200, help_text="URL фотографии")
+    is_main = models.BooleanField(default=False, help_text="Является ли эта фотография основной", null=True)
+    photo_description = models.CharField(max_length=200, help_text="описание фотографии", null=True)
+
+
 class LimitTimeProduct(models.Model):
     limittimeproduct_id = models.AutoField(primary_key=True)
     product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
