@@ -128,11 +128,13 @@ class ProductViewSet(viewsets.ViewSet):
             products = sort_producst(products, query_params=sort_by)
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(products, request)
+
         context = {
             'price_map': cached_data['price_map'],
             'discounts_map': cached_data['discounts_map'],
-            'photos_map': cached_data['photos_map']
+            'mini_photo_map': cached_data['mini_photo_map']
         }
+
         serializer = self.serializer_class(
             result_page,
             many=True,
@@ -157,7 +159,7 @@ class ProductViewSet(viewsets.ViewSet):
         context = {
             'price_map': cached_data['price_map'],
             'discounts_map': cached_data['discounts_map'],
-            'photos_map': cached_data['photos_map']
+            'mini_photos': cached_data['mini_photo_map']
         }
 
         serializer = self.serializer_class(
@@ -189,7 +191,7 @@ class ProductViewSet(viewsets.ViewSet):
         context = {
             'price_map': cached_data['price_map'],
             'discounts_map': cached_data['discounts_map'],
-            'photos_map': cached_data['photos_map']
+            'mini_photo_map': cached_data['mini_photo_map']
         }
 
         # Сериализуем данные
@@ -217,7 +219,7 @@ class ProductViewSet(viewsets.ViewSet):
         context = {
             'price_map': cached_data['price_map'],
             'discounts_map': cached_data['discounts_map'],
-            'photos_map': cached_data['photos_map']
+            'mini_photo_map': cached_data['mini_photo_map']
         }
 
         serializer = ProductSearchSerializer(result_page,
