@@ -464,7 +464,7 @@ class YandexCalculation(APIView):
         elif yandex_response.status_code == 400:
             logger.error(f'Ошибка во время расчета стоимости заказ.\nAddres:{address}\n ERROR:{yandex_data}')
             return Response({"error": "Не удалось расчитать стоимость доставки.\n"
-                                      "Проверьте правильность введенного адреса или повторите попытку позже."},
+                                      "Проверьте правильность введенного адреса."},
                             status=status.HTTP_400_BAD_REQUEST)
         elif yandex_response.status_code == 401:
             logger.critical('Передан не верный токен yandex-delivery.')
