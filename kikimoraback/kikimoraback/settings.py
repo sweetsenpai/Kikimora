@@ -280,17 +280,17 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'info_file', 'error_file'],
+            'handlers': ['console', 'info_file', 'error_file', 'critical_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
         'celery': {
-            'handlers': ['console', 'info_file', 'error_file'],
+            'handlers': ['console', 'info_file', 'error_file',  'critical_file'],
             'level': 'INFO',
             'propagate': False,
         },
         'shop': {
-            'handlers': ['console', 'info_file', 'error_file'],
+            'handlers': ['console', 'info_file', 'error_file',  'critical_file'],
             'level': 'DEBUG',
             'propagate': True,
         },
