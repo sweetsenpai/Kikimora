@@ -287,7 +287,7 @@ LOGGING = {
         'celery': {
             'handlers': ['console', 'info_file', 'error_file'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
         },
         'shop': {
             'handlers': ['console', 'info_file', 'error_file'],
