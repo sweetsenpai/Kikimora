@@ -232,7 +232,6 @@ class ProductViewSet(viewsets.ViewSet):
 class FeedBackApi(APIView):
     def post(self, request):
         try:
-            print(request.data)
             feedback_data = {
                 'name': request.data.get('name'),
                 'phone': request.data.get('phone'),

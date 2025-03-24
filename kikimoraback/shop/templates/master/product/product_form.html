@@ -91,14 +91,17 @@
               </div>
             </div>
             <hr>
-
             <div class="col-12">
-              <label class="form-label"><b>Видимость</b></label>
+              <label class="form-label"><b>Тег</b></label>
               <div class="input-group has-validation">
-                <span id="visibility-display">{{ product.visibility|yesno:"Отображается на сайте,Не отображается на сайте" }}</span>
-                <select id="visibility-input" name="visibility" class="form-select d-none">
-                  <option value="True" {% if product.visibility %}selected{% endif %}>Отображается на сайте</option>
-                  <option value="False" {% if not product.visibility %}selected{% endif %}>Не отображается на сайте</option>
+                <span id="tag-display">{{ product.tag.text|default:"Без тега" }}</span>
+                <select id="tag-select" name="tag" class="form-select d-none">
+                  <option value="">-- Без тега --</option>
+                  {% for tag in tags %}
+                    <option value="{{ tag.tag_id }}" {% if product.tag == tag %}selected{% endif %}>
+                      {{ tag.text }}
+                    </option>
+                  {% endfor %}
                 </select>
               </div>
             </div>

@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.views import LoginView
 
-from django.views.generic import ListView, TemplateView, FormView
+from django.views.generic import ListView, TemplateView, FormView, DeleteView
 from django.views.generic.edit import CreateView, UpdateView, View
 
 from django.utils import timezone
@@ -249,6 +249,7 @@ class ProductUpdateView(UpdateView):
         context = super().get_context_data(**kwargs)
         product = self.get_object()
         context['first_photo'] = product.photos.first()
+        context['tags'] = ProductTag.objects.all()
         return context
 
     def form_valid(self, form):
@@ -278,46 +279,12 @@ class AdminNewTag(StaffCheckRequiredMixin, CreateView):
     success_url = reverse_lazy("tags")
 
 
-class AdminTagEdit(StaffCheckRequiredMixin, UpdateView):
+class AdminDeleteTag(StaffCheckRequiredMixin, DeleteView):
     model = ProductTag
-    form_class = TagForm
-    template_name = 'master/tag/tag_edit.html'
     success_url = reverse_lazy("tags")
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        tag = self.object  # Текущий тег
-
-        # Формируем JSON для продуктов
-        products = list(Product.objects.filter(tag=tag).values("product_id", "name"))
-
-        # Передаём в шаблон
-        context["tag"] = tag
-        context["products_json"] = json.dumps(products)  # Точно корректный JSON
-        return context
-
-
-class UpdateTagProducts(StaffCheckRequiredMixin, View):
-    """Обновление списка товаров, связанных с тегом"""
-    def post(self, request, pk):
-        tag = get_object_or_404(ProductTag, pk=pk)
-        product_ids = request.POST.getlist("products[]")  # Получаем массив ID товаров
-
-        # Сбрасываем тег у всех товаров, которые его имели
-        Product.objects.filter(tag=tag).update(tag=None)
-
-        # Присваиваем тег только выбранным товарам
-        Product.objects.filter(product_id__in=product_ids).update(tag=tag)
-
-        return JsonResponse({"status": "success"})
-
-
-class DeleteTagView(StaffCheckRequiredMixin, View):
-    def post(self, request, pk):
-        tag = get_object_or_404(ProductTag, pk=pk)
-        Product.objects.filter(tag=tag).update(tag=None)  # Очищаем у товаров
-        tag.delete()
-        return JsonResponse({"status": "deleted"})
+    def get_object(self, queryset=None):
+        return get_object_or_404(ProductTag, tag_id=self.kwargs['tag_id'])
 
 
 class AdminDiscountListView(StaffCheckRequiredMixin, ListView):
