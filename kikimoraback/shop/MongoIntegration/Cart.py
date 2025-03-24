@@ -2,7 +2,7 @@ from pymongo import ASCENDING
 from ..MongoIntegration.db_connection import MongoDBClient
 from datetime import datetime
 import logging
-from ..services.caches import active_products_cash
+from ..services.caches import active_products_cache
 from ..tasks import update_price_cache
 
 logger = logging.getLogger('shop')
@@ -87,7 +87,7 @@ class Cart:
 
         # Получаем кэшированные данные о ценах, скидках и фотографиях
         cached_data = update_price_cache()
-        product_cash = active_products_cash()
+        product_cash = active_products_cache()
         price_map = cached_data['price_map']
         # Пройдем по всем товарам в корзине
         for product in front_data['products']:

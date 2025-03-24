@@ -14,76 +14,86 @@ def user_bonus_cash():
     return bonus_cash
 
 
-def subcategory_cash():
-    cash_kay = 'subcategory'
-    sub_cash = cache.get(cash_kay)
-    if not sub_cash:
-        sub_cash = Subcategory.objects.filter(visibility=True)
-        cache.set(cash_kay, sub_cash, timeout=60*15)
-    return sub_cash
+def subcategory_cache(invalidate=False):
+    cache_key = 'subcategory'
+
+    # Если не нужно сбрасывать кеш и он есть — вернуть данные
+    if not invalidate:
+        sub_cache = cache.get(cache_key)
+        if sub_cache:
+            return sub_cache
+
+    # Обновление кеша
+    sub_cache = Subcategory.objects.filter(visibility=True)
+    cache.set(cache_key, sub_cache)
+
+    return sub_cache
 
 
-def active_products_cash(subcategory_id: int = None)->QuerySet:
+def active_products_cache(subcategory_id: int = None, invalidate=False) -> QuerySet:
     """
-        Возвращает кэшированные продукты. Если subcategory_id указан, возвращает товары для этой подкатегории.
-        Если subcategory_id не указан, возвращает все видимые товары.
+    Возвращает кэшированные продукты. Если subcategory_id указан, возвращает товары для этой подкатегории.
+    Если subcategory_id не указан, возвращает все видимые товары.
 
-        Args:
-            subcategory_id (int, optional): ID подкатегории для фильтрации товаров. По умолчанию None.
+    Args:
+        subcategory_id (int, optional): ID подкатегории для фильтрации товаров. По умолчанию None.
+        invalidate (bool, optional): Если True, сбрасывает кеш перед получением данных.
 
-        Returns:
-            QuerySet: Список товаров.
-        """
-    cash_key = f'products_subcategory_id_{subcategory_id}' if subcategory_id else 'products'
+    Returns:
+        QuerySet: Список товаров.
+    """
+    cache_key = f'products_subcategory_{subcategory_id}' if subcategory_id else 'products'
 
-    product_cash = cache.get(cash_key)
-    if not product_cash:
-        if subcategory_id:
-            product_cash = Product.objects.filter(subcategory__subcategory_id=subcategory_id, visibility=True).order_by('name')
-        else:
-            product_cash = Product.objects.filter(visibility=True)
+    # Если кеширование не сбрасывается и кеш есть – возвращаем данные
+    if not invalidate:
+        product_cache = cache.get(cache_key)
+        if product_cache:
+            return product_cache
 
-        product_cash = product_cash.select_related('tag')
+    # Запрос в базу
+    queryset = Product.objects.filter(visibility=True)
+    if subcategory_id:
+        queryset = queryset.filter(subcategory__subcategory_id=subcategory_id)
 
-        cache.set(cash_key, product_cash, timeout=60*15)
-    return product_cash
+    queryset = queryset.select_related('tag').order_by('name')
 
-
-def get_products_sub_cash(cash_key, subcategory_id=None):
-    product_sub_cash = cache.get(cash_key)
-    if not product_sub_cash:
-        if subcategory_id:
-            product_sub_cash = Product.objects.filter(subcategory__subcategory_id=subcategory_id, visibility=True)
-        else:
-            product_sub_cash = Product.objects.filter(visibility=True)
-
-        cache.set(cash_key, product_sub_cash, timeout=60*15)
-    return product_sub_cash
+    # Обновляем кеш
+    cache.set(cache_key, queryset)
+    return queryset
 
 
-def get_discounted_product_data():
+def get_discounted_product_data(invalidate=False):
     cache_key = 'get_discounted_product_data'
-    dp_data = cache.get(cache_key)
-    if not dp_data:
-        products_with_discounts_ids = cache.get("products_with_discounts", [])
-        dp_data = active_products_cash().filter(product_id__in=products_with_discounts_ids)
-        cache.set(cache_key, dp_data, timeout=60*15)
+    if not invalidate:
+        dp_data = cache.get(cache_key)
+        if dp_data is not None:
+            return dp_data
+    products_with_discounts_ids = cache.get("products_with_discounts", [])
+    dp_data = active_products_cache().filter(product_id__in=products_with_discounts_ids)
+    cache.set(cache_key, dp_data)
     return dp_data
 
 
-def get_discount_cash():
+def get_discount_cash(invalidate=False):
     cash_key = "discount"
-    disc_cash = cache.get(cash_key)
-    if not disc_cash:
-        disc_cash = Discount.objects.filter(active=True)
-        cache.set(cash_key, disc_cash, timeout=60*15)
+    if not invalidate:
+        disc_cash = cache.get(cash_key)
+        print("Нас попросили просто выдать кэш")
+        if disc_cash:
+            print("Мы нашли кэш")
+            return disc_cash
+    print("Обновили кэш скидок")
+    disc_cash = Discount.objects.filter(active=True)
+    cache.set(cash_key, disc_cash)
     return disc_cash
 
 
-def get_limit_product_cash():
+def get_limit_product_cash(invalidate=False):
     cash_key = "limit"
-    limit_cash = cache.get(cash_key)
-    if not limit_cash:
-        limit_cash = LimitTimeProduct.objects.all()
-        cache.set(cash_key, limit_cash, timeout=60 * 15)
+    if not invalidate:
+        limit_cash = cache.get(cash_key)
+        if limit_cash:
+            return limit_cash
+    limit_cash = LimitTimeProduct.objects.all()
+    cache.set(cash_key, limit_cash)
     return limit_cash

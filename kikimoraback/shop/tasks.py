@@ -410,7 +410,7 @@ def update_price_cache(forced=False):
     Фоновая задача для предрасчета цен товаров.
     :param forced: Используется для принудительного создания нового кэша, даже если он есть. По умолчанию false.
     """
-    products = active_products_cash()
+    products = active_products_cache()
     result = calculate_prices(products)
 
     # Создаем список товаров с скидками
@@ -423,19 +423,6 @@ def update_price_cache(forced=False):
 
     logger.info("Кэширование цен товаров прошло успешно.")
     return result
-# TODO релизовать задачу для обновления всех свзяанных кэшей
-# @shared_task
-# def update_related_caches():
-#     """
-#     Обновляет все связанные кэши.
-#     """
-#     cache.delete("all_products_prices")
-#     cache.delete("products_with_discounts")
-#
-#     from .tasks import update_price_cache
-#     update_price_cache.delay(forced=True)
-#
-#     logger.info("Все связанные кэши успешно обновлены.")
 
 
 @shared_task(bind=True, max_retries=3)
