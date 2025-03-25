@@ -17,6 +17,8 @@ services:
       - CELERY_BROKER=redis://redis:6379/0
     depends_on:
       - redis
+    user: "${UID}:${GID}"
+    
   celery:
     build:
       context: .
