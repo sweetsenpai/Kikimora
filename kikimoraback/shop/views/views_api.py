@@ -44,7 +44,7 @@ class CategoryList(generics.ListAPIView):
 
 
 class MenuSubcategory(generics.ListAPIView):
-    queryset = subcategory_cash()
+    queryset = subcategory_cache()
     serializer_class = MenuSubcategorySerializer
 
 
@@ -75,9 +75,9 @@ class ProductApi(generics.RetrieveAPIView):
         # Получаем один товар по ID
         try:
             if product_slug.isdigit():
-                single_product = active_products_cash().get(product_id=product_slug)
+                single_product = active_products_cache().get(product_id=product_slug)
             else:
-                single_product = active_products_cash().get(permalink=product_slug)
+                single_product = active_products_cache().get(permalink=product_slug)
         except Product.DoesNotExist:
             logger.error(f"Неудалось найти товаро по заданным параметрам.{product_slug}")
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -122,7 +122,7 @@ class ProductViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'], url_path='all-products')
     def all_products(self, request):
         cached_data = update_price_cache()
-        products = active_products_cash()
+        products = active_products_cache()
         sort_by = request.query_params.get('sort_by', None)
         if sort_by:
             products = sort_producst(products, query_params=sort_by)
@@ -145,12 +145,12 @@ class ProductViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'], url_path='subcategory/(?P<subcategory_id>[^/.]+)')
     def by_subcategory(self, request, subcategory_slug=None):
         if not subcategory_slug.isdigit():
-            subcategory = subcategory_cash().filter(permalink=subcategory_slug).first()
+            subcategory = subcategory_cache().filter(permalink=subcategory_slug).first()
             subcategory_id = subcategory.subcategory_id
         else:
             subcategory_id = subcategory_slug
         cached_data = update_price_cache()
-        products = active_products_cash(subcategory_id)
+        products = active_products_cache(subcategory_id)
         sort_by = request.query_params.get('sort_by', None)
         if sort_by:
             products = sort_producst(products, sort_by)
@@ -159,7 +159,7 @@ class ProductViewSet(viewsets.ViewSet):
         context = {
             'price_map': cached_data['price_map'],
             'discounts_map': cached_data['discounts_map'],
-            'mini_photos': cached_data['mini_photo_map']
+            'mini_photo_map': cached_data['mini_photo_map']
         }
 
         serializer = self.serializer_class(
@@ -175,12 +175,10 @@ class ProductViewSet(viewsets.ViewSet):
         """
         Возвращает все товары, к которым применены скидки.
         """
-        # Получаем список ID товаров с скидками из кэша
-
+        # Получаем список ID товаров со скидками из кэша
 
         # Получаем полные данные о товарах по их ID
         products_with_discounts = get_discounted_product_data()
-
         # Пагинация результатов
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(products_with_discounts, request)
@@ -213,7 +211,7 @@ class ProductViewSet(viewsets.ViewSet):
             return Response({"detail": "Парметр 'query' обязателен."}, status=400)
 
         cached_data = update_price_cache()
-        products = active_products_cash().filter(name__icontains=query)
+        products = active_products_cache().filter(name__icontains=query)
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(products, request)
         context = {
@@ -232,7 +230,6 @@ class ProductViewSet(viewsets.ViewSet):
 class FeedBackApi(APIView):
     def post(self, request):
         try:
-            print(request.data)
             feedback_data = {
                 'name': request.data.get('name'),
                 'phone': request.data.get('phone'),

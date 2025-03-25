@@ -7,26 +7,31 @@
 <h1 style="margin-top:-5%;margin-bottom:3%;">Теги</h1>
 <button type="button" class="btn btn-success" style="margin-top:-4%;" onclick="window.location='/apanel/tags/new_tag';">Создать новый тег</button>
 
-    <form method="post">
-      {% csrf_token %}
-    </form>
-      <div class="table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr>
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
                 <th scope="col">#</th>
                 <th scope="col">Текст</th>
-              </tr>
-            </thead>
-            <tbody>
-            {% for tag in tags %}
-              <tr onclick="window.location='/apanel/tags/{{ tag.tag_id }}/edit';" >
+                <th scope="col">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for tag in tags %}
+            <tr>
                 <th scope="row">{{ tag.tag_id }}</th>
-                  <td>{{ tag.text }}</td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
-      </div>
+                <td>{{ tag.text }}</td>
+                <td>
+                    <!-- Форма для удаления -->
+                    <form method="post" action="{% url 'delete_tag' tag.tag_id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 {% endblock %}

@@ -1,6 +1,9 @@
-from django.db.models.signals import pre_delete, pre_save
+from django.db.models.signals import pre_delete, pre_save, post_save, post_delete
 from django.dispatch import receiver
 from .models import Subcategory, Product, ProductPhoto, Discount, LimitTimeProduct
+from django.core.cache import cache
+from .services.caches import *
+from .tasks import update_price_cache
 import logging
 logger = logging.getLogger(__name__)
 
@@ -36,3 +39,34 @@ def update_related_products(sender, instance, **kwargs):
         if old_instance.visibility != instance.visibility:
             # Обновляем связанные товары
             Product.objects.filter(subcategory=instance).update(visibility=instance.visibility)
+
+
+@receiver([post_save, post_delete])
+def invalidate_cach(sender, instance, **kwargs):
+    if sender in {Subcategory, Product, Discount, LimitTimeProduct}:
+
+        if sender == Subcategory:
+            subcategory_cache(True)
+            active_products_cache(instance.pk, True)
+            if Discount.objects.filter(subcategory=instance.pk):
+                get_discount_cash(True)
+            update_price_cache(forced=True)
+
+        if sender == Product:
+            active_products_cache(invalidate=True)
+            get_discount_cash(True)
+            get_discounted_product_data(True)
+            get_limit_product_cash(True)
+            update_price_cache(forced=True)
+
+        if sender == LimitTimeProduct:
+            get_limit_product_cash(True)
+            active_products_cache(invalidate=True)
+            update_price_cache(forced=True)
+            get_discounted_product_data(True)
+
+        if sender == Discount:
+            get_discount_cash(True)
+            active_products_cache(invalidate=True)
+            update_price_cache(forced=True)
+            get_discounted_product_data(True)
