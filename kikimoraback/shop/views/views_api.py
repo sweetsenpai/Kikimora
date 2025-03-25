@@ -145,12 +145,12 @@ class ProductViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'], url_path='subcategory/(?P<subcategory_id>[^/.]+)')
     def by_subcategory(self, request, subcategory_slug=None):
         if not subcategory_slug.isdigit():
-            subcategory = subcategory_cash().filter(permalink=subcategory_slug).first()
+            subcategory = subcategory_cache().filter(permalink=subcategory_slug).first()
             subcategory_id = subcategory.subcategory_id
         else:
             subcategory_id = subcategory_slug
         cached_data = update_price_cache()
-        products = active_products_cash(subcategory_id)
+        products = active_products_cache(subcategory_id)
         sort_by = request.query_params.get('sort_by', None)
         if sort_by:
             products = sort_producst(products, sort_by)
@@ -159,7 +159,7 @@ class ProductViewSet(viewsets.ViewSet):
         context = {
             'price_map': cached_data['price_map'],
             'discounts_map': cached_data['discounts_map'],
-            'mini_photos': cached_data['mini_photo_map']
+            'mini_photo_map': cached_data['mini_photo_map']
         }
 
         serializer = self.serializer_class(
@@ -175,8 +175,7 @@ class ProductViewSet(viewsets.ViewSet):
         """
         Возвращает все товары, к которым применены скидки.
         """
-        # Получаем список ID товаров с скидками из кэша
-
+        # Получаем список ID товаров со скидками из кэша
 
         # Получаем полные данные о товарах по их ID
         products_with_discounts = get_discounted_product_data()

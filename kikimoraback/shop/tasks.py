@@ -412,15 +412,6 @@ def update_price_cache(forced=False):
     """
     products = active_products_cache()
     result = calculate_prices(products)
-
-    # Создаем список товаров с скидками
-    products_with_discounts = [
-        product_id for product_id, discounts in result['discounts_map'].items() if discounts
-    ]
-
-    # Сохраняем список товаров с скидками в отдельном кэше
-    cache.set("products_with_discounts", products_with_discounts, timeout=None)
-
     logger.info("Кэширование цен товаров прошло успешно.")
     return result
 

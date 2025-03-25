@@ -44,23 +44,29 @@ def update_related_products(sender, instance, **kwargs):
 @receiver([post_save, post_delete])
 def invalidate_cach(sender, instance, **kwargs):
     if sender in {Subcategory, Product, Discount, LimitTimeProduct}:
+
         if sender == Subcategory:
             subcategory_cache(True)
             active_products_cache(instance.pk, True)
             if Discount.objects.filter(subcategory=instance.pk):
                 get_discount_cash(True)
+            update_price_cache(forced=True)
+
         if sender == Product:
-            print("ОБНОВИЛИ ТОВАРЫ!!!!!!!!!!!!!")
             active_products_cache(invalidate=True)
             get_discount_cash(True)
             get_discounted_product_data(True)
             get_limit_product_cash(True)
+            update_price_cache(forced=True)
+
         if sender == LimitTimeProduct:
             get_limit_product_cash(True)
             active_products_cache(invalidate=True)
+            update_price_cache(forced=True)
+            get_discounted_product_data(True)
+
         if sender == Discount:
-            print("ОБНОВИЛИ СКИДКИ!!!!!!!!!!!!!")
             get_discount_cash(True)
             active_products_cache(invalidate=True)
-            print(get_discount_cash())
-    update_price_cache(forced=True)
+            update_price_cache(forced=True)
+            get_discounted_product_data(True)

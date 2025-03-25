@@ -68,7 +68,10 @@ def get_discounted_product_data(invalidate=False):
         dp_data = cache.get(cache_key)
         if dp_data is not None:
             return dp_data
-    products_with_discounts_ids = cache.get("products_with_discounts", [])
+
+    all_prices = cache.get("all_products_prices")
+    products_with_discounts_ids = [product_id for product_id, discount in all_prices['discounts_map'].items() if discount]
+
     dp_data = active_products_cache().filter(product_id__in=products_with_discounts_ids)
     cache.set(cache_key, dp_data)
     return dp_data
@@ -78,11 +81,8 @@ def get_discount_cash(invalidate=False):
     cash_key = "discount"
     if not invalidate:
         disc_cash = cache.get(cash_key)
-        print("Нас попросили просто выдать кэш")
         if disc_cash:
-            print("Мы нашли кэш")
             return disc_cash
-    print("Обновили кэш скидок")
     disc_cash = Discount.objects.filter(active=True)
     cache.set(cash_key, disc_cash)
     return disc_cash
