@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const productSelect = document.getElementById('product');
 
     // Загружаем подкатегории при загрузке страницы
-    fetch('/api/v1/menu/discount_subcategory_menu/')
+    fetch('/api/v1/menu/subcategory/')
         .then(response => response.json())
         .then(data => {
             subcategorySelect.innerHTML = '<option value="">Выберите...</option>'; // Очищаем перед добавлением

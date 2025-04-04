@@ -9,15 +9,15 @@ app = Celery('kikimoraback')
 
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
-app.autodiscover_tasks()
+app.autodiscover_tasks(['shop_api.tasks'])
 
 app.conf.beat_schedule = {
     'check-crm-changes-every-15-minute': {
-        'task': 'shop.tasks.check_crm_changes',
-        'schedule': crontab(minute='*/5'),
+        'task': 'shop_api.tasks.tasks.check_crm_changes',
+        'schedule': crontab(minute='*/15'),
     },
     'cleanup-mongo-four-hour': {
-        'task': 'shop.tasks.clean_up_mongo',
+        'task': 'shop_api.tasks.tasks.clean_up_mongo',
         'schedule': crontab(minute='0', hour='4'),
     }
 }

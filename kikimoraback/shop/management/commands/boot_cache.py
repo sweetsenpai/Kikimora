@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from shop.tasks import boot_cache
+from shop_api.tasks import boot_cache
 
 
 class Command(BaseCommand):

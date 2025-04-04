@@ -26,7 +26,7 @@ from django.core.paginator import Paginator
 
 from ..models import *
 from ..forms import *
-from ..tasks import new_admin_mail, delete_limite_time_product, deactivate_expired_discount, deactivate_expired_promo, activate_promo, activate_discount, update_price_cache
+from shop_api.tasks import *
 
 from celery.result import AsyncResult
 import logging

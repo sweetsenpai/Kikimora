@@ -1,7 +1,5 @@
 from django.core.cache import cache
 from ..models import *
-from ..serializers import DiscountSerializer
-from rest_framework.renderers import JSONRenderer
 from django.db.models import QuerySet
 
 
@@ -20,6 +18,7 @@ def subcategory_cache(invalidate=False):
     # Если не нужно сбрасывать кеш и он есть — вернуть данные
     if not invalidate:
         sub_cache = cache.get(cache_key)
+        print(sub_cache)
         if sub_cache:
             return sub_cache
 
