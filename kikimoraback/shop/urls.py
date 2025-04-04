@@ -38,16 +38,12 @@ urlpatterns = [
     path('api//v1limitproduct', views_api.LimitProduct.as_view(), name='api-limitproduct'),
     # CRM WORK
     path('api/v1/delete_day_product/<int:limittimeproduct_id>/', views_api.DeleteDayProduct.as_view(), name='delete_day_product'),
-    # DELIVERY
-    path('api/v1/calculate_delivery', views_api.YandexCalculation.as_view(), name='calculate-delivery'),
     # CART
-    path('api/v1/check_cart', views_api.CheckCart.as_view(), name='ckeck-cart'),
     path('api/v1/sync_cart', views_api.SyncCart.as_view(), name='sunc-cart'),
     # PROMOCODE
     path('api/v1/promo', views_api.PromoCode.as_view(), name='prom-api'),
     # PAYMENT
     path('api/v1/orderpath', views_api.OrderPath.as_view(), name='order-path'),
-    path('api/v1/payment', views_api.Payment.as_view(), name='payment'),
     path('api/v1/yookassa/test', views_api.TestWebhook.as_view(), name='webhook'),
     path('api/v1/feedback', views_api.FeedBackApi.as_view(), name='feedback'),
     # HOME

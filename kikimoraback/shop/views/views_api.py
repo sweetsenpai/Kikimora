@@ -28,7 +28,7 @@ from yookassa.domain.notification import WebhookNotificationEventType, WebhookNo
 from yookassa.domain.common import SecurityHelper
 from dotenv import load_dotenv
 import logging
-from ..tasks import new_order_email, update_price_cache, process_payment_canceled, \
+from ..tasks import update_price_cache, process_payment_canceled, \
     process_payment_succeeded, send_confirmation_email, feedback_email
 from ..services.email_verification import verify_email_token
 from bson import json_util
@@ -333,7 +333,7 @@ class RegisterUserView(APIView):
             response.set_cookie("access_token", str(refresh.access_token), httponly=True, secure=True, samesite='Strict')
             response.set_cookie("refresh_token", str(refresh), httponly=True, secure=True, samesite='Strict')
 
-            send_confirmation_email(user)
+            send_confirmation_email.delay(user)
 
             return response
         else:
@@ -410,113 +410,6 @@ class UserDataView(APIView):
                 user.save()
             return Response(status=status.HTTP_200_OK, data=serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class YandexCalculation(APIView):
-
-    def post(self, request, *args, **kwargs):
-        token = os.getenv('YANDEX_TOKEN')
-        headers = {"Authorization": f"Bearer {token}",
-                   'Accept-Language': 'ru/ru'}
-        address = request.data.get('address')
-        if not address:
-            logger.warning('Не передан адрес доставки.')
-            return Response({"error": "Не передан адрес доставки."},
-                            status=status.HTTP_400_BAD_REQUEST)
-        data = {
-            "route_points": [
-                {"fullname": "Санкт-Петербург, 11-я Красноармейская улица, 11"},
-                {"fullname": f"Санкт-Петербург, {address}"}],
-        }
-        try:
-            yandex_response = requests.post('https://b2b.taxi.yandex.net/b2b/cargo/integration/v2/check-price',
-                                            headers=headers, json=data)
-        except requests.RequestException as e:
-            logger.critical(f'Ошибка при попытке отправить запрос к API Яндекс:{e}')
-            return Response({"error": "Ошибка при попытке расчета стоимости.\n"
-                                      "Попробуйте оформить заказ позже или обратитесь в магазин."},
-                            status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-        try:
-            yandex_data = yandex_response.json()
-        except ValueError:
-            logger.error(f"Некорректный JSON в ответе от API Яндекс. Статус: {yandex_response.status_code}")
-            return Response({"error": "Сервис доставки временно недоступен."},
-                            status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-        default_error_msg = "Сейчас серфис доставки не доступен.\nВы можете оформить доставку самостоятельно или обратиться в магазин."
-
-        if yandex_response.ok:
-            distance_meters = yandex_data['distance_meters']
-            price = round(float(yandex_data['price']))
-
-            if distance_meters<= 5000:
-                price+= 100
-            if distance_meters > 5000:
-                price += 200
-            if distance_meters>10000:
-                price+= 100
-
-            return Response(status=status.HTTP_200_OK, data={'price': price,
-                                                             'distance_meters': distance_meters})
-        elif yandex_response.status_code == 400:
-            logger.error(f'Ошибка во время расчета стоимости заказ.\nAddres:{address}\n ERROR:{yandex_data}')
-            return Response({"error": "Не удалось расчитать стоимость доставки.\n"
-                                      "Проверьте правильность введенного адреса."},
-                            status=status.HTTP_400_BAD_REQUEST)
-        elif yandex_response.status_code == 401:
-            logger.critical('Передан не верный токен yandex-delivery.')
-            return Response({"error": default_error_msg},
-                            status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            logger.error(f'Непредвиденная ошибка во время расчета стоимости заказ.\nAddres:{request}\n ERROR:{yandex_data}')
-            return Response({"error": default_error_msg},
-                            status=yandex_response.status_code)
-
-
-class CheckCart(APIView):
-    def post(self, request):
-        front_data = request.data.get('cart')
-        user = request.user
-        if not isinstance(user, AnonymousUser):
-            try:
-                user_id = CustomUser.objects.get(user_id=user.user_id).user_id
-                new_user_card = False
-            except CustomUser.DoesNotExist:
-                return Response({"error": "Пользователь не найден."}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            user_id = request.COOKIES.get('user_id', None)
-            new_user_card = user_id is None
-            if new_user_card:
-                user_id = str(uuid.uuid4())
-
-        user_cart = Cart()
-        if not user_cart.ping():
-            return Response({"error": "Ошибка подключения."}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            card_updated = user_cart.check_cart_data(user_id=user_id, front_data=front_data)
-
-        except Exception as e:
-            logger.error(f'По какой-то причине не удалось обновить корзину.\nОшибка: {e}')
-            return Response(status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-        if card_updated is None:
-            response = Response({"Корзина пустая"}, status=status.HTTP_204_NO_CONTENT)
-            return response
-        user_cart.sync_cart_data(user_id=user_id, front_cart_data={'total': card_updated['total'],
-                                                                   'products': card_updated['updated_cart']['products'],
-                                                                   'add_bonuses': card_updated['add_bonuses']})
-
-        response = Response(status=status.HTTP_200_OK, data=card_updated)
-        if new_user_card:
-            response.set_cookie('user_id', user_id, max_age=60 * 60 * 24 * 30, httponly=True)
-        # if promo:
-        #     user_cart.apply_promo(promo)
-        if isinstance(user, AnonymousUser):
-            user_cart.add_unregistered_mark(user_id=user_id)
-            response.set_cookie('user_id', user_id, max_age=60*60*24*30, httponly=True)
-        return response
 
 
 class SyncCart(APIView):
@@ -624,64 +517,6 @@ class PromoCode(APIView):
         promo_metadata['discount_value'] = promo.procentage
         Cart().apply_promo(cart_data['customer'], promo_metadata)
         return Response(data={"percentage": promo.procentage}, status=status.HTTP_200_OK)
-
-
-class Payment(APIView):
-    def post(self, request):
-        reg_user = request.user
-        bonuses = request.data.get('usedBonus')
-        user_data = request.data.get('userData')
-        delivery_data = request.data.get('deliveryData')
-        comment = request.data.get('comment')
-        if not isinstance(reg_user, AnonymousUser):
-            try:
-                user_id = CustomUser.objects.get(user_id=reg_user.user_id).user_id
-            except CustomUser.DoesNotExist:
-                return Response({"error": "Пользователь не найден."}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            user_id = request.COOKIES.get('user_id', None)
-            if not user_id:
-                logger.error("По какой-то причине не удалось опознать корзину клиента.")
-                return Response({"error": "Что-то пошло не так, убедитесь что корзина не пустая.\n"
-                                          "Обновите страницу и попробуйте оформить заказ ещё раз, "
-                                          "если ошибка не исчезла, "
-                                          "то свяжитесь с магазином и поможем с оформление заказа."})
-
-        payment = PaymentYookassa()
-        user_cart = Cart()
-        if not user_cart.ping():
-            return Response({"error": "Ошибка подключения Корзины."}, status=status.HTTP_400_BAD_REQUEST)
-        order = Order()
-        user_cart.add_delivery(user_id, delivery_data, user_data, comment)
-
-        cart_data = user_cart.get_cart_data(user_id=user_id)
-        delivery_data = cart_data['delivery_data']
-        order_number = order.get_neworder_num(user_id)
-
-        if bonuses:
-            try:
-                UserBonusSystem.deduct_bonuses(user_id=user_id, bonuses=bonuses)
-            except Exception as e:
-                logger.error(f"Неудалось списать бонусы с баланса пользователя id {user_id}. Ошибка: {e}")
-                return Response({"error": "Неудалось списать бонусы в счёт заказа."}, status=status.HTTP_400_BAD_REQUEST)
-
-        response = json.loads(payment.send_payment_request(user_data=user_data,
-                                                           cart=cart_data,
-                                                           order_id=order_number,
-                                                           delivery_data=delivery_data,
-                                                           bonuses=bonuses))
-
-        if not response:
-            return Response({"error": "Во время оформления заказа произошла ошибка.\n"
-                                      "Попробуйте перезагрузить страниц."},
-                            status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        user_cart.add_payment_data(user_id=user_id, payment_id=response['id'], order_number=order_number, bonuses=bonuses)
-        order.create_order_on_cart(user_cart.get_cart_data(user_id=user_id))
-        user_cart.delete_cart(user_id=user_id)
-        return Response(
-            {"detail": "Redirecting to payment", "redirect_url": response['confirmation']['confirmation_url']},
-            status=status.HTTP_302_FOUND
-        )
 
 
 class OrderPath(APIView):
