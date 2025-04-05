@@ -11,12 +11,12 @@ logger = logging.getLogger('shop')
 
 
 class UserDataView(APIView):
-    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
     serializer_class = UserDataSerializer
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        logger.info(f"Запрос к /user/. Пользователь: {request.user}")
         if not user.is_staff:
             user_id = user.user_id
         else:

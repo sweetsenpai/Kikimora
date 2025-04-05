@@ -357,7 +357,7 @@ class UserDataView(APIView):
 
 
 class SyncCart(APIView):
-    authentication_classes = [CookieJWTAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):

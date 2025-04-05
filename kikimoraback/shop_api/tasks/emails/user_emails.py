@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 @shared_task
 def send_confirmation_email(user):
-    token = generate_email_token(user.get(user_id))
+    token = generate_email_token(user.user_id)
     verification_url = f"{os.getenv('MAIN_DOMAIN')}api/v1/verify-email/{token}/"
 
     # Рендеринг HTML-шаблона
