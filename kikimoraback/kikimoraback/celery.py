@@ -13,11 +13,11 @@ app.autodiscover_tasks(['shop_api.tasks'])
 
 app.conf.beat_schedule = {
     'check-crm-changes-every-15-minute': {
-        'task': 'shop_api.tasks.tasks.check_crm_changes',
+        'task': 'shop_api.tasks.db_tasks.sql.filling_db_tasks.check_crm_changes',
         'schedule': crontab(minute='*/15'),
     },
     'cleanup-mongo-four-hour': {
-        'task': 'shop_api.tasks.tasks.clean_up_mongo',
+        'task': 'shop_api.tasks.db_tasks.mongo.mongo_tasks.clean_up_mongo',
         'schedule': crontab(minute='0', hour='4'),
     }
 }

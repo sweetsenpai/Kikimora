@@ -4,14 +4,14 @@ from django.core.mail import EmailMessage
 import os
 from dotenv import load_dotenv
 import logging
-
+from shop.services.email_verification import generate_email_token
 load_dotenv()
 logger = logging.getLogger(__name__)
 
 
 @shared_task
 def send_confirmation_email(user):
-    token = generate_email_token(user.user_id)
+    token = generate_email_token(user.get(user_id))
     verification_url = f"{os.getenv('MAIN_DOMAIN')}api/v1/verify-email/{token}/"
 
     # Рендеринг HTML-шаблона

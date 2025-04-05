@@ -71,7 +71,7 @@ MIDDLEWARE = [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 
 ]
-CORS_ALLOWED_ORIGINS = ['http://localhost:3000',]  # замените на адрес вашего фронтенда
+CORS_ALLOWED_ORIGINS = ['http://localhost:3000', ]  # замените на адрес вашего фронтенда
 
 
 CORS_ALLOW_CREDENTIALS = True
@@ -185,6 +185,12 @@ REST_FRAMEWORK = {
     ),
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 9,
+}
+
+
+JWT_COOKIE_SETTINGS = {
+    'ACCESS_TOKEN_COOKIE': 'access_token',
+    'REFRESH_TOKEN_COOKIE': 'refresh_token',
 }
 
 SIMPLE_JWT = {

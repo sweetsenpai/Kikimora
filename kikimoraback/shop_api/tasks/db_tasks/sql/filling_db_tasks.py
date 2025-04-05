@@ -1,6 +1,7 @@
 from celery import shared_task
 from django.db import transaction
 from django.template.loader import render_to_string
+from ..cache_tasks.cache_prices_tasks import update_price_cache
 import kikimoraback.settings as settings
 import httpx
 import re
