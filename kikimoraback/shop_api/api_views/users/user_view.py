@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from shop_api.serializers.auth.user import UserDataSerializer
 from shop_api.authentication import CookieJWTAuthentication
+from shop.models import CustomUser
 import logging
 logger = logging.getLogger('shop')
 

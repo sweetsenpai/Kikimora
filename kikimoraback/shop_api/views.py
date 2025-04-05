@@ -33,6 +33,7 @@ from .tasks import *
 from shop.services.email_verification import verify_email_token
 from bson import json_util
 from pprint import pprint
+from .authentication import CookieJWTAuthentication
 load_dotenv()
 logger = logging.getLogger('shop')
 logger.setLevel(logging.DEBUG)
@@ -356,7 +357,9 @@ class UserDataView(APIView):
 
 
 class SyncCart(APIView):
+    authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
+
     def post(self, request):
         front_data = request.data.get('cart')
         user = request.user
