@@ -1,6 +1,7 @@
-from dotenv import load_dotenv
-from celery import shared_task
 import logging
+
+from celery import shared_task
+from dotenv import load_dotenv
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -21,9 +22,9 @@ def new_order_email(order_data):
     )
 
     total = order_data["total"]
-    delivery_date = order_data['delivery_data']['date'].strftime("%d.%m.%Y")
+    delivery_date = order_data["delivery_data"]["date"].strftime("%d.%m.%Y")
 
-    if order_data['delivery_data']['method'] == "Самовывоз":
+    if order_data["delivery_data"]["method"] == "Самовывоз":
         delivery_info = f"""
             <p>Ваш заказ можно будет забрать по адресу: <b>Санкт-Петербург, ул. 11-я Красноармейская, 11, строение 3.</b></p>
             <p>Выбранная дата и время получения: <b>{delivery_date} {order_data['delivery_data']['time']}</b></p>
@@ -84,7 +85,7 @@ def new_order_email(order_data):
         subject=f"Кикимора заказ №{order_data['insales']}",
         body=html_content,
         from_email=os.getenv("EMAIL"),
-        to=[order_data['customer_data']['email']],
+        to=[order_data["customer_data"]["email"]],
     )
 
     # Указываем, что содержимое письма в формате HTML

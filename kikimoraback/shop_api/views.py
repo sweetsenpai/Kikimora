@@ -1,255 +1,96 @@
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+import json
+import logging
+import os
+import uuid
+from pprint import pprint
+
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import AnonymousUser, update_last_login
 from django.db.models import F
-from django.contrib.auth import authenticate
+from django.http import JsonResponse
 from django.shortcuts import render
-from rest_framework.views import APIView
-from rest_framework import viewsets
+from django.views.decorators.csrf import csrf_exempt
+
+from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+import requests
+from bson import json_util
+from celery.result import AsyncResult
+from dotenv import load_dotenv
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework import generics, status
-from rest_framework.filters import SearchFilter
-from celery.result import AsyncResult
-from .serializers import *
-from shop.services.caches import *
-import json
-import requests
-import uuid
-import os
+from yookassa.domain.common import SecurityHelper
+from yookassa.domain.notification import (
+    WebhookNotificationEventType,
+    WebhookNotificationFactory,
+)
+
+from shop.API.insales_api import send_new_order
+from shop.API.yookassa_api import PaymentYookassa
 from shop.MongoIntegration.Cart import Cart
 from shop.MongoIntegration.Order import Order
-from shop.API.yookassa_api import PaymentYookassa
-from shop.API.insales_api import send_new_order
-from yookassa.domain.notification import WebhookNotificationEventType, WebhookNotificationFactory
-from yookassa.domain.common import SecurityHelper
-from dotenv import load_dotenv
-import logging
-from .tasks import *
+from shop.services.caches import *
 from shop.services.email_verification import verify_email_token
-from bson import json_util
-from pprint import pprint
+
 from .authentication import CookieJWTAuthentication
+from .serializers import *
+from .tasks import *
+
 load_dotenv()
-logger = logging.getLogger('shop')
+logger = logging.getLogger("shop")
 logger.setLevel(logging.DEBUG)
-
-
-class CategoryList(generics.ListAPIView):
-    queryset = Category.objects.filter(visibility=True).prefetch_related('subcategories')
-    serializer_class = CategorySerializer
-
-
-class MenuSubcategory(generics.ListAPIView):
-    queryset = subcategory_cache()
-    serializer_class = MenuSubcategorySerializer
 
 
 class DiscountCreationRelatedProducts(APIView):
     def get(self, request, subcategory_id=None):
         if not subcategory_id:
-            return Response({'error': "Необходимо передать id подкатегории"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Необходимо передать id подкатегории"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         try:
-            subcategory = Subcategory.objects.filter(subcategory_id=subcategory_id).prefetch_related('products').first()
+            subcategory = (
+                Subcategory.objects.filter(subcategory_id=subcategory_id)
+                .prefetch_related("products")
+                .first()
+            )
             products = subcategory.products.all()
             serializer = MenuDiscountProductSerializer(products, many=True)
             return Response(serializer.data)
         except AttributeError:
-            return Response({'error': f'Категории с id {subcategory_id} не существует.'}, status=status.HTTP_404_NOT_FOUND)
-
-
-class ProductApi(generics.RetrieveAPIView):
-    serializer_class = ProductSerializer
-
-    def get_object(self):
-        product_slug = self.kwargs.get('product_slug')
-
-        # Получаем один товар по ID
-        try:
-            if product_slug.isdigit():
-                single_product = active_products_cache().get(product_id=product_slug)
-            else:
-                single_product = active_products_cache().get(permalink=product_slug)
-        except Product.DoesNotExist:
-            logger.error(f"Неудалось найти товаро по заданным параметрам.{product_slug}")
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        # Возвращаем объект продукта
-        return single_product
-
-    def get_serializer_context(self):
-        # Добавляем контекст для сериализатора
-        cached_data = update_price_cache()
-        return {
-            'price_map': cached_data['price_map'],
-            'discounts_map': cached_data['discounts_map'],
-            'photos_map': cached_data['photos_map']
-        }
-
-
-def sort_producst(products_set, query_params: str):
-    """
-    Функция для сортировки товаров по цене или весу, по возрастанию или убыванию.
-    Args:
-        products_set: QuerySet товаров
-        query_params: Фильтр, который будет применен для этой функции
-    """
-    # Конечно в будующем лучше реализовать кеширование результатов работы этой функции,
-    # но пока этого достаточно
-    if query_params == 'price_asc':
-        products_set = products_set.order_by('price')
-    if query_params == 'price_des':
-        products_set = products_set.order_by('-price')
-    if query_params == 'weight_asc':
-        products_set = products_set.order_by('weight')
-    if query_params == 'weight_des':
-        products_set = products_set.order_by('-weight')
-    return products_set
-
-
-class ProductViewSet(viewsets.ViewSet):
-    serializer_class = ProductCardSerializer
-    pagination_class = PageNumberPagination
-    page_size = 8
-
-    @action(detail=False, methods=['get'], url_path='all-products')
-    def all_products(self, request):
-        cached_data = update_price_cache()
-        products = active_products_cache()
-        sort_by = request.query_params.get('sort_by', None)
-        if sort_by:
-            products = sort_producst(products, query_params=sort_by)
-        paginator = self.pagination_class()
-        result_page = paginator.paginate_queryset(products, request)
-
-        context = {
-            'price_map': cached_data['price_map'],
-            'discounts_map': cached_data['discounts_map'],
-            'mini_photo_map': cached_data['mini_photo_map']
-        }
-
-        serializer = self.serializer_class(
-            result_page,
-            many=True,
-            context=context
-        )
-        return paginator.get_paginated_response(serializer.data)
-
-    @action(detail=False, methods=['get'], url_path='subcategory/(?P<subcategory_id>[^/.]+)')
-    def by_subcategory(self, request, subcategory_slug=None):
-        if not subcategory_slug.isdigit():
-            subcategory = subcategory_cache().filter(permalink=subcategory_slug).first()
-            subcategory_id = subcategory.subcategory_id
-        else:
-            subcategory_id = subcategory_slug
-        cached_data = update_price_cache()
-        products = active_products_cache(subcategory_id)
-        sort_by = request.query_params.get('sort_by', None)
-        if sort_by:
-            products = sort_producst(products, sort_by)
-        paginator = self.pagination_class()
-        result_page = paginator.paginate_queryset(products, request)
-        context = {
-            'price_map': cached_data['price_map'],
-            'discounts_map': cached_data['discounts_map'],
-            'mini_photo_map': cached_data['mini_photo_map']
-        }
-
-        serializer = self.serializer_class(
-            result_page,
-            many=True,
-            context=context
-        )
-
-        return paginator.get_paginated_response(serializer.data)
-
-    @action(detail=False, methods=['get'], url_path='with-discounts')
-    def with_discounts(self, request):
-        """
-        Возвращает все товары, к которым применены скидки.
-        """
-        # Получаем список ID товаров со скидками из кэша
-
-        # Получаем полные данные о товарах по их ID
-        products_with_discounts = get_discounted_product_data()
-        # Пагинация результатов
-        paginator = self.pagination_class()
-        result_page = paginator.paginate_queryset(products_with_discounts, request)
-
-        # Получаем кэшированные данные для контекста
-        cached_data = update_price_cache()
-
-        context = {
-            'price_map': cached_data['price_map'],
-            'discounts_map': cached_data['discounts_map'],
-            'mini_photo_map': cached_data['mini_photo_map']
-        }
-
-        # Сериализуем данные
-        serializer = self.serializer_class(
-            result_page,
-            many=True,
-            context=context
-        )
-
-        return paginator.get_paginated_response(serializer.data)
-
-    @action(detail=False, methods=['get'], url_path='search-product')
-    def search_product(self, request):
-        """
-        Метод для поиска по товарам
-        """
-        query = request.query_params.get('query', None)
-        if not query:
-            return Response({"detail": "Парметр 'query' обязателен."}, status=400)
-
-        cached_data = update_price_cache()
-        products = active_products_cache().filter(name__icontains=query)
-        paginator = self.pagination_class()
-        result_page = paginator.paginate_queryset(products, request)
-        context = {
-            'price_map': cached_data['price_map'],
-            'discounts_map': cached_data['discounts_map'],
-            'mini_photo_map': cached_data['mini_photo_map']
-        }
-
-        serializer = ProductSearchSerializer(result_page,
-                                             many=True,
-                                             context=context)
-
-        return Response(serializer.data)
+            return Response(
+                {"error": f"Категории с id {subcategory_id} не существует."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 class FeedBackApi(APIView):
     def post(self, request):
         try:
             feedback_data = {
-                'name': request.data.get('name'),
-                'phone': request.data.get('phone'),
-                'email': request.data.get('email'),
-                'question': request.data.get('question')
+                "name": request.data.get("name"),
+                "phone": request.data.get("phone"),
+                "email": request.data.get("email"),
+                "question": request.data.get("question"),
             }
             feedback_email.delay(feedback_data)  # Вызываем задачу через Celery
             return Response(status=status.HTTP_200_OK)
         except Exception as e:
-            logger.error(f"Во время отправки обратной связи произошла непредвиденная ошибка.\nERROR: {e}")
+            logger.error(
+                f"Во время отправки обратной связи произошла непредвиденная ошибка.\nERROR: {e}"
+            )
             return Response(status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-
-class ProductAutocompleteView(APIView):
-    def get(self, request, *args, **kwargs):
-        query = request.query_params.get('term', '')
-        products = Product.objects.filter(name__icontains=query)[:10]
-        serializer = ProductSerializer(products, many=True)
-        return Response(serializer.data)
 
 
 class DiscountProductActiveList(generics.ListAPIView):
     queryset = get_discount_cash()
-    serializer_class=DiscountSerializer
+    serializer_class = DiscountSerializer
 
 
 class StopDiscountView(APIView):
@@ -261,9 +102,12 @@ class StopDiscountView(APIView):
             AsyncResult(id=discount.task_id_end).revoke(terminate=True)
             discount.end = timezone.now()
             discount.save()
-            return Response({'status': 'success'}, status=status.HTTP_200_OK)
+            return Response({"status": "success"}, status=status.HTTP_200_OK)
         except Discount.DoesNotExist:
-            return Response({'status': 'error', 'message': 'Discount not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"status": "error", "message": "Discount not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 class DeleteDayProduct(APIView):
@@ -272,88 +116,19 @@ class DeleteDayProduct(APIView):
             day_product = LimitTimeProduct.objects.get(pk=limittimeproduct_id)
             if day_product.task_id:
                 AsyncResult(id=day_product.task_id).revoke(terminate=True)
-                logger.info(f'Задача удалена! info:{day_product.task_id}')
+                logger.info(f"Задача удалена! info:{day_product.task_id}")
             day_product.delete()
-            return Response({'status': 'success'}, status=status.HTTP_200_OK)
+            return Response({"status": "success"}, status=status.HTTP_200_OK)
         except LimitTimeProduct.DoesNotExist:
-            return Response({'status': 'error', 'message': 'Day Product not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"status": "error", "message": "Day Product not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 class LimitProduct(generics.ListAPIView):
     queryset = get_limit_product_cash()
-    serializer_class=LimitTimeProductSerializer
-
-
-class VerifyEmailView(APIView):
-    def get(self, request, token):
-        user_id = verify_email_token(token)
-        if user_id:
-            try:
-                user = CustomUser.objects.get(user_id=user_id)
-                if not user.is_email_verified:
-                    user.is_email_verified = True
-                    user.save()
-                    return render(request, 'emails/email_confirmed.html',
-                                  {'website_url': os.getenv("WEBSITE_URL")})
-                else:
-                    return render(request, 'emails/email_confirmed.html', {
-                        'website_url': os.getenv("WEBSITE_URL"),
-                        'message': 'Email уже был подтвержден ранее.'
-                    })
-            except CustomUser.DoesNotExist:
-                pass
-            return render(request, 'emails/email_confirmed.html', {
-                'website_url': os.getenv("WEBSITE_URL"),
-                'message': 'Недействительная ссылка для подтверждения.'
-            })
-
-
-class UserDataView(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
-    serializer_class = UserDataSerializer
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        if not user.is_staff:
-            user_id = user.user_id
-        else:
-            user_id = kwargs.get('user_id', user.user_id)
-
-        try:
-            user_data = CustomUser.objects.get(user_id=user_id)
-            serializer = self.serializer_class(user_data, many=False)
-        except CustomUser.DoesNotExist:
-            return Response({"error": "Пользователь не найден."}, status=404)
-        return Response(status=status.HTTP_200_OK,data=serializer.data)
-
-    def patch(self, request, **kwargs):
-        user = request.user
-        user_id = kwargs.get('user_id', user.user_id)
-        new_password = request.data.get('new_password')
-        old_password = request.data.get('old_password')
-        if not user.is_staff and user.user_id != user_id:
-            return Response({"error": "У вас нет прав для изменения этих данных."}, status=403)
-
-        try:
-            user_data = CustomUser.objects.get(user_id=user_id)
-        except CustomUser.DoesNotExist:
-            return Response({"error": "Пользователь не найден."}, status=404)
-
-        if new_password:
-            if not user.is_staff and not old_password:
-                return Response({"error": "Требуется старый пароль."}, status=400)
-            if not user.is_staff and not user.check_password(old_password):
-                return Response({"error": "Неверный старый пароль."}, status=400)
-            user.set_password(new_password)
-
-        serializer = self.serializer_class(user_data, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            if new_password:
-                user.save()
-            return Response(status=status.HTTP_200_OK, data=serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    serializer_class = LimitTimeProductSerializer
 
 
 class SyncCart(APIView):
@@ -361,7 +136,7 @@ class SyncCart(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        front_data = request.data.get('cart')
+        front_data = request.data.get("cart")
         user = request.user
         try:
             user_data = CustomUser.objects.get(user_id=user.user_id)
@@ -369,7 +144,12 @@ class SyncCart(APIView):
             return Response({"error": "Пользователь не найден."}, status=404)
         cart = Cart()
 
-        return Response(data=cart.sync_cart_data(user_id=user_data.user_id, front_cart_data=front_data), status=status.HTTP_200_OK)
+        return Response(
+            data=cart.sync_cart_data(
+                user_id=user_data.user_id, front_cart_data=front_data
+            ),
+            status=status.HTTP_200_OK,
+        )
 
 
 class PromoCode(APIView):
@@ -377,8 +157,12 @@ class PromoCode(APIView):
         user = request.user
         cart_service = Cart()
         cart_data = cart_service.get_cart_data(user_id=user.user_id)
-        promo_code = request.data.get('promoCode')
-        promo = PromoSystem.objects.filter(code=promo_code, active=True).prefetch_related('promocodeuseg_set').first()
+        promo_code = request.data.get("promoCode")
+        promo = (
+            PromoSystem.objects.filter(code=promo_code, active=True)
+            .prefetch_related("promocodeuseg_set")
+            .first()
+        )
         try:
             response = self.apply_promo(cart_data, promo, user, promo_code)
         except Exception as error:
@@ -386,28 +170,42 @@ class PromoCode(APIView):
                 f"Ошибка применения промокода.\nPROMO: {promo}\nCART: {cart_data}\nERROR: {error}"
             )
             return Response(
-                {"error": "Сейчас невозможно использовать этот промокод. Попробуйте позже."},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE
+                {
+                    "error": "Сейчас невозможно использовать этот промокод. Попробуйте позже."
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         return response
 
     def apply_promo(self, cart_data, promo, user, promo_code):
         if not promo:
-            return Response({"error": "Промокод не существует."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Промокод не существует."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         if promo.one_time and not isinstance(user, AnonymousUser):
             return Response(
-                {"error": f"Зарегистрируйтесь или войдите в аккаунт, чтобы использовать промокод {promo_code}."},
-                status=status.HTTP_400_BAD_REQUEST
+                {
+                    "error": f"Зарегистрируйтесь или войдите в аккаунт, чтобы использовать промокод {promo_code}."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if promo.one_time and promo.promocodeuseg_set.filter(user_id=user.user_id).exists():
-            return Response({"error": "Промокод уже использован."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if promo.min_sum and promo.min_sum > cart_data['total']:
+        if (
+            promo.one_time
+            and promo.promocodeuseg_set.filter(user_id=user.user_id).exists()
+        ):
             return Response(
-                {"error": f"Минимальная стоимость заказа для использования промокода {promo.min_sum} р."},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "Промокод уже использован."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if promo.min_sum and promo.min_sum > cart_data["total"]:
+            return Response(
+                {
+                    "error": f"Минимальная стоимость заказа для использования промокода {promo.min_sum} р."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         promo_metadata = {"promocode_id": promo.promo_id, "one_time": promo.one_time}
@@ -422,47 +220,56 @@ class PromoCode(APIView):
 
     def apply_delivery_discount(self, cart_data, promo, promo_metadata):
         try:
-            if cart_data['delivery_data']['method'] != "Доставка":
+            if cart_data["delivery_data"]["method"] != "Доставка":
                 return Response(
-                    {"error": "Невозможно применить промокод для бесплатной доставки в заказе без доставки."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {
+                        "error": "Невозможно применить промокод для бесплатной доставки в заказе без доставки."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
         except KeyError:
             return Response(
-                {"error": "Невозможно применить промокод для бесплатной доставки в заказе без доставки."},
-                status=status.HTTP_400_BAD_REQUEST
+                {
+                    "error": "Невозможно применить промокод для бесплатной доставки в заказе без доставки."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        promo_metadata['type'] = "delivery"
-        promo_metadata['new_total'] = cart_data['total'] - cart_data['delivery_data']['cost']
-        Cart().apply_promo(cart_data['customer'], promo_metadata)
+        promo_metadata["type"] = "delivery"
+        promo_metadata["new_total"] = (
+            cart_data["total"] - cart_data["delivery_data"]["cost"]
+        )
+        Cart().apply_promo(cart_data["customer"], promo_metadata)
         return Response(status=status.HTTP_200_OK, data={"freeDelivery": True})
 
     def apply_fixed_discount(self, cart_data, promo, promo_metadata):
-        total_after_discount = cart_data['total'] - promo.amount
+        total_after_discount = cart_data["total"] - promo.amount
         if total_after_discount < 1:
             return Response(
                 {
-                    "error": f"Нельзя применить промокод, недостаточная сумма заказа. Минимальная сумма заказа {promo.min_sum} р."},
-                status=status.HTTP_400_BAD_REQUEST
+                    "error": f"Нельзя применить промокод, недостаточная сумма заказа. Минимальная сумма заказа {promo.min_sum} р."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        promo_metadata['type'] = "fixed"
-        promo_metadata['new_total'] = total_after_discount
-        promo_metadata['discount_value'] = promo.amount
+        promo_metadata["type"] = "fixed"
+        promo_metadata["new_total"] = total_after_discount
+        promo_metadata["discount_value"] = promo.amount
 
-        Cart().apply_promo(cart_data['customer'], promo_metadata)
+        Cart().apply_promo(cart_data["customer"], promo_metadata)
         return Response(data={"amount": promo.amount}, status=status.HTTP_200_OK)
 
     def apply_percentage_discount(self, cart_data, promo, promo_metadata):
-        discount_value = round(cart_data['total'] * (promo.procentage * 0.01))
-        new_total = cart_data['total'] - discount_value
+        discount_value = round(cart_data["total"] * (promo.procentage * 0.01))
+        new_total = cart_data["total"] - discount_value
 
-        promo_metadata['type'] = "percentage"
-        promo_metadata['new_total'] = new_total
-        promo_metadata['discount_value'] = promo.procentage
-        Cart().apply_promo(cart_data['customer'], promo_metadata)
-        return Response(data={"percentage": promo.procentage}, status=status.HTTP_200_OK)
+        promo_metadata["type"] = "percentage"
+        promo_metadata["new_total"] = new_total
+        promo_metadata["discount_value"] = promo.procentage
+        Cart().apply_promo(cart_data["customer"], promo_metadata)
+        return Response(
+            data={"percentage": promo.procentage}, status=status.HTTP_200_OK
+        )
 
 
 class OrderPath(APIView):
@@ -473,37 +280,52 @@ class OrderPath(APIView):
         order_service = Order()
 
         # Все возможные шаги
-        all_steps = ['delivery_step', 'check_cart_step', 'promo_code_step', 'payment_step']
+        all_steps = [
+            "delivery_step",
+            "check_cart_step",
+            "promo_code_step",
+            "payment_step",
+        ]
 
         # Данные из запроса
         user = request.user
         data = request.data
-        steps = data.get('steps', [])
-        delivery_data = data.get('deliveryData', {})
-        cart = data.get('cart')
-        bonuses = data.get('usedBonus')
-        user_data = data.get('userData')
-        delivery_data = data.get('deliveryData')
-        comment = request.data.get('comment')
+        steps = data.get("steps", [])
+        delivery_data = data.get("deliveryData", {})
+        cart = data.get("cart")
+        bonuses = data.get("usedBonus")
+        user_data = data.get("userData")
+        delivery_data = data.get("deliveryData")
+        comment = request.data.get("comment")
         # Проверка входных данных
         if not steps:
-            logger.error("В OrderPath пришел запрос не содержащий steps.\n"
-                         f"request.data: {data}\n"
-                         f"user: {user}")
-            return Response({"error": "Невозможно обработать пустой запрос."},
-                            status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            logger.error(
+                "В OrderPath пришел запрос не содержащий steps.\n"
+                f"request.data: {data}\n"
+                f"user: {user}"
+            )
+            return Response(
+                {"error": "Невозможно обработать пустой запрос."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
 
         # Проверка доступности сервисов
         if not cart_service.ping():
-            return Response({"error": "Не удалось подключиться к сервису работы корзины. Перезагрузите страницу."},
-                            status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response(
+                {
+                    "error": "Не удалось подключиться к сервису работы корзины. Перезагрузите страницу."
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
 
         if not order_service.ping():
-            return Response({"error": "Не удалось оформить заказ. Повторите попытку позже"},
-                            status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response(
+                {"error": "Не удалось оформить заказ. Повторите попытку позже"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
 
         # Определение user_id
-        if 'payment_step' in steps:
+        if "payment_step" in steps:
             steps = all_steps
 
         response = Response()
@@ -511,21 +333,32 @@ class OrderPath(APIView):
             try:
                 user_id = CustomUser.objects.get(user_id=user.user_id).user_id
             except CustomUser.DoesNotExist:
-                return Response({"error": "Пользователь не найден."}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"error": "Пользователь не найден."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
         else:
-            user_id = request.COOKIES.get('user_id', None)
+            user_id = request.COOKIES.get("user_id", None)
             if not user_id:
                 user_id = str(uuid.uuid4())
-                response.set_cookie('user_id', user_id, max_age=60 * 60 * 24 * 30, httponly=True, secure=True)
+                response.set_cookie(
+                    "user_id",
+                    user_id,
+                    max_age=60 * 60 * 24 * 30,
+                    httponly=True,
+                    secure=True,
+                )
 
         # Функция расчета доставки через Яндекс API
-        def yandex_calculation(user_id: int | str, delivery_data: dict, response: Response) -> Response:
+        def yandex_calculation(
+            user_id: int | str, delivery_data: dict, response: Response
+        ) -> Response:
             MAX_RANGE = 5000  # Максимальное расстояние для первого тарифа
-            ADD_COST = 100    # Дополнительная стоимость за каждый диапазон
+            ADD_COST = 100  # Дополнительная стоимость за каждый диапазон
 
-            token = os.getenv('YANDEX_TOKEN')
-            headers = {"Authorization": f"Bearer {token}", 'Accept-Language': 'ru/ru'}
-            address = delivery_data.get('address')  # Получаем адрес из delivery_data
+            token = os.getenv("YANDEX_TOKEN")
+            headers = {"Authorization": f"Bearer {token}", "Accept-Language": "ru/ru"}
+            address = delivery_data.get("address")  # Получаем адрес из delivery_data
 
             if not address:
                 response.status_code = status.HTTP_400_BAD_REQUEST
@@ -535,36 +368,42 @@ class OrderPath(APIView):
             payload = {
                 "route_points": [
                     {"fullname": "Санкт-Петербург, 11-я Красноармейская улица, 11"},
-                    {"fullname": f"Санкт-Петербург, {address}"}
+                    {"fullname": f"Санкт-Петербург, {address}"},
                 ]
             }
 
             try:
                 yandex_response = requests.post(
-                    'https://b2b.taxi.yandex.net/b2b/cargo/integration/v2/check-price',
+                    "https://b2b.taxi.yandex.net/b2b/cargo/integration/v2/check-price",
                     headers=headers,
-                    json=payload
+                    json=payload,
                 )
             except requests.RequestException as e:
-                logger.critical(f'Ошибка при попытке отправить запрос к API Яндекс:{e}')
+                logger.critical(f"Ошибка при попытке отправить запрос к API Яндекс:{e}")
                 response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-                response.data = {"error": "Ошибка при попытке расчета стоимости. "
-                                          "Попробуйте оформить заказ позже или обратитесь в магазин."}
+                response.data = {
+                    "error": "Ошибка при попытке расчета стоимости. "
+                    "Попробуйте оформить заказ позже или обратитесь в магазин."
+                }
                 return response
 
             try:
                 yandex_data = yandex_response.json()
             except ValueError:
-                logger.error(f"Некорректный JSON в ответе от API Яндекс. Статус: {yandex_response.status_code}")
+                logger.error(
+                    f"Некорректный JSON в ответе от API Яндекс. Статус: {yandex_response.status_code}"
+                )
                 response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-                response.data = {"error": "Сервис доставки временно недоступен. Перезагрузите страницу и попробуйте ещё раз."}
+                response.data = {
+                    "error": "Сервис доставки временно недоступен. Перезагрузите страницу и попробуйте ещё раз."
+                }
                 return response
 
             default_error_msg = "Сейчас сервис доставки недоступен. Вы можете оформить доставку самостоятельно или обратиться в магазин."
 
             if yandex_response.ok:
-                distance_meters = yandex_data['distance_meters']
-                price = round(float(yandex_data['price']))
+                distance_meters = yandex_data["distance_meters"]
+                price = round(float(yandex_data["price"]))
 
                 # Увеличиваем стоимость в зависимости от расстояния
                 if distance_meters <= MAX_RANGE:
@@ -575,105 +414,142 @@ class OrderPath(APIView):
                     price += ADD_COST * 3
 
                 response.status_code = status.HTTP_200_OK
-                response.data = {'price': price, 'distance_meters': distance_meters}
+                response.data = {"price": price, "distance_meters": distance_meters}
                 return response
 
             elif yandex_response.status_code == 400:
-                logger.error(f'Ошибка во время расчета стоимости заказа.\nAddress:{address}\n ERROR:{yandex_data}')
+                logger.error(
+                    f"Ошибка во время расчета стоимости заказа.\nAddress:{address}\n ERROR:{yandex_data}"
+                )
                 response.status_code = status.HTTP_400_BAD_REQUEST
-                response.data = {"error": "Не удалось рассчитать стоимость доставки. "
-                                          "Проверьте правильность введенного адреса."}
+                response.data = {
+                    "error": "Не удалось рассчитать стоимость доставки. "
+                    "Проверьте правильность введенного адреса."
+                }
                 return response
 
             elif yandex_response.status_code == 401:
-                logger.critical('Передан неверный токен yandex-delivery.')
+                logger.critical("Передан неверный токен yandex-delivery.")
                 response.status_code = status.HTTP_401_UNAUTHORIZED
                 response.data = {"error": default_error_msg}
                 return response
 
             else:
-                logger.error(f'Непредвиденная ошибка во время расчета стоимости заказа.\nAddress:{address}\n ERROR:{yandex_data}')
+                logger.error(
+                    f"Непредвиденная ошибка во время расчета стоимости заказа.\nAddress:{address}\n ERROR:{yandex_data}"
+                )
                 response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
                 response.data = {"error": default_error_msg}
                 return response
 
-        def check_cart(user_id: int|str, cart_data: dict,  response: Response)->Response:
+        def check_cart(
+            user_id: int | str, cart_data: dict, response: Response
+        ) -> Response:
             if not cart_data:
                 response.status = status.HTTP_400_BAD_REQUEST
-                response.data= {"error": "В корзине ничего нет"}
+                response.data = {"error": "В корзине ничего нет"}
                 return response
-            card_updated = cart_service.check_cart_data(front_data=cart_data, user_id=user_id)
-            cart_service.sync_cart_data(user_id=user_id,
-                                        front_cart_data={'total':
-                                                             card_updated['total'],
-                                                             'products': card_updated['updated_cart']['products'],
-
-                                                             'add_bonuses': card_updated['add_bonuses']})
+            card_updated = cart_service.check_cart_data(
+                front_data=cart_data, user_id=user_id
+            )
+            cart_service.sync_cart_data(
+                user_id=user_id,
+                front_cart_data={
+                    "total": card_updated["total"],
+                    "products": card_updated["updated_cart"]["products"],
+                    "add_bonuses": card_updated["add_bonuses"],
+                },
+            )
             response.status = status.HTTP_200_OK
             response.data = card_updated
             return response
 
-        def payment(user, user_data, bonuses, comment, delivery_data,response: Response)->Response:
+        def payment(
+            user, user_data, bonuses, comment, delivery_data, response: Response
+        ) -> Response:
             cart_service.add_delivery(user, delivery_data, user_data, comment)
             cart_data = cart_service.get_cart_data(user)
-            delivery_data = cart_data['delivery_data']
+            delivery_data = cart_data["delivery_data"]
             order_number = order_service.get_neworder_num(user_id)
             payment_service = PaymentYookassa()
             if bonuses:
                 try:
                     UserBonusSystem.deduct_bonuses(user_id=user_id, bonuses=bonuses)
                 except Exception as e:
-                    logger.error(f"Неудалось списать бонусы с баланса пользователя id {user_id}. Ошибка: {e}")
+                    logger.error(
+                        f"Неудалось списать бонусы с баланса пользователя id {user_id}. Ошибка: {e}"
+                    )
                     response.status_code = status.HTTP_400_BAD_REQUEST
                     response.data.error = "Неудалось списать бонусы в счёт заказа."
                     return response
 
-            response = json.loads(payment_service.send_payment_request(user_data=user_data,
-                                                               cart=cart_data,
-                                                               order_id=order_number,
-                                                               delivery_data=delivery_data,
-                                                               bonuses=bonuses))
+            response = json.loads(
+                payment_service.send_payment_request(
+                    user_data=user_data,
+                    cart=cart_data,
+                    order_id=order_number,
+                    delivery_data=delivery_data,
+                    bonuses=bonuses,
+                )
+            )
 
             if not response:
-                return Response({"error": "Во время оформления заказа произошла ошибка.\n"
-                                          "Попробуйте перезагрузить страниц."},
-                                status=status.HTTP_503_SERVICE_UNAVAILABLE)
-            cart_service.add_payment_data(user_id=user_id, payment_id=response['id'], order_number=order_number,
-                                       bonuses=bonuses)
-            order_service.create_order_on_cart(cart_service.get_cart_data(user_id=user_id))
+                return Response(
+                    {
+                        "error": "Во время оформления заказа произошла ошибка.\n"
+                        "Попробуйте перезагрузить страниц."
+                    },
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                )
+            cart_service.add_payment_data(
+                user_id=user_id,
+                payment_id=response["id"],
+                order_number=order_number,
+                bonuses=bonuses,
+            )
+            order_service.create_order_on_cart(
+                cart_service.get_cart_data(user_id=user_id)
+            )
             cart_service.delete_cart(user_id=user_id)
             return Response(
-                {"detail": "Redirecting to payment", "redirect_url": response['confirmation']['confirmation_url']},
-                status=status.HTTP_302_FOUND
+                {
+                    "detail": "Redirecting to payment",
+                    "redirect_url": response["confirmation"]["confirmation_url"],
+                },
+                status=status.HTTP_302_FOUND,
             )
 
         if not steps:
-            return Response({"error": "Шаг не определен."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Шаг не определен."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
-        if 'delivery_step' in steps:
+        if "delivery_step" in steps:
             response = yandex_calculation(user_id, delivery_data, response)
-            delivery_data['deliveryCost'] = response.data['price']
-            if response.data.get('error', None):
+            delivery_data["deliveryCost"] = response.data["price"]
+            if response.data.get("error", None):
                 return response
-        if 'check_cart_step' in steps:
+        if "check_cart_step" in steps:
             response = check_cart(user_id, cart, response)
-            if response.data['price_mismatches']:
+            if response.data["price_mismatches"]:
                 return response
-            elif response.data['deleted_products']:
+            elif response.data["deleted_products"]:
                 return response
-        if 'payment_step' in steps:
+        if "payment_step" in steps:
 
-            response = payment(user_id, user_data, bonuses, comment, delivery_data, response)
+            response = payment(
+                user_id, user_data, bonuses, comment, delivery_data, response
+            )
 
         return response
 
 
 def get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
     if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
+        ip = x_forwarded_for.split(",")[0]
     else:
-        ip = request.META.get('REMOTE_ADDR')
+        ip = request.META.get("REMOTE_ADDR")
     return ip
 
 
@@ -681,7 +557,9 @@ def get_client_ip(request):
 def yookassa_webhook(request):
     ip = get_client_ip(request)
     if not SecurityHelper().is_ip_trusted(ip):
-        logger.warning("Попытка получить доступ к API оплаты из незарегистрированного источника.")
+        logger.warning(
+            "Попытка получить доступ к API оплаты из незарегистрированного источника."
+        )
         return HttpResponse(status=400)
 
     event_json = json.loads(request.body)
@@ -699,7 +577,9 @@ def yookassa_webhook(request):
         return Response(status=status.HTTP_200_OK)  # Быстрый ответ YooKassa
 
     except Exception as e:
-        logger.error(f"Ошибка при обработке вебхука YooKassa: {str(e)}, данные: {event_json}")
+        logger.error(
+            f"Ошибка при обработке вебхука YooKassa: {str(e)}, данные: {event_json}"
+        )
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -722,9 +602,13 @@ class UsersOrder(APIView):
         try:
             user = request.user
             if not user:
-                return Response({"error: Пользователь ненайден"}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"error: Пользователь ненайден"}, status=status.HTTP_404_NOT_FOUND
+                )
             orders = Order().get_users_orders(user.user_id)
-            return Response(status=status.HTTP_200_OK, data={'orders': orders})
+            return Response(status=status.HTTP_200_OK, data={"orders": orders})
         except Exception as e:
-            logger.error(f"Вовремя выдачи истории заказов пользователя произошла непредвиденная ошибка.\nERROR:{e}")
+            logger.error(
+                f"Вовремя выдачи истории заказов пользователя произошла непредвиденная ошибка.\nERROR:{e}"
+            )
             return Response(status=status.HTTP_503_SERVICE_UNAVAILABLE)

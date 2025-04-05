@@ -1,5 +1,7 @@
 from rest_framework import serializers
+
 from shop.models import LimitTimeProduct
+
 from ..products.detail import ProductSerializer
 
 
@@ -8,4 +10,11 @@ class LimitTimeProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LimitTimeProduct
-        fields = ['limittimeproduct_id', 'price', 'ammount', 'due', 'task_id', 'product_id']
+        fields = [
+            "limittimeproduct_id",
+            "price",
+            "ammount",
+            "due",
+            "task_id",
+            "product_id",
+        ]

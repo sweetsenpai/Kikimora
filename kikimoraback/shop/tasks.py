@@ -1,22 +1,25 @@
-from celery import shared_task
+import logging
+import os
+import re
+from functools import wraps
+
 from django.core.mail import EmailMessage
 from django.db import transaction
 from django.template.loader import render_to_string
-from .services.caches import *
-from .models import *
-from functools import wraps
-from .services.price_calculation import calculate_prices
-from .MongoIntegration.Order import Order
-from .API.insales_api import send_new_order
-import kikimoraback.settings as settings
+
 import httpx
-import re
-import os
-import logging
-from dotenv import load_dotenv
 import pymongo
-from .services.email_verification import generate_email_token
+from celery import shared_task
+from dotenv import load_dotenv
+
+import kikimoraback.settings as settings
+
+from .API.insales_api import send_new_order
+from .models import *
+from .MongoIntegration.Order import Order
 from .services.caches import *
+from .services.email_verification import generate_email_token
+from .services.price_calculation import calculate_prices
 
 load_dotenv()
 
@@ -52,7 +55,9 @@ def new_admin_mail(password, email):
         email_message.content_subtype = "html"
         email_message.send(fail_silently=False)
     except Exception as e:
-        logger.error(f'Во время отправки письма новому администратору произошла ошибка.\nERROR:{e}')
+        logger.error(
+            f"Во время отправки письма новому администратору произошла ошибка.\nERROR:{e}"
+        )
     return
 
 
@@ -71,9 +76,9 @@ def new_order_email(order_data):
     )
 
     total = order_data["total"]
-    delivery_date = order_data['delivery_data']['date'].strftime("%d.%m.%Y")
+    delivery_date = order_data["delivery_data"]["date"].strftime("%d.%m.%Y")
 
-    if order_data['delivery_data']['method'] == "Самовывоз":
+    if order_data["delivery_data"]["method"] == "Самовывоз":
         delivery_info = f"""
             <p>Ваш заказ можно будет забрать по адресу: <b>Санкт-Петербург, ул. 11-я Красноармейская, 11, строение 3.</b></p>
             <p>Выбранная дата и время получения: <b>{delivery_date} {order_data['delivery_data']['time']}</b></p>
@@ -134,7 +139,7 @@ def new_order_email(order_data):
         subject=f"Кикимора заказ №{order_data['insales']}",
         body=html_content,
         from_email=os.getenv("EMAIL"),
-        to=[order_data['customer_data']['email']],
+        to=[order_data["customer_data"]["email"]],
     )
 
     # Указываем, что содержимое письма в формате HTML
@@ -152,14 +157,17 @@ def send_confirmation_email(user):
     verification_url = f"{os.getenv('MAIN_DOMAIN')}api/v1/verify-email/{token}/"
 
     # Рендеринг HTML-шаблона
-    html_content = render_to_string('emails/email_verification.html', {
-        'user': user,
-        'verification_url': verification_url,
-    })
+    html_content = render_to_string(
+        "emails/email_verification.html",
+        {
+            "user": user,
+            "verification_url": verification_url,
+        },
+    )
 
     # Создаем сообщение
     email_message = EmailMessage(
-        subject='Подтверждение email',
+        subject="Подтверждение email",
         body=html_content,
         from_email=os.getenv("EMAIL"),
         to=[user.email],
@@ -172,50 +180,50 @@ def send_confirmation_email(user):
 def deactivate_expired_discount(discount_id):
     discount = Discount.objects.filter(discount_id=discount_id).first()
     if not discount:
-        return f'Скидки с указаным id:{discount_id} не существует в БД.'
+        return f"Скидки с указаным id:{discount_id} не существует в БД."
     discount.active = False
     discount.save()
-    return f'Скдка с id {discount_id} удалена.'
+    return f"Скдка с id {discount_id} удалена."
 
 
 @shared_task
 def activate_discount(discount_id):
     discount = Discount.objects.filter(discount_id=discount_id).first()
     if not discount:
-        return f'Скидки с указаным id:{discount_id} не существует в БД.'
+        return f"Скидки с указаным id:{discount_id} не существует в БД."
     discount.active = True
     discount.save()
-    return f'Скдка с id {discount_id} активирована.'
+    return f"Скдка с id {discount_id} активирована."
 
 
 @shared_task
 def deactivate_expired_promo(promo_id):
     promo = PromoSystem.objects.filter(promo_id=promo_id).first()
     if not promo:
-        return f'Промокод с id {promo_id} не существует в БД.'
+        return f"Промокод с id {promo_id} не существует в БД."
     promo.active = False
     promo.save()
-    return f'Промокод с id {promo_id} теперь не активен.'
+    return f"Промокод с id {promo_id} теперь не активен."
 
 
 @shared_task
 def activate_promo(promo_id):
     promo = PromoSystem.objects.filter(promo_id=promo_id).first()
     if not promo:
-        return f'Промокод с id {promo_id} не существует в БД.'
+        return f"Промокод с id {promo_id} не существует в БД."
     promo.active = False
     promo.save()
-    return f'Промокод с id {promo_id} теперь активен.'
+    return f"Промокод с id {promo_id} теперь активен."
 
 
 @shared_task
 def delete_limite_time_product(product_id):
     product = LimitTimeProduct.objects.filter(product_id=product_id).first()
     if not product:
-        return f'Товар дня id:{product_id} не существует в БД.'
+        return f"Товар дня id:{product_id} не существует в БД."
 
     product.delete()
-    return f'Товар дня id:{product_id} удалён.'
+    return f"Товар дня id:{product_id} удалён."
 
 
 @shared_task(bind=True, max_retries=3)
@@ -229,47 +237,64 @@ def check_crm_changes(self):
 
     try:
         with httpx.Client() as client:
-                # Получаем данные о подкатегориях (коллекциях)
-            sub_response = client.get(f"{insales_url}collections.json", params={'parent_id': 30736737}).json()
+            # Получаем данные о подкатегориях (коллекциях)
+            sub_response = client.get(
+                f"{insales_url}collections.json", params={"parent_id": 30736737}
+            ).json()
             if not sub_response:
                 logger.error("Не удалось получить ответ от insales при обновлении БД.")
-            sub_list = [subcategory['id'] for subcategory in sub_response]
+            sub_list = [subcategory["id"] for subcategory in sub_response]
             Subcategory.objects.exclude(subcategory_id__in=sub_list).delete()
             for subcat in sub_response:
                 # Проверяем, существует ли подкатегория в базе данных
                 try:
-                    text = subcat.get('description', '')
+                    text = subcat.get("description", "")
                     if isinstance(text, str):
-                        text = re.sub(r'<.*?>', '', text)
+                        text = re.sub(r"<.*?>", "", text)
                     else:
-                        text=''
+                        text = ""
                     subcategory, created = Subcategory.objects.update_or_create(
-                        subcategory_id=subcat['id'],
+                        subcategory_id=subcat["id"],
                         defaults={
-                            'name': subcat['title'],
-                            'category': Category.objects.get(category_id=1),
-                            'text': text,
-                            'permalink': subcat['permalink']
-                        }
+                            "name": subcat["title"],
+                            "category": Category.objects.get(category_id=1),
+                            "text": text,
+                            "permalink": subcat["permalink"],
+                        },
                     )
                 except Exception as e:
-                    logger.error(f"Во время создания новой категории произошла ошибка."
-                                 f"\nERROR: {e}"
-                                 f"\nSUBCATEGORY DATA:{subcat}")
+                    logger.error(
+                        f"Во время создания новой категории произошла ошибка."
+                        f"\nERROR: {e}"
+                        f"\nSUBCATEGORY DATA:{subcat}"
+                    )
                 if created:
                     new_subcategories.append(subcategory)
 
                 # Получаем товары из коллекции
-                prod_response = client.get(f"{insales_url}collects.json", params={'collection_id': subcat['id']}).json()
+                prod_response = client.get(
+                    f"{insales_url}collects.json",
+                    params={"collection_id": subcat["id"]},
+                ).json()
                 if prod_response:
                     for product in prod_response:
                         # Получаем данные о товаре
-                        prod_data = client.get(f"{insales_url}products/{product['product_id']}.json", timeout=10).json()
-                        bonus = float(prod_data['variants'][0]['price_in_site_currency']) * 0.1 if \
-                        float(prod_data['variants'][0]['price_in_site_currency']) < 4000 else float(
-                            prod_data['variants'][0]['price_in_site_currency']) * 0.05
-                        weight = prod_data['variants'][0].get('weight')
-                        if prod_data['variants'][0]['quantity'] == 0:
+                        prod_data = client.get(
+                            f"{insales_url}products/{product['product_id']}.json",
+                            timeout=10,
+                        ).json()
+                        bonus = (
+                            float(prod_data["variants"][0]["price_in_site_currency"])
+                            * 0.1
+                            if float(prod_data["variants"][0]["price_in_site_currency"])
+                            < 4000
+                            else float(
+                                prod_data["variants"][0]["price_in_site_currency"]
+                            )
+                            * 0.05
+                        )
+                        weight = prod_data["variants"][0].get("weight")
+                        if prod_data["variants"][0]["quantity"] == 0:
                             available = False
                         else:
                             available = True
@@ -277,80 +302,94 @@ def check_crm_changes(self):
                             weight = 0
                         try:
                             product_obj, created = Product.objects.update_or_create(
-                                product_id=prod_data['id'],
+                                product_id=prod_data["id"],
                                 defaults={
-                                    'name': re.sub(r'\s*\(.*?\)\s*', '', prod_data['title']),
-                                    'description': prod_data['description'],
-                                    'price': float(prod_data['variants'][0]['price_in_site_currency']),
-                                    'weight': weight,
-                                    'bonus': round(bonus),
-                                    'permalink': prod_data['permalink'],
-                                    'available': available
-                                }
+                                    "name": re.sub(
+                                        r"\s*\(.*?\)\s*", "", prod_data["title"]
+                                    ),
+                                    "description": prod_data["description"],
+                                    "price": float(
+                                        prod_data["variants"][0][
+                                            "price_in_site_currency"
+                                        ]
+                                    ),
+                                    "weight": weight,
+                                    "bonus": round(bonus),
+                                    "permalink": prod_data["permalink"],
+                                    "available": available,
+                                },
                             )
                             if created:
                                 # Привязываем подкатегорию к товару
                                 product_obj.subcategory.add(subcategory)
                                 new_products.append(product_obj)
                                 # Добавляем фотографии товара
-                                for image in prod_data['images']:
-                                    if image['external_id']:
+                                for image in prod_data["images"]:
+                                    if image["external_id"]:
                                         new_photos.append(
                                             ProductPhoto(
                                                 product=product_obj,
-                                                photo_url=image['url'],
-                                                is_main=(image['position'] == 1)
+                                                photo_url=image["url"],
+                                                is_main=(image["position"] == 1),
                                             )
                                         )
-                                    elif image['original_url']:
+                                    elif image["original_url"]:
                                         new_photos.append(
                                             ProductPhoto(
                                                 product=product_obj,
-                                                photo_url=image['original_url'],
-                                                is_main=(image['position'] == 1)
+                                                photo_url=image["original_url"],
+                                                is_main=(image["position"] == 1),
                                             )
                                         )
-                                    if image['large_url']:
+                                    if image["large_url"]:
                                         new_mini_photos.append(
                                             ProductPhotoMini(
                                                 product=product_obj,
-                                                photo_url=image['large_url'],
-                                                is_main=(image['position'] == 1)
+                                                photo_url=image["large_url"],
+                                                is_main=(image["position"] == 1),
                                             )
                                         )
 
                             else:
                                 product_obj.subcategory.add(subcategory)
-                                for image in prod_data['images']:
-                                    if image['external_id']:
-                                        obj, created = ProductPhoto.objects.get_or_create(
-                                            photo_url=image['external_id'],
-                                            defaults={
-                                                'product': product_obj,
-                                                'is_main': (image['position'] == 1)
-                                            }
+                                for image in prod_data["images"]:
+                                    if image["external_id"]:
+                                        obj, created = (
+                                            ProductPhoto.objects.get_or_create(
+                                                photo_url=image["external_id"],
+                                                defaults={
+                                                    "product": product_obj,
+                                                    "is_main": (image["position"] == 1),
+                                                },
+                                            )
                                         )
-                                    elif image['original_url']:
-                                        obj, created = ProductPhoto.objects.get_or_create(
-                                            photo_url=image['original_url'],
-                                            defaults={
-                                                'product': product_obj,
-                                                'is_main': (image['position'] == 1)
-                                            }
+                                    elif image["original_url"]:
+                                        obj, created = (
+                                            ProductPhoto.objects.get_or_create(
+                                                photo_url=image["original_url"],
+                                                defaults={
+                                                    "product": product_obj,
+                                                    "is_main": (image["position"] == 1),
+                                                },
+                                            )
                                         )
-                                    if image['large_url']:
-                                        obj, created = ProductPhotoMini.objects.get_or_create(
-                                            photo_url=image['large_url'],
-                                            defaults={
-                                                'product': product_obj,
-                                                'is_main': (image['position'] == 1)
-                                            }
+                                    if image["large_url"]:
+                                        obj, created = (
+                                            ProductPhotoMini.objects.get_or_create(
+                                                photo_url=image["large_url"],
+                                                defaults={
+                                                    "product": product_obj,
+                                                    "is_main": (image["position"] == 1),
+                                                },
+                                            )
                                         )
 
                         except Exception as e:
-                            logger.error(f"Во время записи нового товара в БД произошла ошибка."
-                                         f"\n PRODUCT DATA: {prod_data}"
-                                         f"\n ERROR: {e}")
+                            logger.error(
+                                f"Во время записи нового товара в БД произошла ошибка."
+                                f"\n PRODUCT DATA: {prod_data}"
+                                f"\n ERROR: {e}"
+                            )
                             pass
 
         # Используем транзакцию и bulk_create для массовой вставки товаров, подкатегорий и фотографий
@@ -361,18 +400,18 @@ def check_crm_changes(self):
             ProductPhotoMini.objects.bulk_create(new_mini_photos, ignore_conflicts=True)
 
         logger.info(
-            f"Successfully added {len(new_subcategories)} subcategories, {len(new_products)} products, and {len(new_photos)} photos.")
+            f"Successfully added {len(new_subcategories)} subcategories, {len(new_products)} products, and {len(new_photos)} photos."
+        )
         update_price_cache(forced=True)
     except Exception as e:
         update_price_cache(forced=True)
         logger.error(f"Error in `check_crm_changes`: {e}")
-        self.retry(countdown=2 ** self.request.retries)
-
+        self.retry(countdown=2**self.request.retries)
 
 
 @shared_task
 def clean_up_mongo():
-    collection = pymongo.MongoClient(os.getenv("MONGOCON"))['kikimora']['cart']
+    collection = pymongo.MongoClient(os.getenv("MONGOCON"))["kikimora"]["cart"]
     result = collection.delete_many({"unregistered": True})
     logger.info(f"Удалено {result.deleted_count} корзин с меткой unregistered.")
 
@@ -389,7 +428,7 @@ def cache_result(cache_key: str, timeout: int = None):
         @wraps(func)
         def wrapper(*args, **kwargs):
             # Извлекаем параметр forced из kwargs, если он есть
-            forced = kwargs.pop('forced', False)
+            forced = kwargs.pop("forced", False)
 
             # Проверяем, есть ли результаты в кэше
             cached_result = cache.get(cache_key)
@@ -423,22 +462,28 @@ def process_payment_succeeded(self, payment_id):
     try:
         user_order = Order()
         if not user_order.ping():
-            logger.error(f"Ошибка подключения к базе данных при обработке платежа {payment_id}.")
+            logger.error(
+                f"Ошибка подключения к базе данных при обработке платежа {payment_id}."
+            )
             return
 
         user_order_data = user_order.get_order_by_payment(payment_id)
 
         # Начисление бонусов
-        if user_order_data['add_bonuses']:
-            UserBonusSystem.add_bonus(user_order_data['customer'], user_order_data['add_bonuses'])
+        if user_order_data["add_bonuses"]:
+            UserBonusSystem.add_bonus(
+                user_order_data["customer"], user_order_data["add_bonuses"]
+            )
 
         # Отправка заказа в InSales
         insales_order_new = send_new_order(user_order_data)
         if insales_order_new:
-            user_order.insert_insales_number(payment_id=payment_id, insales_order_number=insales_order_new)
-            user_order_data['insales'] = insales_order_new
+            user_order.insert_insales_number(
+                payment_id=payment_id, insales_order_number=insales_order_new
+            )
+            user_order_data["insales"] = insales_order_new
 
-            del user_order_data['_id']
+            del user_order_data["_id"]
             # Просто удалил поле _id воизбежания ошибки при сериализации=)
 
             new_order_email.delay(user_order_data)
@@ -446,7 +491,9 @@ def process_payment_succeeded(self, payment_id):
             logger.error(f"Не удалось загрузить заказ {payment_id} в CRM.")
     except Exception as e:
         logger.error(f"Ошибка при обработке успешного платежа {payment_id}: {e}")
-        self.retry(countdown=2 ** self.request.retries)  # Повторная попытка через экспоненциальное время ожидания
+        self.retry(
+            countdown=2**self.request.retries
+        )  # Повторная попытка через экспоненциальное время ожидания
 
 
 @shared_task(bind=True, max_retries=3)
@@ -456,11 +503,13 @@ def process_payment_canceled(self, payment_id):
         user_order_data = user_order.get_order_by_payment(payment_id)
 
         # Возврат бонусов
-        if user_order_data['bonuses_deducted']:
-            UserBonusSystem.add_bonus(user_order_data['customer'], user_order_data['bonuses_deducted'])
+        if user_order_data["bonuses_deducted"]:
+            UserBonusSystem.add_bonus(
+                user_order_data["customer"], user_order_data["bonuses_deducted"]
+            )
     except Exception as e:
         logger.error(f"Ошибка при обработке отмененного платежа {payment_id}: {e}")
-        self.retry(countdown=2 ** self.request.retries)
+        self.retry(countdown=2**self.request.retries)
 
 
 @shared_task(bind=True, max_retries=3)
@@ -530,13 +579,17 @@ def feedback_email(self, feedback_data):
         email_message.send(fail_silently=False)
 
     except Exception as e:
-        logger.error(f"Во время отправки обратной связи произошла непредвиденная ошибка.\nERROR: {e}")
-        raise self.retry(exc=e, countdown=2 ** self.request.retries)  # Повторная попытка отправки
+        logger.error(
+            f"Во время отправки обратной связи произошла непредвиденная ошибка.\nERROR: {e}"
+        )
+        raise self.retry(
+            exc=e, countdown=2**self.request.retries
+        )  # Повторная попытка отправки
 
 
 @shared_task
 def boot_cache():
-    if not cache.get('is_cache_initialized'):
+    if not cache.get("is_cache_initialized"):
         logger.info("Начинаю загрузку кэш!")
         active_products_cache(True)
         subcategory_cache(True)

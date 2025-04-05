@@ -1,6 +1,7 @@
-from locust import HttpUser, TaskSet, task, between
 import json
 import uuid
+
+from locust import HttpUser, TaskSet, between, task
 
 
 class UserBehavior(TaskSet):
@@ -15,9 +16,14 @@ class UserBehavior(TaskSet):
         data = {
             "cart": {
                 "products": [
-                    {"product_id": 434443626, "name": "Product 1", "price": 10, "quantity": 1}
+                    {
+                        "product_id": 434443626,
+                        "name": "Product 1",
+                        "price": 10,
+                        "quantity": 1,
+                    }
                 ],
-                "total": 5
+                "total": 5,
             }
         }
 
@@ -26,7 +32,7 @@ class UserBehavior(TaskSet):
             "api/v1/products/all",
             data=json.dumps(data),
             headers={"Content-Type": "application/json"},
-            cookies=self.cookies
+            cookies=self.cookies,
         )
 
         print(f"Статус-код ответа: {response.status_code}")
@@ -41,4 +47,5 @@ class WebsiteUser(HttpUser):
 
 if __name__ == "__main__":
     import os
+
     os.system("locust -f locustfile.py")

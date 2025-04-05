@@ -1,8 +1,10 @@
-from celery import shared_task
-from django.core.mail import EmailMessage
-import os
-from dotenv import load_dotenv
 import logging
+import os
+
+from django.core.mail import EmailMessage
+
+from celery import shared_task
+from dotenv import load_dotenv
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -36,7 +38,9 @@ def new_admin_mail(password, email):
         email_message.content_subtype = "html"
         email_message.send(fail_silently=False)
     except Exception as e:
-        logger.error(f'Во время отправки письма новому администратору произошла ошибка.\nERROR:{e}')
+        logger.error(
+            f"Во время отправки письма новому администратору произошла ошибка.\nERROR:{e}"
+        )
     return
 
 
@@ -102,5 +106,9 @@ def feedback_email(self, feedback_data):
         email_message.send(fail_silently=False)
 
     except Exception as e:
-        logger.error(f"Во время отправки обратной связи произошла непредвиденная ошибка.\nERROR: {e}")
-        raise self.retry(exc=e, countdown=2 ** self.request.retries)  # Повторная попытка отправки
+        logger.error(
+            f"Во время отправки обратной связи произошла непредвиденная ошибка.\nERROR: {e}"
+        )
+        raise self.retry(
+            exc=e, countdown=2**self.request.retries
+        )  # Повторная попытка отправки

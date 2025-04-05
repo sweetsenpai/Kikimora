@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from shop.models import Product, Discount
+
+from shop.models import Discount, Product
+
 from ..categories.category import CategorySerializer
 from ..categories.subcategory import SubcategorySerializer
 from ..products.detail import ProductSerializer
@@ -8,10 +10,7 @@ from ..products.detail import ProductSerializer
 class MenuDiscountProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields=[
-            'product_id',
-            'name'
-        ]
+        fields = ["product_id", "name"]
 
 
 class DiscountSerializer(serializers.ModelSerializer):
@@ -21,5 +20,14 @@ class DiscountSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Discount
-        fields = ['discount_id', 'discount_type', 'value', 'description', 'start', 'end', 'category',
-                  'subcategory', 'product']
+        fields = [
+            "discount_id",
+            "discount_type",
+            "value",
+            "description",
+            "start",
+            "end",
+            "category",
+            "subcategory",
+            "product",
+        ]

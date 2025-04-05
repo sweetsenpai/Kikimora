@@ -1,15 +1,12 @@
 from rest_framework import serializers
-from shop.models import Subcategory, Product
+
+from shop.models import Product, Subcategory
 
 
 class MenuSubcategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Subcategory
-        fields = [
-            'subcategory_id',
-            'name',
-            'text',
-            'permalink']
+        fields = ["subcategory_id", "name", "text", "permalink"]
 
 
 class SubcategorySerializer(serializers.ModelSerializer):
@@ -19,9 +16,4 @@ class SubcategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subcategory
-        fields = [
-            'subcategory_id',
-            'name',
-            'category',
-            'products'
-        ]
+        fields = ["subcategory_id", "name", "category", "products"]

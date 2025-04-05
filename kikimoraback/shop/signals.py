@@ -1,10 +1,13 @@
-from django.db.models.signals import pre_delete, pre_save, post_save, post_delete
-from django.dispatch import receiver
-from .models import Subcategory, Product, ProductPhoto, Discount, LimitTimeProduct
+import logging
+
 from django.core.cache import cache
+from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
+from django.dispatch import receiver
+
+from .models import Discount, LimitTimeProduct, Product, ProductPhoto, Subcategory
 from .services.caches import *
 from .tasks import update_price_cache
-import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -29,7 +32,9 @@ def update_related_products(sender, instance, **kwargs):
     """
     Обновляет товары, если изменилось поле 'visibility' у подкатегории.
     """
-    if instance.pk:  # Проверяем, что объект уже существует (не создаётся, а обновляется)
+    if (
+        instance.pk
+    ):  # Проверяем, что объект уже существует (не создаётся, а обновляется)
         try:
             old_instance = Subcategory.objects.get(pk=instance.pk)
         except Subcategory.DoesNotExist:
@@ -38,7 +43,9 @@ def update_related_products(sender, instance, **kwargs):
         # Проверяем, изменилось ли поле visibility
         if old_instance.visibility != instance.visibility:
             # Обновляем связанные товары
-            Product.objects.filter(subcategory=instance).update(visibility=instance.visibility)
+            Product.objects.filter(subcategory=instance).update(
+                visibility=instance.visibility
+            )
 
 
 @receiver([post_save, post_delete])
