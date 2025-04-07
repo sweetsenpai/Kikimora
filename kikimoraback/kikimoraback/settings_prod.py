@@ -33,7 +33,12 @@ SECRET_KEY = os.getenv("DJANGO_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["http://82.146.57.177"]
+ALLOWED_HOSTS = [
+    "http://82.146.57.177",
+    "localhost",
+    "127.0.0.1",
+    "82.146.57.177",
+]
 CSRF_TRUSTED_ORIGINS = ["http://82.146.57.177"]
 
 
