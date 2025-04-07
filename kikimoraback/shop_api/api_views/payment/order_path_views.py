@@ -19,8 +19,7 @@ from shop.MongoIntegration.Cart import Cart
 from shop.MongoIntegration.Order import Order
 from shop.services.caches import *
 
-from .authentication import CookieJWTAuthentication
-from .serializers import *
+from shop_api.services.authentication import CookieJWTAuthentication
 
 load_dotenv()
 logger = logging.getLogger("shop")

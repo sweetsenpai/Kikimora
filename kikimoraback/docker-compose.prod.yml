@@ -1,0 +1,78 @@
+services:
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: django
+    restart: always
+    expose:
+      - "8000"
+    volumes:
+      - /var/www/kikimora/static:/kikimoraback/static  # Монтируем статические файлы на хост
+      - /var/www/kikimora/media:/kikimoraback/media     # Монтируем медиа-файлы на хост
+      - /logs:/logs
+    environment:
+      - CELERY_BROKER=redis://redis:6379/0
+    healthcheck:
+      test: [ "CMD", "pgrep", "-f", "uvicorn" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+    depends_on:
+      redis:
+        condition: service_healthy
+
+    user: "${UID}:${GID}"
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+
+    command: celery -A kikimoraback worker -l INFO -E  -c 4
+
+    depends_on:
+      redis:
+        condition: service_healthy
+
+    healthcheck:
+      test: [ "CMD", "celery", "-A", "kikimoraback", "inspect", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    command: celery -A kikimoraback beat --loglevel=info
+    depends_on:
+      redis:
+        condition: service_healthy
+
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: flower
+    ports:
+      - "5555:5555"
+    command: >
+      bash -c "
+      celery -A kikimoraback flower --port=5555 --basic_auth=${FLOWER_USER}:${FLOWER_PASSWORD}"
+    depends_on:
+      celery:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

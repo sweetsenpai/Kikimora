@@ -8,7 +8,6 @@ from rest_framework_simplejwt.views import (
 )
 
 from .api_views import *
-from .views import *
 
 product_by_subcategory = ProductViewSet.as_view({"get": "by_subcategory"})
 products_with_discounts = ProductViewSet.as_view({"get": "with_discounts"})

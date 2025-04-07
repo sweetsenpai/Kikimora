@@ -12,8 +12,6 @@ import pymongo
 from celery import shared_task
 from dotenv import load_dotenv
 
-import kikimoraback.settings as settings
-
 from .API.insales_api import send_new_order
 from .models import *
 from .MongoIntegration.Order import Order
