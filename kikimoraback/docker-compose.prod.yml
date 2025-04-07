@@ -13,12 +13,6 @@ services:
       - /logs:/logs
     environment:
       - CELERY_BROKER=redis://redis:6379/0
-    healthcheck:
-      test: [ "CMD", "pgrep", "-f", "uvicorn" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
     depends_on:
       redis:
         condition: service_healthy
