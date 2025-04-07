@@ -16,14 +16,9 @@ services:
     volumes:
       - .:/kikimoraback
     environment:
+      - DJANGO_SETTINGS_MODULE=kikimoraback.settings_dev
       - DEBUG=1
       - CELERY_BROKER=redis://redis:6379/0
-    healthcheck:
-      test: [ "CMD", "pgrep", "-f", "uvicorn" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
     depends_on:
       redis:
         condition: service_healthy
@@ -33,6 +28,8 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     command: celery -A kikimoraback worker -l INFO -E  -c 4
+    environment:
+      - DJANGO_SETTINGS_MODULE=kikimoraback.settings_dev
     volumes:
       - .:/kikimoraback
     depends_on:
