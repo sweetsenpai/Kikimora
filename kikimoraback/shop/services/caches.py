@@ -19,7 +19,6 @@ def subcategory_cache(invalidate=False):
     # Если не нужно сбрасывать кеш и он есть — вернуть данные
     if not invalidate:
         sub_cache = cache.get(cache_key)
-        print(sub_cache)
         if sub_cache:
             return sub_cache
 

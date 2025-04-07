@@ -173,9 +173,3 @@ kikimoraback/shop/migrations/0001_initial.py
 /kikimoraback/shop/static/images/test_img.webp
 # Deploy fiels
 deploy.sh
-
-kikimoraback/Dockerfile
-kikimoraback/docker-compose.yml
-kikimoraback/docker-compose.development.yml
-kikimoraback/Dockerfile.dev
-kikimoraback/settings.py

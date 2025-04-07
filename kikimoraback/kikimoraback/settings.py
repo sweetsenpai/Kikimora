@@ -206,7 +206,7 @@ SIMPLE_JWT = {
 LANGUAGE_CODE = "ru-ru"
 
 TIME_ZONE = "Europe/Moscow"
-
+CELERY_TIMEZONE = TIME_ZONE
 USE_I18N = True
 
 USE_TZ = True
@@ -296,7 +296,3 @@ LOGGING = {
         },
     },
 }
-DEBUG_TOOLBAR_PANELS = [
-    "debug_toolbar.panels.cache.CachePanel",
-    "debug_toolbar.panels.sql.SQLPanel",
-]
