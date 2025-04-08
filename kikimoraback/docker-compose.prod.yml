@@ -73,3 +73,37 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      django:
+        condition: service_started
+      celery:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "7000:3000"  # Порт для интерфейса Grafana
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_started
+
+volumes:
+  grafana-storage:
+    driver: local
+    driver_opts:
+      type: none
+      device: /grafana
+      o: bind
