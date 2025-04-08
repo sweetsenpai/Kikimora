@@ -47,7 +47,7 @@ INSTALLED_APPS = [
 
     "django.contrib.admin",
     "django.contrib.auth",
-    "django_prometheus"
+    "django_prometheus",
     "shop.apps.ShopConfig",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
