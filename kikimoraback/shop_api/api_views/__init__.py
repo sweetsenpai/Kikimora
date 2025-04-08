@@ -18,6 +18,8 @@ from .users.register_view import RegisterUserView
 from .users.user_view import UserDataView, UsersOrder
 from .payment.order_path_views import OrderPath
 
+from .products.single_product_view import trigger_error
+
 __all__ = [
     "Login",
     "UserDataView",
@@ -38,5 +40,6 @@ __all__ = [
     "yookassa_webhook",
     "TestWebhook",
     "UsersOrder",
-    "OrderPath"
+    "OrderPath",
+    "trigger_error"
 ]
