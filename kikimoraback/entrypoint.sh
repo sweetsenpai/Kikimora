@@ -11,4 +11,4 @@ python manage.py boot_cache
 python manage.py collectstatic --noinput
 
 # Запускаем gunicorn
-exec uvicorn kikimoraback.asgi:application --host 0.0.0.0 --port 8000
+exec uvicorn kikimoraback.asgi:application --host 0.0.0.0 --port 8000 --lifespan off
