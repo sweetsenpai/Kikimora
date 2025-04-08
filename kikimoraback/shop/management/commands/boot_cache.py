@@ -11,7 +11,7 @@ class Command(BaseCommand):
         Метод handle вызывается при выполнении команды.
         Здесь мы вызываем задачу Celery.
         """
-        boot_cache.delay()
+        boot_cache()
         self.stdout.write(
             self.style.SUCCESS("Задача для инициализации кэша отправлена")
         )
