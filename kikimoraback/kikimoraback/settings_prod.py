@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
-
+import sentry_sdk
 from celery.schedules import crontab
 from dotenv import load_dotenv
 
@@ -212,6 +212,13 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 # Celery Beat
 CELERY_BROKER_HEARTBEAT = 60
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+sentry_sdk.init(
+    dsn=os.environ.get("SENTRY_DNS"),
+    # Add data like request headers and IP for users,
+    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+    send_default_pii=True,
+)
 
 LOGGING = {
     "version": 1,
