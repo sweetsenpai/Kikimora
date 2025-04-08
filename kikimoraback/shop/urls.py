@@ -1,5 +1,6 @@
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import path
+from django_prometheus import exports
 
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -114,4 +115,5 @@ urlpatterns = [
         views_admin.AdminDeleteTag.as_view(),
         name="delete_tag",
     ),
+    path("apanel/metrics/", exports.ExportToDjangoView, name='prometheus-metrics')
 ]

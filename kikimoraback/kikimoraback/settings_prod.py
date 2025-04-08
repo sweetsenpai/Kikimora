@@ -54,12 +54,13 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "django_celery_beat",
-    # 'debug_toolbar'
+    "django_prometheus"
 ]
 
 INTERNAL_IPS = ["127.0.0.1", "localhost", "172.17.0.1", "172.18.0.1"]
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware'
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -68,7 +69,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 CORS_ALLOWED_ORIGINS = ["http://82.146.57.177"]
 
