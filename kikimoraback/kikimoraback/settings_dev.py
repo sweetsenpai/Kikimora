@@ -231,7 +231,7 @@ CELERY_BROKER_HEARTBEAT = 60
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 sentry_sdk.init(
-    dsn="https://e7f200618040918ac7f4d6c5e90d562c@o4509096102199296.ingest.de.sentry.io/4509096104099920",
+    dsn=os.environ.get("SENTRY_DNS"),
     # Add data like request headers and IP for users,
     # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
     send_default_pii=True,
