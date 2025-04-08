@@ -44,8 +44,10 @@ CSRF_TRUSTED_ORIGINS = ["http://82.146.57.177"]
 # Application definition
 
 INSTALLED_APPS = [
+
     "django.contrib.admin",
     "django.contrib.auth",
+    "django_prometheus"
     "shop.apps.ShopConfig",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -54,7 +56,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "django_celery_beat",
-    "django_prometheus"
 ]
 
 INTERNAL_IPS = ["127.0.0.1", "localhost", "172.17.0.1", "172.18.0.1"]
