@@ -50,6 +50,7 @@ services:
 
   redis:
     image: redis:latest
+    command: redis-server --appendonly yes --save 900 1 --save 300 10
     ports:
       - "6379:6379"
     healthcheck:

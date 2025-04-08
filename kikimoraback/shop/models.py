@@ -275,8 +275,8 @@ class Discount(models.Model):
     )
     value = models.FloatField(help_text="Процент скидки или сумма скидки", default=0)
     description = models.CharField(max_length=400, blank=True)
-    start = models.DateTimeField(default=django.utils.timezone.now())
-    end = models.DateTimeField(default=django.utils.timezone.now())
+    start = models.DateTimeField(default=timezone.now)
+    end = models.DateTimeField(default=timezone.now)
     category = models.ForeignKey(
         Category, null=True, blank=True, on_delete=models.CASCADE
     )
