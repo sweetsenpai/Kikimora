@@ -37,6 +37,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "82.146.57.177",
+    'django',
 ]
 CSRF_TRUSTED_ORIGINS = ["http://82.146.57.177"]
 
