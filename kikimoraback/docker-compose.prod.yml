@@ -76,6 +76,8 @@ services:
     ports:
       - "5555:5555"
     environment:
+      - CELERY_BROKER=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     command: >
       bash -c "
