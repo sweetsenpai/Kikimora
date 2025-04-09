@@ -116,11 +116,11 @@ DATABASES = {
         },
     }
 }
-
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/1",
+        "LOCATION": f"redis://:{REDIS_PASSWORD}@redis:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
@@ -209,8 +209,8 @@ if not DEBUG:
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "shop.CustomUser"
 
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
-CELERY_RESULT_BACKEND = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER", f"redis://:{REDIS_PASSWORD}@redis:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_BROKER", f"redis://:{REDIS_PASSWORD}@redis:6379/0")
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 # Celery Beat
 CELERY_BROKER_HEARTBEAT = 60
