@@ -19,7 +19,7 @@ include_trailing_comma = true
 force_grid_wrap = 0
 combine_as_imports = true
 
-known_first_party = ["shop", "shop_api"]
+known_first_party = ["shop", "shop_api", "kikimoraback"]
 known_django = ["django"]
 known_drf = ["rest_framework"]
 

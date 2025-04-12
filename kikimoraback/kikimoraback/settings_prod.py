@@ -99,6 +99,12 @@ APPEND_SLASH = True
 
 WSGI_APPLICATION = "kikimoraback.wsgi.application"
 
+PROMETHEUS_METRICS = {
+    'django.http_requests_total_by_view_method_total': True,
+    'django.http_request_duration_seconds': True,
+}
+PROMETHEUS_EXPORT_MIGRATIONS = True
+
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases

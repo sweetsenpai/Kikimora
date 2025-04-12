@@ -8,8 +8,8 @@ services:
     expose:
       - "8000"
     volumes:
-      - /var/www/kikimora/static:/kikimoraback/static  # Монтируем статические файлы на хост
-      - /var/www/kikimora/media:/kikimoraback/media     # Монтируем медиа-файлы на хост
+      - /var/www/kikimora/static:/kikimoraback/static
+      - /var/www/kikimora/media:/kikimoraback/media
       - /logs:/logs
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
