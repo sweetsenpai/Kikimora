@@ -1,0 +1,20 @@
+services:
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: django
+    ports:
+      - "8000:8000"
+    command: >
+      bash -c "
+      pytest -q --ds=kikimoraback.settings_test --nomigrations --reuse-db --maxfail=1
+      "
+    environment:
+      - DJANGO_SETTINGS_MODULE=kikimoraback.settings_test
+      - DEBUG=1
+    develop:
+      watch:
+        - path: .
+          target: /kikimoraback
+          action: sync

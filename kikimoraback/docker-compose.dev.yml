@@ -11,17 +11,21 @@ services:
       python manage.py makemigrations --noinput &&
       python manage.py migrate &&
       python manage.py boot_cache &&
-      uvicorn kikimoraback.asgi:application --host 0.0.0.0 --port 8000 --reload
+      uvicorn kikimoraback.asgi:application --host 0.0.0.0 --port 8000 --reload --reload-dir kikimoraback
       "
-    volumes:
-      - .:/kikimoraback
     environment:
       - DJANGO_SETTINGS_MODULE=kikimoraback.settings_dev
       - DEBUG=1
       - CELERY_BROKER=redis://redis:6379/0
+      - UVICORN_RELOAD_USE_POLLING=true
     depends_on:
       redis:
         condition: service_healthy
+    develop:
+      watch:
+        - path: .
+          target: /kikimoraback
+          action: sync
 
   celery:
     build:
@@ -38,7 +42,7 @@ services:
 
     healthcheck:
       test: [ "CMD", "celery", "-A", "kikimoraback", "inspect", "ping" ]
-      interval: 5s
+      interval: 3s
       timeout: 3s
       retries: 5
 
@@ -59,7 +63,7 @@ services:
       - "6379:6379"
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
+      interval: 3s
       timeout: 3s
 
   flower:

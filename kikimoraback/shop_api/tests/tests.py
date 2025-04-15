@@ -1,8 +1,9 @@
+import sys
 from unittest.mock import MagicMock
 
 import pytest
 
-from ..api_views.products.products_views import sort_products
+from shop_api.api_views.products.products_views import sort_products
 
 
 @pytest.mark.parametrize(

@@ -18,7 +18,6 @@ from shop.API.yookassa_api import PaymentYookassa
 from shop.MongoIntegration.Cart import Cart
 from shop.MongoIntegration.Order import Order
 from shop.services.caches import *
-
 from shop_api.services.authentication import CookieJWTAuthentication
 
 load_dotenv()
@@ -49,7 +48,6 @@ class OrderPath(APIView):
         user = request.user
         data = request.data
         steps = data.get("steps", [])
-        delivery_data = data.get("deliveryData", {})
         cart = data.get("cart")
         bonuses = data.get("usedBonus")
         user_data = data.get("userData")
@@ -116,12 +114,12 @@ class OrderPath(APIView):
 
             token = os.getenv("YANDEX_TOKEN")
             headers = {"Authorization": f"Bearer {token}", "Accept-Language": "ru/ru"}
-            address = delivery_data.get("address")  # Получаем адрес из delivery_data
-
-            if not address:
+            if not delivery_data or not delivery_data.get("address"):
                 response.status_code = status.HTTP_400_BAD_REQUEST
                 response.data = {"error": "Не передан адрес для расчета доставки."}
                 return response
+
+            address = delivery_data.get("address")
 
             payload = {
                 "route_points": [
@@ -283,10 +281,12 @@ class OrderPath(APIView):
             )
 
         if "delivery_step" in steps:
+            if not delivery_data or not delivery_data.get("address"):
+                return Response(
+                    {"error": "Не передан адрес для расчета доставки."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             response = yandex_calculation(user_id, delivery_data, response)
-            delivery_data["deliveryCost"] = response.data["price"]
-            if response.data.get("error", None):
-                return response
         if "check_cart_step" in steps:
             response = check_cart(user_id, cart, response)
             if response.data["price_mismatches"]:

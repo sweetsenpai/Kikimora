@@ -1,16 +1,10 @@
-"""
-Настройки Django для запуска тестов.
-Этот файл наследует базовые настройки и переопределяет нужные параметры для тестирования.
-"""
-import sys
 import os
-
+import sys
+import tempfile
+from kikimoraback.settings_dev import *
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
-sys.path.insert(0, os.path.join(BASE_DIR, 'kikimoraback'))
 
-from .settings_dev import *  # Наследуем настройки разработки
-import tempfile
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -21,69 +15,89 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "django_celery_beat",
-    'shop',
-    'shop_api',
+    "shop",
+    "shop_api",
 ]
 
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
 
-# Отключаем Celery для тестов, заменяя его на синхронный режим
+# Удаляем CSRF middleware для тестов
+MIDDLEWARE = [m for m in MIDDLEWARE if "csrf" not in m.lower()]
+
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
-CELERY_BROKER_URL = 'memory://'
+CELERY_BROKER_URL = "memory://"
 
-# Используем быструю тестовую БД в памяти
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',  # Используем in-memory SQLite для скорости
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
     }
 }
 
-# Отключаем кэширование
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    "default": {
+        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
     }
 }
 
-# Отключаем проверку паролей для ускорения тестов
 PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.MD5PasswordHasher',
+    "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
 
-# Отключаем CSRF проверку для тестовых запросов
-MIDDLEWARE = [m for m in MIDDLEWARE if 'csrf' not in m.lower()]
-
-# Отключаем логирование или перенаправляем в файл
-LOGGING = {
-}
+LOGGING = {}
 
 MEDIA_ROOT = tempfile.mkdtemp()
 
-# Отключаем отправку реальных писем
-EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
-# Ускоряем тесты, отключая миграции
-MIGRATION_MODULES = {
-    'auth': None,
-    'contenttypes': None,
-    'sessions': None,
-    'admin': None,
-    'shop': None,
-    'shop_api': None,
-    # Добавьте другие ваши приложения, чтобы отключить их миграции во время теста
+
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "OPTIONS": {
+            "loaders": [
+                (
+                    "django.template.loaders.cached.Loader",
+                    [
+                        "django.template.loaders.filesystem.Loader",
+                        "django.template.loaders.app_directories.Loader",
+                    ],
+                ),
+            ],
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    }
+]
+
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+    ],
 }
 
-# Добавьте сюда мок-настройки для внешних сервисов, которые вы используете
-# Например:
-# PAYMENT_GATEWAY_URL = 'http://mock-payment-gateway'
+class DisableMigrations:
+    def __contains__(self, item):
+        return True
 
-# Используем быстрые тестовые шаблонные движки
-# Update templates configuration for tests
-TEMPLATES[0]['APP_DIRS'] = False
-TEMPLATES[0]['OPTIONS']['loaders'] = [
-    ('django.template.loaders.cached.Loader', [
-        'django.template.loaders.filesystem.Loader',
-        'django.template.loaders.app_directories.Loader',
-    ]),
-]
+    def __getitem__(self, item):
+        return None
+
+MIGRATION_MODULES = DisableMigrations()
