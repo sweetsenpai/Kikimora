@@ -48,7 +48,6 @@ class OrderPath(APIView):
         # Данные из запроса
         user = request.user
         data = request.data
-        print(data)
         steps = data.get("steps", [])
         cart = data.get("cart")
         bonuses = data.get("usedBonus")
@@ -174,10 +173,8 @@ class OrderPath(APIView):
             response = check_cart_service.check(user_id, cart)
 
             if response.data.get("price_mismatches"):
-                print(response.data)
                 return response
             elif response.data.get("deleted_products"):
-                print(response.data)
                 return response
         if "payment_step" in steps:
             response = payment(
