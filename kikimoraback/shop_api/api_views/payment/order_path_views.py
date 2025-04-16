@@ -19,8 +19,10 @@ from shop.MongoIntegration.Cart import Cart
 from shop.MongoIntegration.Order import Order
 from shop.services.caches import *
 from shop_api.services.authentication import CookieJWTAuthentication
-from shop_api.services.order_path_services.delivery_service import DeliveryService
 from shop_api.services.order_path_services.check_cart_service import CheckCartService
+from shop_api.services.order_path_services.delivery_service import DeliveryService
+from shop_api.services.order_path_services.payment_service import PaymentService
+
 load_dotenv()
 logger = logging.getLogger("shop")
 logger.setLevel(logging.DEBUG)
@@ -37,6 +39,8 @@ class OrderPath(APIView):
         cart_service = Cart()
         check_cart_service = CheckCartService(cart_service)
         order_service = Order()
+        payment_service = PaymentService(cart_service, order_service)
+
         # Все возможные шаги
         all_steps = [
             "delivery_step",
@@ -106,61 +110,6 @@ class OrderPath(APIView):
                     secure=True,
                 )
 
-        def payment(
-            user, user_data, bonuses, comment, delivery_data, response: Response
-        ) -> Response:
-            cart_service.add_delivery(user, delivery_data, user_data, comment)
-            cart_data = cart_service.get_cart_data(user)
-            delivery_data = cart_data["delivery_data"]
-            order_number = order_service.get_neworder_num(user_id)
-            payment_service = PaymentYookassa()
-            if bonuses:
-                try:
-                    UserBonusSystem.deduct_bonuses(user_id=user_id, bonuses=bonuses)
-                except Exception as e:
-                    logger.error(
-                        f"Неудалось списать бонусы с баланса пользователя id {user_id}. Ошибка: {e}"
-                    )
-                    response.status_code = status.HTTP_400_BAD_REQUEST
-                    response.data.error = "Неудалось списать бонусы в счёт заказа."
-                    return response
-
-            response = json.loads(
-                payment_service.send_payment_request(
-                    user_data=user_data,
-                    cart=cart_data,
-                    order_id=order_number,
-                    delivery_data=delivery_data,
-                    bonuses=bonuses,
-                )
-            )
-
-            if not response:
-                return Response(
-                    {
-                        "error": "Во время оформления заказа произошла ошибка.\n"
-                        "Попробуйте перезагрузить страниц."
-                    },
-                    status=status.HTTP_503_SERVICE_UNAVAILABLE,
-                )
-            cart_service.add_payment_data(
-                user_id=user_id,
-                payment_id=response["id"],
-                order_number=order_number,
-                bonuses=bonuses,
-            )
-            order_service.create_order_on_cart(
-                cart_service.get_cart_data(user_id=user_id)
-            )
-            cart_service.delete_cart(user_id=user_id)
-            return Response(
-                {
-                    "detail": "Redirecting to payment",
-                    "redirect_url": response["confirmation"]["confirmation_url"],
-                },
-                status=status.HTTP_302_FOUND,
-            )
-
         if not steps:
             return Response(
                 {"error": "Шаг не определен."}, status=status.HTTP_400_BAD_REQUEST
@@ -177,8 +126,12 @@ class OrderPath(APIView):
             elif response.data.get("deleted_products"):
                 return response
         if "payment_step" in steps:
-            response = payment(
-                user_id, user_data, bonuses, comment, delivery_data, response
+            response = payment_service.process_payment(
+                user_id=user_id,
+                user_data=user_data,
+                bonuses=bonuses,
+                comment=comment,
+                delivery_data=delivery_data,
             )
 
         return response
