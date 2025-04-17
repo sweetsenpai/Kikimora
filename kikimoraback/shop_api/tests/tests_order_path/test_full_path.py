@@ -8,13 +8,14 @@ from unittest.mock import patch
 class TestOrderPath:
     def setup_method(self):
         self.client = APIClient()
+        base_path = "shop_api.api_views.payment.order_path_views"
 
-        patcher_cart = patch("shop_api.api_views.views.OrderPath.Cart")
-        patcher_order = patch("shop_api.api_views.OrderPath.Order")
-        patcher_check = patch("shop_api.api_views.OrderPath.CheckCartService")
-        patcher_delivery = patch("shop_api.api_views.OrderPath.DeliveryService")
-        patcher_payment = patch("shop_api.api_views.OrderPath.PaymentService")
-        patcher_user = patch("shop_api.api_views.OrderPath.UserIdentifierService")
+        patcher_cart = patch(f"{base_path}.Cart")
+        patcher_order = patch(f"{base_path}.Order")
+        patcher_check = patch(f"{base_path}.CheckCartService")
+        patcher_delivery = patch(f"{base_path}.DeliveryService")
+        patcher_payment = patch(f"{base_path}.PaymentService")
+        patcher_user = patch(f"{base_path}.UserIdentifierService")
 
         self.mock_cart = patcher_cart.start()
         self.mock_order = patcher_order.start()
@@ -100,7 +101,7 @@ class TestOrderPath:
             {"payment_id": "123", "status": "success"}, status=200
         )
 
-        response = self.client.post("/api/order-path/", self.base_payload(), format="json")
+        response = self.client.post("/api/v1/orderpath", self.base_payload(), format="json")
 
         assert response.status_code == 200
         assert response.data["status"] == "success"
@@ -108,6 +109,6 @@ class TestOrderPath:
 
     def test_empty_steps_returns_400(self):
         payload = self.base_payload(steps=[])
-        response = self.client.post("/api/order-path/", payload, format="json")
+        response = self.client.post("/api/v1/orderpath", payload, format="json")
         assert response.status_code == 400
         assert "steps" in response.data
