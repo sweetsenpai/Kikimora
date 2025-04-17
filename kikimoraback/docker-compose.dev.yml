@@ -11,8 +11,10 @@ services:
       python manage.py makemigrations --noinput &&
       python manage.py migrate &&
       python manage.py boot_cache &&
-      uvicorn kikimoraback.asgi:application --host 0.0.0.0 --port 8000 --reload --reload-dir kikimoraback
+      uvicorn kikimoraback.asgi:application --host 0.0.0.0 --port 8000 --reload --reload-dir /kikimoraback
       "
+    volumes:
+      - .:/kikimoraback
     environment:
       - DJANGO_SETTINGS_MODULE=kikimoraback.settings_dev
       - DEBUG=1
@@ -21,11 +23,6 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-    develop:
-      watch:
-        - path: .
-          target: /kikimoraback
-          action: sync
 
   celery:
     build:

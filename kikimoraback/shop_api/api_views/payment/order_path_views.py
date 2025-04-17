@@ -18,14 +18,13 @@ from shop.API.yookassa_api import PaymentYookassa
 from shop.MongoIntegration.Cart import Cart
 from shop.MongoIntegration.Order import Order
 from shop.services.caches import *
-from shop_api.services.authentication import CookieJWTAuthentication
-from shop_api.services.order_path_services.check_cart_service import CheckCartService
-from shop_api.services.order_path_services.delivery_service import DeliveryService
-from shop_api.services.order_path_services.payment_service import PaymentService
-
-load_dotenv()
-logger = logging.getLogger("shop")
-logger.setLevel(logging.DEBUG)
+from shop_api.serializers import OrderPathSerializer
+from shop_api.services import (
+    CheckCartService,
+    DeliveryService,
+    PaymentService,
+    UserIdentifierService,
+)
 
 load_dotenv()
 logger = logging.getLogger("shop")
@@ -35,30 +34,27 @@ logger.setLevel(logging.DEBUG)
 class OrderPath(APIView):
 
     def post(self, request) -> Response:
-        # Инициализация сервисов
+        serializer = OrderPathSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        validated_data = serializer.validated_data
+
         cart_service = Cart()
         check_cart_service = CheckCartService(cart_service)
         order_service = Order()
         payment_service = PaymentService(cart_service, order_service)
 
-        # Все возможные шаги
-        all_steps = [
-            "delivery_step",
-            "check_cart_step",
-            "promo_code_step",
-            "payment_step",
-        ]
-
-        # Данные из запроса
         user = request.user
-        data = request.data
-        steps = data.get("steps", [])
-        cart = data.get("cart")
-        bonuses = data.get("usedBonus")
-        user_data = data.get("userData")
-        delivery_data = data.get("deliveryData")
-        comment = request.data.get("comment")
-        # Проверка входных данных
+        logger.debug(f"Данные полученные на вход orderpath:\n{validated_data}")
+
+        steps = validated_data["steps"]
+        cart = validated_data.get("cart")
+        bonuses = validated_data.get("usedBonus")
+        user_data = validated_data.get("userData")
+        delivery_data = validated_data.get("deliveryData")
+        comment = validated_data.get("comment")
+
         if not steps:
             logger.error(
                 "В OrderPath пришел запрос не содержащий steps.\n"
@@ -67,71 +63,81 @@ class OrderPath(APIView):
             )
             return Response(
                 {"error": "Невозможно обработать пустой запрос."},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Проверка доступности сервисов
         if not cart_service.ping():
             return Response(
-                {
-                    "error": "Не удалось подключиться к сервису работы корзины. Перезагрузите страницу."
-                },
+                {"error": "Не удалось подключиться к сервису работы корзины."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
         if not order_service.ping():
             return Response(
-                {"error": "Не удалось оформить заказ. Повторите попытку позже"},
+                {"error": "Не удалось оформить заказ. Повторите попытку позже."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
-
-        # Определение user_id
-        if "payment_step" in steps:
-            steps = all_steps
-
-        response = Response()
-        if not isinstance(user, AnonymousUser):
-            try:
-                user_id = CustomUser.objects.get(user_id=user.user_id).user_id
-            except CustomUser.DoesNotExist:
-                return Response(
-                    {"error": "Пользователь не найден."},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-        else:
-            user_id = request.COOKIES.get("user_id", None)
-            if not user_id:
-                user_id = str(uuid.uuid4())
-                response.set_cookie(
-                    "user_id",
-                    user_id,
-                    max_age=60 * 60 * 24 * 30,
-                    httponly=True,
-                    secure=True,
-                )
-
-        if not steps:
-            return Response(
-                {"error": "Шаг не определен."}, status=status.HTTP_400_BAD_REQUEST
+        logger.debug(f"cookie from user:{request.COOKIES}")
+        user_id_service = UserIdentifierService(request)
+        user_id, cookie_response = user_id_service.get_or_create_user_id()
+        if not user_id:
+            logger.debug(
+                "Неудалось опознать пользователя\n"
+                f"cookie_response:{user_response}\n"
+                f"user_id:{user_id}"
             )
+            return cookie_response
 
-        if "delivery_step" in steps:
-            delivery_sertsvice = DeliveryService()
-            response = delivery_sertsvice.calculate(user_id, delivery_data)
-        if "check_cart_step" in steps:
+        # Если запрошена оплата — выполнить все шаги
+        if "payment_step" in steps:
+            steps = ["check_cart_step", "delivery_step", "payment_step"]
+
+        def check_cart_step(user_id, cart, check_cart_service):
             response = check_cart_service.check(user_id, cart)
+            if response.data.get("price_mismatches") or response.data.get(
+                "deleted_products"
+            ):
+                return response, True
+            return response, False
 
-            if response.data.get("price_mismatches"):
-                return response
-            elif response.data.get("deleted_products"):
-                return response
-        if "payment_step" in steps:
-            response = payment_service.process_payment(
-                user_id=user_id,
-                user_data=user_data,
-                bonuses=bonuses,
-                comment=comment,
-                delivery_data=delivery_data,
+        step_actions = {
+            "check_cart_step": lambda: check_cart_step(
+                user_id, cart, check_cart_service
+            ),
+            "delivery_step": lambda: (
+                DeliveryService(cart_service).calculate(
+                    user_id=user_id,
+                    user_data=user_data,
+                    delivery_data=delivery_data,
+                    comment=comment,
+                    steps=steps,
+                ),
+                False,
+            ),
+            "payment_step": lambda: (
+                payment_service.process_payment(
+                    user_id=user_id,
+                    user_data=user_data,
+                    bonuses=bonuses,
+                ),
+                False,
+            ),
+        }
+
+        last_response = Response()
+
+        for step in steps:
+            logger.debug(f"Текущий шаг в orderpath:{step}")
+            action = step_actions.get(step)
+            if action:
+                response, should_stop = action()
+                last_response = response
+                if should_stop or response.status_code >= 400:
+                    return response
+        if cookie_response:
+            last_response.set_cookie(
+                key=cookie_response["key"],
+                value=cookie_response["value"],
+                **cookie_response["options"],
             )
-
-        return response
+        return last_response

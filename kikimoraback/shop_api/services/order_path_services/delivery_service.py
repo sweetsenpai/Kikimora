@@ -7,6 +7,7 @@ import logging
 from dotenv import load_dotenv
 from rest_framework.response import Response
 from rest_framework import status
+from shop.MongoIntegration.Cart import Cart
 
 logger = logging.getLogger("shop")
 load_dotenv()
@@ -15,15 +16,22 @@ class DeliveryService:
     MAX_RANGE = 5000
     ADD_COST = 100
 
-    def __init__(self):
+    def __init__(self, cart_service=None):
         self.token = os.getenv("YANDEX_TOKEN")
         self.headers = {
             "Authorization": f"Bearer {self.token}",
             "Accept-Language": "ru/ru"
         }
+        self.cart_service = cart_service or Cart()
 
-    def calculate(self, user_id: str, delivery_data: dict) -> Response:
+    def calculate(self, user_id: str, delivery_data: dict, steps: list, user_data:None, comment:None) -> Response:
         response = Response()
+        logger.debug(f"Данные пришли на DeliveryService:\n{delivery_data}")
+
+        if delivery_data.get('deliveryMethod') == 'Самовывоз':
+            logger.debug("Запись данных для самовывоза в mongo")
+            self.cart_service.add_delivery(user_id, delivery_data, user_data, comment)
+            return Response()
 
         if not delivery_data or not delivery_data.get("address"):
             response.status_code = status.HTTP_400_BAD_REQUEST
@@ -76,6 +84,11 @@ class DeliveryService:
 
             response.status_code = status.HTTP_200_OK
             response.data = {"price": price, "distance_meters": distance_meters}
+            if "payment_step" in steps:
+                logger.debug("Запись данных доставки в mongo")
+                delivery_data['deliveryCost'] = price
+                logger.debug(f"Данные доставки записываемые в mongo:\n{delivery_data}")
+                self.cart_service.add_delivery(user_id, delivery_data, user_data, comment)
             return response
 
         return self._handle_error(yandex_response.status_code, yandex_data, address, response)

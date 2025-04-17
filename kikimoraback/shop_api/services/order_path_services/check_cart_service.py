@@ -1,5 +1,9 @@
-from rest_framework.response import Response
+import logging
+
 from rest_framework import status
+from rest_framework.response import Response
+
+logger = logging.getLogger("shop")
 
 
 class CheckCartService:
@@ -7,10 +11,10 @@ class CheckCartService:
         self.cart_service = cart_service
 
     def check(self, user_id: int | str, cart_data: dict) -> Response:
+        logger.debug(f"Данные пришли в CheckCartService:\n{cart_data}")
         if not cart_data:
             return Response(
-                {"error": "В корзине ничего нет"},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "В корзине ничего нет"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         card_updated = self.cart_service.check_cart_data(
@@ -25,5 +29,6 @@ class CheckCartService:
                 "add_bonuses": card_updated["add_bonuses"],
             },
         )
-
-        return Response(card_updated, status=status.HTTP_200_OK)
+        logger.debug("Ответ от сервиса проверки корзины:\n"
+                     f"data:\n{card_updated}")
+        return Response(data=card_updated, status=status.HTTP_200_OK)

@@ -78,7 +78,7 @@ def test_delivery_step_success(
     assert response.data == {
         "price": 600,
         "distance_meters": 3000,
-    }  # 500 + 100 (ADD_COST)
+    }
     mock_requests_post.assert_called_once_with(
         "https://b2b.taxi.yandex.net/b2b/cargo/integration/v2/check-price",
         headers={"Authorization": "Bearer None", "Accept-Language": "ru/ru"},

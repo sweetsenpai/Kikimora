@@ -7,7 +7,7 @@ from .discounts.limit_time import LimitTimeProductSerializer
 from .products.card import ProductCardSerializer
 from .products.detail import ProductSerializer
 from .products.search import ProductSearchSerializer
-
+from .order_path.order_path_data import OrderPathSerializer
 __all__ = [
     "RegistrationSerializer",
     "UserBonusSerializer",
@@ -21,4 +21,5 @@ __all__ = [
     "MenuDiscountProductSerializer",
     "DiscountSerializer",
     "LimitTimeProductSerializer",
+    "OrderPathSerializer",
 ]

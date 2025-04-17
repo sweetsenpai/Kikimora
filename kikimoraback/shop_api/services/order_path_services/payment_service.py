@@ -18,10 +18,9 @@ class PaymentService:
         self.payment_gateway = payment_gateway or PaymentYookassa()
 
     def process_payment(
-        self, user_id, user_data, bonuses, comment, delivery_data
+        self, user_id, user_data, bonuses,
     ) -> Response:
         try:
-            self.cart_service.add_delivery(user_id, delivery_data, user_data, comment)
             cart_data = self.cart_service.get_cart_data(user_id)
             delivery_data = cart_data.get("delivery_data")
             order_number = self.order_service.get_neworder_num(user_id)
@@ -57,12 +56,20 @@ class PaymentService:
                     status=status.HTTP_503_SERVICE_UNAVAILABLE,
                 )
 
+            logger.debug("Внесение информации о платеже:\n"
+                         f"payment_id: {response_data['id']}\n"
+                         f"order_number: {order_number}\n"
+                         f"bonuses: {bonuses}")
+
             self.cart_service.add_payment_data(
                 user_id=user_id,
                 payment_id=response_data["id"],
                 order_number=order_number,
                 bonuses=bonuses,
             )
+            cart_data['payment_id'] = response_data["id"]
+            cart_data['order_number']=order_number
+            cart_data['bonuses_deducted']=bonuses
 
             self.order_service.create_order_on_cart(cart_data)
             self.cart_service.delete_cart(user_id=user_id)
