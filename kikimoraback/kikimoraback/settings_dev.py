@@ -27,8 +27,9 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = ["http://localhost:3000/"]
 
+INSTALLED_APPS += ["debug_toolbar"]
 
-MIDDLEWARE += "debug_toolbar.middleware.DebugToolbarMiddleware"
+MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
 ]
@@ -95,3 +96,72 @@ AUTH_USER_MODEL = "shop.CustomUser"
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
+
+PROMETHEUS_EXPORT_MIGRATIONS = False
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} {levelname} {name} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+            "level": "DEBUG",  # Установите уровень обработчика на DEBUG
+        },
+        "info_file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/info.log"),
+            "level": "INFO",
+            "formatter": "verbose",
+            "maxBytes": 1024 * 1024 * 5,
+            "backupCount": 3,
+        },
+        "error_file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/error.log"),
+            "level": "ERROR",
+            "formatter": "verbose",
+            "maxBytes": 1024 * 1024 * 5,
+            "backupCount": 3,
+        },
+        "critical_file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/critical.log"),
+            "level": "CRITICAL",
+            "formatter": "verbose",
+            "maxBytes": 1024 * 1024 * 5,
+            "backupCount": 3,
+        },
+    },
+    "root": {
+        "handlers": ["console", "info_file", "error_file"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "info_file", "error_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "celery": {
+            "handlers": ["console", "info_file", "error_file"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "shop": {
+            "handlers": ["console", "info_file", "error_file"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
+    },
+}
