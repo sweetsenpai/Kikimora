@@ -1,10 +1,16 @@
 from rest_framework import generics, status
-from rest_framework.views import APIView
-from celery.result import AsyncResult
-from ..models import *
-from rest_framework import generics, status
-from ..serializers import CategorySerializer, SubcategorySerializer, ProductSerializer, LimitTimeProductSerializer
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from celery.result import AsyncResult
+
+from ..models import *
+from ..serializers import (
+    CategorySerializer,
+    LimitTimeProductSerializer,
+    ProductSerializer,
+    SubcategorySerializer,
+)
 
 
 class CategoryList(generics.ListAPIView):
@@ -16,7 +22,7 @@ class SubcategoryList(generics.ListAPIView):
     serializer_class = SubcategorySerializer
 
     def get_queryset(self):
-        category_id = self.request.query_params.get('category')
+        category_id = self.request.query_params.get("category")
         return Subcategory.objects.filter(category=category_id)
 
 
@@ -24,13 +30,13 @@ class ProductList(generics.ListAPIView):
     serializer_class = ProductSerializer
 
     def get_queryset(self):
-        subcategory_id = self.request.query_params.get('subcategory')
+        subcategory_id = self.request.query_params.get("subcategory")
         return Product.objects.filter(subcategory=subcategory_id)
 
 
 class ProductAutocompleteView(APIView):
     def get(self, request, *args, **kwargs):
-        query = request.query_params.get('term', '')
+        query = request.query_params.get("term", "")
         products = Product.objects.filter(name__icontains=query)[:10]
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
@@ -45,9 +51,12 @@ class StopDiscountView(APIView):
             AsyncResult(id=discount.task_id_end).revoke(terminate=True)
             discount.end = timezone.now()
             discount.save()
-            return Response({'status': 'success'}, status=status.HTTP_200_OK)
+            return Response({"status": "success"}, status=status.HTTP_200_OK)
         except Discount.DoesNotExist:
-            return Response({'status': 'error', 'message': 'Discount not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"status": "error", "message": "Discount not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 class DeleteDayProduct(APIView):
@@ -56,8 +65,11 @@ class DeleteDayProduct(APIView):
             day_product = LimitTimeProduct.objects.get(pk=limittimeproduct_id)
             if day_product.task_id:
                 AsyncResult(id=day_product.task_id).revoke(terminate=True)
-                print(f'Задача удалена! info:{day_product.task_id}')
+                print(f"Задача удалена! info:{day_product.task_id}")
             day_product.delete()
-            return Response({'status': 'success'}, status=status.HTTP_200_OK)
+            return Response({"status": "success"}, status=status.HTTP_200_OK)
         except LimitTimeProduct.DoesNotExist:
-            return Response({'status': 'error', 'message': 'Day Product not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"status": "error", "message": "Day Product not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )

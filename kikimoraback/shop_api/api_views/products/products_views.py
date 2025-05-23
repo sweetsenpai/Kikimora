@@ -3,6 +3,7 @@ from django.core.cache import cache
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 
 from shop.services.caches import (
     active_products_cache,

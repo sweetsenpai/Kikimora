@@ -1,18 +1,18 @@
+import json
+import os
 import uuid
 from unittest.mock import Mock, patch
-import os
+
 from django.contrib.auth.models import AnonymousUser
 from django.http import JsonResponse
-from django.test import RequestFactory
-from django.test import override_settings
+from django.test import RequestFactory, override_settings
+
 from rest_framework import status
 from rest_framework.response import Response
-import json
+
 import pytest
 
 from shop_api.api_views.payment.order_path_views import OrderPath
-
-
 
 
 @pytest.fixture
@@ -23,6 +23,7 @@ def request_factory():
 @pytest.fixture
 def anonymous_user():
     return AnonymousUser()
+
 
 @pytest.fixture
 def mock_cart_service():
@@ -36,6 +37,7 @@ def mock_order_service():
     order_service = Mock()
     order_service.ping.return_value = True
     return order_service
+
 
 @patch.dict(os.environ, {"YANDEX_API_TOKEN": "None"}, clear=True)
 @patch("shop_api.api_views.payment.order_path_views.Cart")
@@ -90,6 +92,7 @@ def test_delivery_step_success(
         },
     )
 
+
 @patch.dict(os.environ, {"YANDEX_API_TOKEN": "None"}, clear=True)
 @patch("shop_api.api_views.payment.order_path_views.Cart")
 @patch("shop_api.api_views.payment.order_path_views.Order")
@@ -111,9 +114,7 @@ def test_delivery_step_missing_address(
     data = {"steps": ["delivery_step"], "deliveryData": {}}
 
     request = request_factory.post(
-        "/order",
-        data=json.dumps(data),
-        content_type="application/json"
+        "/order", data=json.dumps(data), content_type="application/json"
     )
     request.user = anonymous_user
     request.COOKIES = {"user_id": user_id}
@@ -127,6 +128,7 @@ def test_delivery_step_missing_address(
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.data == {"error": "Не передан адрес для расчета доставки."}
     mock_requests_post.assert_not_called()
+
 
 @patch.dict(os.environ, {"YANDEX_API_TOKEN": "None"}, clear=True)
 @patch("shop_api.api_views.payment.order_path_views.Cart")

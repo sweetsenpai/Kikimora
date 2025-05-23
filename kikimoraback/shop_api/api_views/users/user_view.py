@@ -8,9 +8,10 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from shop.models import CustomUser
-from shop_api.services.authentication import CookieJWTAuthentication
-from shop_api.serializers.auth.user import UserDataSerializer
 from shop.MongoIntegration.Order import Order
+from shop_api.serializers.auth.user import UserDataSerializer
+from shop_api.services.authentication import CookieJWTAuthentication
+
 logger = logging.getLogger("shop")
 
 

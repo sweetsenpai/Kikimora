@@ -11,6 +11,7 @@ from shop.services.caches import UserBonusSystem
 
 logger = logging.getLogger("shop")
 
+
 class PaymentService:
     def __init__(self, cart_service=None, order_service=None, payment_gateway=None):
         self.cart_service = cart_service or Cart()
@@ -18,7 +19,10 @@ class PaymentService:
         self.payment_gateway = payment_gateway or PaymentYookassa()
 
     def process_payment(
-        self, user_id, user_data, bonuses,
+        self,
+        user_id,
+        user_data,
+        bonuses,
     ) -> Response:
         try:
             cart_data = self.cart_service.get_cart_data(user_id)
@@ -51,15 +55,17 @@ class PaymentService:
                 return Response(
                     {
                         "error": "Во время оформления заказа произошла ошибка. "
-                                 "Попробуйте перезагрузить страницу."
+                        "Попробуйте перезагрузить страницу."
                     },
                     status=status.HTTP_503_SERVICE_UNAVAILABLE,
                 )
 
-            logger.debug("Внесение информации о платеже:\n"
-                         f"payment_id: {response_data['id']}\n"
-                         f"order_number: {order_number}\n"
-                         f"bonuses: {bonuses}")
+            logger.debug(
+                "Внесение информации о платеже:\n"
+                f"payment_id: {response_data['id']}\n"
+                f"order_number: {order_number}\n"
+                f"bonuses: {bonuses}"
+            )
 
             self.cart_service.add_payment_data(
                 user_id=user_id,
@@ -67,9 +73,9 @@ class PaymentService:
                 order_number=order_number,
                 bonuses=bonuses,
             )
-            cart_data['payment_id'] = response_data["id"]
-            cart_data['order_number']=order_number
-            cart_data['bonuses_deducted']=bonuses
+            cart_data["payment_id"] = response_data["id"]
+            cart_data["order_number"] = order_number
+            cart_data["bonuses_deducted"] = bonuses
 
             self.order_service.create_order_on_cart(cart_data)
             self.cart_service.delete_cart(user_id=user_id)

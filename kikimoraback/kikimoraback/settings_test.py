@@ -1,7 +1,9 @@
 import os
 import sys
 import tempfile
+
 from kikimoraback.settings_dev import *
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
 
@@ -93,11 +95,13 @@ REST_FRAMEWORK = {
     ],
 }
 
+
 class DisableMigrations:
     def __contains__(self, item):
         return True
 
     def __getitem__(self, item):
         return None
+
 
 MIGRATION_MODULES = DisableMigrations()

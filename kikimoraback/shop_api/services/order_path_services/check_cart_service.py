@@ -3,7 +3,7 @@ import logging
 from rest_framework import status
 from rest_framework.response import Response
 
-logger = logging.getLogger("shop")
+logger = logging.getLogger(__name__)
 
 
 class CheckCartService:
@@ -29,6 +29,5 @@ class CheckCartService:
                 "add_bonuses": card_updated["add_bonuses"],
             },
         )
-        logger.debug("Ответ от сервиса проверки корзины:\n"
-                     f"data:\n{card_updated}")
+        logger.debug("Ответ от сервиса проверки корзины:\n" f"data:\n{card_updated}")
         return Response(data=card_updated, status=status.HTTP_200_OK)

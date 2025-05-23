@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+
 from pymongo import ASCENDING
 
 from ..MongoIntegration.db_connection import MongoDBClient

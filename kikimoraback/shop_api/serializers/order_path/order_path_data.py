@@ -1,11 +1,17 @@
 from rest_framework import serializers
 
+
 class OrderPathSerializer(serializers.Serializer):
     steps = serializers.ListField(
-        child=serializers.ChoiceField(choices=[
-            "delivery_step", "check_cart_step", "promo_code_step", "payment_step"
-        ]),
-        required=True
+        child=serializers.ChoiceField(
+            choices=[
+                "delivery_step",
+                "check_cart_step",
+                "promo_code_step",
+                "payment_step",
+            ]
+        ),
+        required=True,
     )
     cart = serializers.DictField(required=False)
     userData = serializers.DictField(required=False)

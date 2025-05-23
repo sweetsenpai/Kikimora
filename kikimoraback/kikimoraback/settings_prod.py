@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
+
 import sentry_sdk
 from celery.schedules import crontab
 from dotenv import load_dotenv
@@ -37,7 +38,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "82.146.57.177",
-    'django',
+    "django",
 ]
 CSRF_TRUSTED_ORIGINS = ["http://82.146.57.177"]
 
@@ -45,7 +46,6 @@ CSRF_TRUSTED_ORIGINS = ["http://82.146.57.177"]
 # Application definition
 
 INSTALLED_APPS = [
-
     "django.contrib.admin",
     "django.contrib.auth",
     "django_prometheus",
@@ -57,12 +57,13 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "django_celery_beat",
+    "drf_spectacular",
 ]
 
 INTERNAL_IPS = ["127.0.0.1", "localhost", "172.17.0.1", "172.18.0.1"]
 
 MIDDLEWARE = [
-    'django_prometheus.middleware.PrometheusBeforeMiddleware',
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -71,7 +72,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'django_prometheus.middleware.PrometheusAfterMiddleware',
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 CORS_ALLOWED_ORIGINS = ["http://82.146.57.177"]
 
@@ -100,8 +101,8 @@ APPEND_SLASH = True
 WSGI_APPLICATION = "kikimoraback.wsgi.application"
 
 PROMETHEUS_METRICS = {
-    'django.http_requests_total_by_view_method_total': True,
-    'django.http_request_duration_seconds': True,
+    "django.http_requests_total_by_view_method_total": True,
+    "django.http_request_duration_seconds": True,
 }
 PROMETHEUS_EXPORT_MIGRATIONS = True
 
@@ -173,7 +174,15 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "PAGE_SIZE": 9,
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Kikimora API",
+    "DESCRIPTION": "API для магазина Кикимора.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
 
 SIMPLE_JWT = {
@@ -215,8 +224,12 @@ if not DEBUG:
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "shop.CustomUser"
 
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER", f"redis://:{REDIS_PASSWORD}@redis:6379/0")
-CELERY_RESULT_BACKEND = os.environ.get("CELERY_BROKER", f"redis://:{REDIS_PASSWORD}@redis:6379/0")
+CELERY_BROKER_URL = os.getenv(
+    "CELERY_BROKER", f"redis://:{REDIS_PASSWORD}@redis:6379/0"
+)
+CELERY_RESULT_BACKEND = os.environ.get(
+    "CELERY_BROKER", f"redis://:{REDIS_PASSWORD}@redis:6379/0"
+)
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 # Celery Beat
 CELERY_BROKER_HEARTBEAT = 60

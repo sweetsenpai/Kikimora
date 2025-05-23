@@ -1,13 +1,15 @@
 import logging
+
 from django.views.decorators.csrf import csrf_exempt
+
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from yookassa.domain.common import SecurityHelper
 from yookassa.domain.notification import (
     WebhookNotificationEventType,
     WebhookNotificationFactory,
 )
-from rest_framework.views import APIView
 
 from shop_api.tasks.payment_tasks.payment_canceled_tasks import process_payment_canceled
 from shop_api.tasks.payment_tasks.payment_succeeded_tasks import (

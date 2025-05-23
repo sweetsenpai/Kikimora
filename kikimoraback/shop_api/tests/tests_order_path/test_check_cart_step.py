@@ -1,6 +1,8 @@
+from unittest.mock import MagicMock
+
 from rest_framework import status
 from rest_framework.response import Response
-from unittest.mock import MagicMock
+
 import pytest
 
 from shop_api.services.order_path_services.check_cart_service import CheckCartService
@@ -39,10 +41,16 @@ class TestCheckCartService:
             "price_mismatches": [],
             "updated_cart": {
                 "products": [
-                    {"product_id": 1, "name": "Test Product", "price": 1000, "bonus": 100, "quantity": 1}
+                    {
+                        "product_id": 1,
+                        "name": "Test Product",
+                        "price": 1000,
+                        "bonus": 100,
+                        "quantity": 1,
+                    }
                 ]
             },
-            "add_bonuses": 100
+            "add_bonuses": 100,
         }
 
         service = CheckCartService(cart_service=mock_cart)
@@ -50,8 +58,14 @@ class TestCheckCartService:
         cart_data = {
             "total": 8610,
             "products": [
-                {"product_id": 1, "name": "Test Product", "price": 1000, "image": [], "quantity": 1}
-            ]
+                {
+                    "product_id": 1,
+                    "name": "Test Product",
+                    "price": 1000,
+                    "image": [],
+                    "quantity": 1,
+                }
+            ],
         }
 
         response = service.check(user_id="test-user", cart_data=cart_data)
@@ -73,15 +87,21 @@ class TestCheckCartService:
                     "product_id": 1,
                     "name": "Test Product",
                     "old_price": 10,
-                    "new_price": 1000
+                    "new_price": 1000,
                 }
             ],
             "updated_cart": {
                 "products": [
-                    {"product_id": 1, "name": "Test Product", "price": 1000, "bonus": 100, "quantity": 1}
+                    {
+                        "product_id": 1,
+                        "name": "Test Product",
+                        "price": 1000,
+                        "bonus": 100,
+                        "quantity": 1,
+                    }
                 ]
             },
-            "add_bonuses": 100
+            "add_bonuses": 100,
         }
 
         service = CheckCartService(cart_service=mock_cart)
@@ -89,9 +109,21 @@ class TestCheckCartService:
         cart_data = {
             "total": 8610,
             "products": [
-                {"product_id": 1, "name": "Test Product", "price": 10, "image": [], "quantity": 1},
-                {"product_id": 999, "name": "Product X", "price": 500, "image": [], "quantity": 1}
-            ]
+                {
+                    "product_id": 1,
+                    "name": "Test Product",
+                    "price": 10,
+                    "image": [],
+                    "quantity": 1,
+                },
+                {
+                    "product_id": 999,
+                    "name": "Product X",
+                    "price": 500,
+                    "image": [],
+                    "quantity": 1,
+                },
+            ],
         }
 
         response = service.check(user_id="test-user", cart_data=cart_data)

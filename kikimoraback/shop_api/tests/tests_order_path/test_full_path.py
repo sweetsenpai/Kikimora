@@ -1,7 +1,9 @@
-import pytest
-from rest_framework.test import APIClient
-from rest_framework.response import Response
 from unittest.mock import patch
+
+from rest_framework.response import Response
+from rest_framework.test import APIClient
+
+import pytest
 
 
 @pytest.mark.django_db
@@ -25,8 +27,12 @@ class TestOrderPath:
         self.mock_user_service = patcher_user.start()
 
         self.patchers = [
-            patcher_cart, patcher_order, patcher_check,
-            patcher_delivery, patcher_payment, patcher_user
+            patcher_cart,
+            patcher_order,
+            patcher_check,
+            patcher_delivery,
+            patcher_payment,
+            patcher_user,
         ]
 
         # Пинги
@@ -34,7 +40,10 @@ class TestOrderPath:
         self.mock_order.return_value.ping.return_value = True
 
         # user_id
-        self.mock_user_service.return_value.get_or_create_user_id.return_value = ("user-123", None)
+        self.mock_user_service.return_value.get_or_create_user_id.return_value = (
+            "user-123",
+            None,
+        )
 
     def teardown_method(self):
         for patcher in self.patchers:
@@ -75,23 +84,26 @@ class TestOrderPath:
         }
 
     def test_success_payment_path(self):
-        self.mock_check_cart.return_value.check.return_value = Response({
-            "total": 2400,
-            "deleted_products": [],
-            "price_mismatches": [],
-            "updated_cart": {
-                "products": [
-                    {
-                        "product_id": 483174435,
-                        "name": "15 оттенков весны",
-                        "price": 2400,
-                        "bonus": 200,
-                        "quantity": 1,
-                    }
-                ]
+        self.mock_check_cart.return_value.check.return_value = Response(
+            {
+                "total": 2400,
+                "deleted_products": [],
+                "price_mismatches": [],
+                "updated_cart": {
+                    "products": [
+                        {
+                            "product_id": 483174435,
+                            "name": "15 оттенков весны",
+                            "price": 2400,
+                            "bonus": 200,
+                            "quantity": 1,
+                        }
+                    ]
+                },
+                "add_bonuses": 200,
             },
-            "add_bonuses": 200,
-        }, status=200)
+            status=200,
+        )
 
         self.mock_delivery.return_value.calculate.return_value = Response(
             {"delivery_price": 500}, status=200
@@ -101,7 +113,9 @@ class TestOrderPath:
             {"payment_id": "123", "status": "success"}, status=200
         )
 
-        response = self.client.post("/api/v1/orderpath", self.base_payload(), format="json")
+        response = self.client.post(
+            "/api/v1/orderpath", self.base_payload(), format="json"
+        )
 
         assert response.status_code == 200
         assert response.data["status"] == "success"

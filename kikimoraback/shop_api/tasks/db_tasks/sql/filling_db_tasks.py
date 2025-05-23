@@ -8,7 +8,6 @@ from django.template.loader import render_to_string
 import httpx
 from celery import shared_task
 
-
 from ..cache_tasks.cache_prices_tasks import update_price_cache
 
 logger = logging.getLogger(__name__)

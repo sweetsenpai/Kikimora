@@ -27,7 +27,7 @@ from shop_api.services import (
 )
 
 load_dotenv()
-logger = logging.getLogger("shop")
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
@@ -87,7 +87,7 @@ class OrderPath(APIView):
                 f"user_id:{user_id}"
             )
             return cookie_response
-
+        logger.debug(f"user_id:{request.user}")
         # Если запрошена оплата — выполнить все шаги
         if "payment_step" in steps:
             steps = ["check_cart_step", "delivery_step", "payment_step"]
@@ -135,6 +135,7 @@ class OrderPath(APIView):
                 if should_stop or response.status_code >= 400:
                     return response
         if cookie_response:
+            logger.debug(f"cookie_response:{cookie_response}")
             last_response.set_cookie(
                 key=cookie_response["key"],
                 value=cookie_response["value"],

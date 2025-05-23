@@ -1,16 +1,19 @@
 # shop/services/delivery/yandex_delivery_service.py
 
-import os
-import requests
 import logging
+import os
 
-from dotenv import load_dotenv
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.response import Response
+
+import requests
+from dotenv import load_dotenv
+
 from shop.MongoIntegration.Cart import Cart
 
 logger = logging.getLogger("shop")
 load_dotenv()
+
 
 class DeliveryService:
     MAX_RANGE = 5000
@@ -20,15 +23,22 @@ class DeliveryService:
         self.token = os.getenv("YANDEX_TOKEN")
         self.headers = {
             "Authorization": f"Bearer {self.token}",
-            "Accept-Language": "ru/ru"
+            "Accept-Language": "ru/ru",
         }
         self.cart_service = cart_service or Cart()
 
-    def calculate(self, user_id: str, delivery_data: dict, steps: list, user_data:None, comment:None) -> Response:
+    def calculate(
+        self,
+        user_id: str,
+        delivery_data: dict,
+        steps: list,
+        user_data: None,
+        comment: None,
+    ) -> Response:
         response = Response()
         logger.debug(f"Данные пришли на DeliveryService:\n{delivery_data}")
 
-        if delivery_data.get('deliveryMethod') == 'Самовывоз':
+        if delivery_data.get("deliveryMethod") == "Самовывоз":
             logger.debug("Запись данных для самовывоза в mongo")
             self.cart_service.add_delivery(user_id, delivery_data, user_data, comment)
             return Response()
@@ -64,7 +74,9 @@ class DeliveryService:
         try:
             yandex_data = yandex_response.json()
         except ValueError:
-            logger.error(f"Некорректный JSON от API Яндекс. Статус: {yandex_response.status_code}")
+            logger.error(
+                f"Некорректный JSON от API Яндекс. Статус: {yandex_response.status_code}"
+            )
             response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
             response.data = {
                 "error": "Сервис доставки временно недоступен. Перезагрузите страницу и попробуйте ещё раз."
@@ -86,26 +98,36 @@ class DeliveryService:
             response.data = {"price": price, "distance_meters": distance_meters}
             if "payment_step" in steps:
                 logger.debug("Запись данных доставки в mongo")
-                delivery_data['deliveryCost'] = price
+                delivery_data["deliveryCost"] = price
                 logger.debug(f"Данные доставки записываемые в mongo:\n{delivery_data}")
-                self.cart_service.add_delivery(user_id, delivery_data, user_data, comment)
+                self.cart_service.add_delivery(
+                    user_id, delivery_data, user_data, comment
+                )
             return response
 
-        return self._handle_error(yandex_response.status_code, yandex_data, address, response)
+        return self._handle_error(
+            yandex_response.status_code, yandex_data, address, response
+        )
 
-    def _handle_error(self, code: int, data: dict, address: str, response: Response) -> Response:
+    def _handle_error(
+        self, code: int, data: dict, address: str, response: Response
+    ) -> Response:
         default_error = "Сейчас сервис доставки недоступен. Вы можете оформить доставку самостоятельно или обратиться в магазин."
 
         if code == 400:
             logger.error(f"Ошибка расчета стоимости. Address: {address} Error: {data}")
             response.status_code = status.HTTP_400_BAD_REQUEST
-            response.data = {"error": "Не удалось рассчитать стоимость доставки. Проверьте правильность введенного адреса."}
+            response.data = {
+                "error": "Не удалось рассчитать стоимость доставки. Проверьте правильность введенного адреса."
+            }
         elif code == 401:
             logger.critical("Неверный токен yandex-delivery.")
             response.status_code = status.HTTP_401_UNAUTHORIZED
             response.data = {"error": default_error}
         else:
-            logger.error(f"Непредвиденная ошибка при расчете. Address: {address} Error: {data}")
+            logger.error(
+                f"Непредвиденная ошибка при расчете. Address: {address} Error: {data}"
+            )
             response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
             response.data = {"error": default_error}
         return response
