@@ -10,7 +10,7 @@ services:
       bash -c "
       python manage.py makemigrations --noinput &&
       python manage.py migrate &&
-      pytest
+      pytest --import-mode=importlib
       "
     volumes:
       - .:/kikimoraback
