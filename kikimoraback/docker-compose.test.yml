@@ -8,13 +8,32 @@ services:
       - "8000:8000"
     command: >
       bash -c "
-      pytest -q --ds=kikimoraback.settings_test --nomigrations --reuse-db --maxfail=1
+      python manage.py makemigrations --noinput &&
+      python manage.py migrate &&
+      pytest
       "
+    volumes:
+      - .:/kikimoraback
     environment:
       - DJANGO_SETTINGS_MODULE=kikimoraback.settings_test
-      - DEBUG=1
-    develop:
-      watch:
-        - path: .
-          target: /kikimoraback
-          action: sync
+      - DEBUG=0
+    depends_on:
+      testdb:
+        condition: service_healthy
+
+  testdb:
+    image: postgres
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    container_name: testdb
+
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d postgres" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
