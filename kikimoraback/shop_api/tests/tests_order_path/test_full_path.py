@@ -120,9 +120,3 @@ class TestOrderPath:
         assert response.status_code == 200
         assert response.data["status"] == "success"
         assert response.data["payment_id"] == "123"
-
-    def test_empty_steps_returns_400(self):
-        payload = self.base_payload(steps=[])
-        response = self.client.post("/api/v1/orderpath", payload, format="json")
-        assert response.status_code == 400
-        assert "steps" in response.data

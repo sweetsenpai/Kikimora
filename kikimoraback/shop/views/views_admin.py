@@ -49,6 +49,7 @@ class StaffCheckRequiredMixin(UserPassesTestMixin):
         return redirect("admin_login")
 
 
+# TODO переписать под форму django
 class AdminLogin(LoginView):
     template_name = "master/login.html"
     redirect_authenticated_user = True
@@ -78,6 +79,7 @@ class AdminHomePageView(StaffCheckRequiredMixin, TemplateView):
     template_name = "master/home.html"
 
 
+# TODO переписать под форму django
 class StaffListView(StaffCheckRequiredMixin, ListView):
     template_name = "master/admin/staff.html"
     context_object_name = "admins"
@@ -90,7 +92,9 @@ class StaffListView(StaffCheckRequiredMixin, ListView):
         fio = request.POST.get("fio")
         phone = request.POST.get("phone")
         search_query = Q(email=email) | Q(phone=phone) | Q(user_fio=fio)
-        self.object_list = CustomUser.objects.filter(search_query, is_staff=True)
+        self.object_list = CustomUser.objects.filter(
+            search_query, is_staff=True
+        ).values()
         return self.render_to_response(
             self.get_context_data(object_list=self.object_list)
         )
@@ -138,7 +142,7 @@ class AdminCreateView(StaffCheckRequiredMixin, FormView):
         errors = {field: error_list[0] for field, error_list in form.errors.items()}
         return JsonResponse({"status": "error", "errors": errors})
 
-
+# TODO тестим всё что ниже
 @user_passes_test(is_staff_or_superuser)
 def admin_account(request, admin_id):
     if request.method == "POST":

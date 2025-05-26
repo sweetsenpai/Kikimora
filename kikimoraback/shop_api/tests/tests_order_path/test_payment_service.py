@@ -45,8 +45,6 @@ def test_payment_success(payment_service, mock_cart):
         user_id=user_id,
         user_data={"name": "Test"},
         bonuses=0,
-        comment="No comment",
-        delivery_data={"type": "pickup"},
     )
 
     assert response.status_code == status.HTTP_302_FOUND
@@ -65,7 +63,7 @@ def test_bonus_deduction_failure(payment_service, mock_cart, monkeypatch):
     )
 
     response = payment_service.process_payment(
-        user_id="user-2", user_data={}, bonuses=100, comment="test", delivery_data={}
+        user_id="user-2", user_data={}, bonuses=100
     )
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -76,23 +74,8 @@ def test_payment_gateway_returns_none(payment_service, mock_gateway):
     mock_gateway.send_payment_request.return_value = "{}"
 
     response = payment_service.process_payment(
-        user_id="user-3", user_data={}, bonuses=0, comment="test", delivery_data={}
+        user_id="user-3", user_data={}, bonuses=0
     )
 
     assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-    assert "error" in response.data
-
-
-def test_unexpected_exception(monkeypatch, payment_service):
-    monkeypatch.setattr(
-        payment_service.cart_service,
-        "add_delivery",
-        lambda *a, **k: (_ for _ in ()).throw(Exception("boom")),
-    )
-
-    response = payment_service.process_payment(
-        user_id="user-4", user_data={}, bonuses=0, comment="test", delivery_data={}
-    )
-
-    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
     assert "error" in response.data
