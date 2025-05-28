@@ -10,7 +10,7 @@ class TestAdminCategoryView:
         response = client.get(url)
 
         assert response.status_code == 200
-        assert len(response.context['categories']) == len(Category.objects.all())
+        assert list(response.context['categories']) == list(Category.objects.all())
 
     def test_not_admin_get_page_category(self,client, regular_user):
         client.force_login(regular_user)

@@ -70,7 +70,7 @@ def get_discounted_product_data(invalidate=False):
         if dp_data is not None:
             return dp_data
 
-    all_prices = cache.get("all_products_prices")
+    all_prices = cache.get("all_products_prices") or {"discounts_map": {}}
     products_with_discounts_ids = [
         product_id
         for product_id, discount in all_prices["discounts_map"].items()

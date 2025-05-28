@@ -55,7 +55,7 @@ urlpatterns = [
     path(
         "apanel/category/<int:category_id>/subcategories/<int:subcategory_id>/",
         views_admin.AdminProdactListView.as_view(),
-        name="prodact_list",
+        name="product_list",
     ),
     path(
         "api/v1/change_visibility_product/<int:product_id>/",

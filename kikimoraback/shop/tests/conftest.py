@@ -51,13 +51,23 @@ def subcategories(category):
 
 
 @pytest.fixture
-def products(subcategories):
-    products = []
-    for subcat in subcategories:
-        products += baker.make(
-            "Product",
-            subcategory=subcat,
-            _quantity=10,
-            name=baker.seq("Product {}", start=1),
-        )
+def products_set_1(subcategories):
+    products = baker.make(
+        "Product",
+        _quantity=10,
+        name=baker.seq("Product {}", start=1),
+    )
+    for product in products:
+        product.subcategory.add(subcategories[0])  # добавляем связь после сохранения
+    return products
+
+@pytest.fixture
+def products_set_2(subcategories):
+    products = baker.make(
+        "Product",
+        _quantity=10,
+        name=baker.seq("Product2 {}", start=1),
+    )
+    for product in products:
+        product.subcategory.add(subcategories[1])  # добавляем связь после сохранения
     return products
