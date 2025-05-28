@@ -55,7 +55,7 @@ def products_set_1(subcategories):
     products = baker.make(
         "Product",
         _quantity=10,
-        name=baker.seq("Product {}", start=1),
+        name=baker.seq("Product", start=1),
     )
     for product in products:
         product.subcategory.add(subcategories[0])  # добавляем связь после сохранения
@@ -66,7 +66,7 @@ def products_set_2(subcategories):
     products = baker.make(
         "Product",
         _quantity=10,
-        name=baker.seq("Product2 {}", start=1),
+        name=baker.seq("Product2", start=1),
     )
     for product in products:
         product.subcategory.add(subcategories[1])  # добавляем связь после сохранения

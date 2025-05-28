@@ -176,7 +176,7 @@ def toggle_visibility_category(request, category_id):
         return JsonResponse({"visibility": category.visibility})
     return JsonResponse({"error": "Invalid request"}, status=400)
 
-# TODO тестим всё что ниже
+
 class AdminSubcategoryListView(StaffCheckRequiredMixin, ListView):
     model = Subcategory
     template_name = "master/product/subcategory.html"
@@ -256,8 +256,7 @@ def toggle_visibility_product(request, product_id):
         return JsonResponse({"visibility": product.visibility})
     return JsonResponse({"error": "Invalid request"}, status=400)
 
-
-class ProductUpdateView(UpdateView):
+class ProductUpdateView(StaffCheckRequiredMixin, UpdateView):
     model = Product
     form_class = ProductForm
     template_name = "master/product/product_form.html"

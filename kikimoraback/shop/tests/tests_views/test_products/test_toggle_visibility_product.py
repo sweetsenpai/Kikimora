@@ -11,10 +11,10 @@ class TestToogleVisabilityProduct:
         url = reverse('change_visibility_product', kwargs={'product_id': product_before.product_id})
         response = client.post(url)
 
-        product_affter = Product.objects.get(prodcut_id=product_before.product_id,)
+        product_affter = Product.objects.get(product_id=product_before.product_id,)
 
         assert response.status_code == 200
-        assert product_before.visability != product_affter.visability
+        assert product_before.visibility != product_affter.visibility
 
     def test_toggle_non_existing_product(self, client, admin_user):
         client.force_login(admin_user)
@@ -32,7 +32,7 @@ class TestToogleVisabilityProduct:
         product_affter = Product.objects.get(product_id=product_before.product_id)
 
         assert response.status_code == 302
-        assert product_before.visability == product_affter.visability
+        assert product_before.visibility == product_affter.visibility
 
     def test_toogle_get(self, client, admin_user, products_set_1):
         client.force_login(admin_user)
@@ -41,7 +41,7 @@ class TestToogleVisabilityProduct:
         url = reverse('change_visibility_product', kwargs={'product_id': product_before.product_id})
         response = client.get(url)
 
-        product_affter = Product.obkects.get(product_id=product_before.product_id)
+        product_affter = Product.objects.get(product_id=product_before.product_id)
 
         assert response.status_code == 400
-        assert product_before.visability == product_affter.visability
+        assert product_before.visibility == product_affter.visibility

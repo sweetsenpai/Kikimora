@@ -121,17 +121,16 @@ class CategoryCreationForm(forms.ModelForm):
 
 
 class ProductForm(forms.ModelForm):
+    tag = forms.ModelChoiceField(
+        queryset=ProductTag.objects.all(),
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        label="Тег",
+    )
+
     class Meta:
         model = Product
         fields = ("name", "description", "price", "weight", "bonus", "tag")
-
-        tag = forms.ModelChoiceField(
-            queryset=ProductTag.objects.all(),
-            required=False,
-            widget=forms.Select(attrs={"class": "form-select"}),
-            label="Тег",
-        )
-
         error_messages = {
             "weight": {
                 "required": "Поле вес не может быть пустым!",
@@ -145,6 +144,7 @@ class ProductForm(forms.ModelForm):
                 "required": "Поле названия не может быть пустым!",
             },
         }
+
 
 
 class DiscountForm(forms.ModelForm):
