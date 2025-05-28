@@ -29,6 +29,9 @@ class TestAdminCreateAdmin:
         })
 
         assert response.status_code == 200
+        user = get_user_model().objects.filter(email="admin3@example.com").first()
+        assert user is None
+
 
     def test_create_new_admin_over_existing_user(self, client, admin_user, regular_user):
         client.force_login(admin_user)

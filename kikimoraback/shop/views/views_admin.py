@@ -142,19 +142,20 @@ class AdminCreateView(StaffCheckRequiredMixin, FormView):
         errors = {field: error_list[0] for field, error_list in form.errors.items()}
         return JsonResponse({"status": "error", "errors": errors})
 
-# TODO тестим всё что ниже
 @user_passes_test(is_staff_or_superuser)
 def admin_account(request, admin_id):
+    admin = get_object_or_404(get_user_model(), user_id=admin_id, is_staff=True)
+
     if request.method == "POST":
-        ex_admin = get_object_or_404(CustomUser, user_id=admin_id)
-        ex_admin.is_staff = False
-        ex_admin.is_superuser = False
-        ex_admin.save()
+        admin.is_staff = False
+        admin.is_superuser = False
+        admin.save()
         return JsonResponse({"status": "success", "redirect_url": "/apanel/staff"})
 
-    admin_data = {"admin": CustomUser.objects.get(user_id=admin_id)}
     return render(
-        request, template_name="master/admin/admin_page.html", context=admin_data
+        request,
+        template_name="master/admin/admin_page.html",
+        context={"admin": admin},
     )
 
 
@@ -162,9 +163,8 @@ class AdminCategoryView(StaffCheckRequiredMixin, ListView):
     template_name = "master/product/category.html"
     context_object_name = "categories"
     form_class = CategoryCreationForm
+    queryset = Category.objects.all().order_by("category_id")
 
-    def get_queryset(self):
-        return Category.objects.all().order_by("category_id")
 
 
 @user_passes_test(is_staff_or_superuser)
