@@ -142,6 +142,7 @@ class AdminCreateView(StaffCheckRequiredMixin, FormView):
         errors = {field: error_list[0] for field, error_list in form.errors.items()}
         return JsonResponse({"status": "error", "errors": errors})
 
+
 @user_passes_test(is_staff_or_superuser)
 def admin_account(request, admin_id):
     admin = get_object_or_404(get_user_model(), user_id=admin_id, is_staff=True)
@@ -166,7 +167,6 @@ class AdminCategoryView(StaffCheckRequiredMixin, ListView):
     queryset = Category.objects.all().order_by("category_id")
 
 
-
 @user_passes_test(is_staff_or_superuser)
 def toggle_visibility_category(request, category_id):
     if request.method == "POST":
@@ -176,7 +176,7 @@ def toggle_visibility_category(request, category_id):
         return JsonResponse({"visibility": category.visibility})
     return JsonResponse({"error": "Invalid request"}, status=400)
 
-
+# TODO тестим всё что ниже
 class AdminSubcategoryListView(StaffCheckRequiredMixin, ListView):
     model = Subcategory
     template_name = "master/product/subcategory.html"
