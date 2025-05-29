@@ -1,6 +1,9 @@
 from django.urls import reverse
-from shop.models import Category
+
 import pytest
+
+from shop.models import Category
+
 
 @pytest.mark.django_db
 class TestAdminCategoryView:
@@ -10,12 +13,12 @@ class TestAdminCategoryView:
         response = client.get(url)
 
         assert response.status_code == 200
-        assert list(response.context['categories']) == list(Category.objects.all())
+        assert list(response.context["categories"]) == list(Category.objects.all())
 
-    def test_not_admin_get_page_category(self,client, regular_user):
+    def test_not_admin_get_page_category(self, client, regular_user):
         client.force_login(regular_user)
         url = reverse("admin_category_view")
         response = client.get(url)
 
         assert response.status_code == 302
-        assert response.url == reverse('admin_login')
+        assert response.url == reverse("admin_login")

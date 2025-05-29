@@ -3,8 +3,6 @@ from django.contrib.auth import get_user_model
 import pytest
 from model_bakery import baker
 
-from shop.models import *
-
 User = get_user_model()
 
 
@@ -55,19 +53,55 @@ def products_set_1(subcategories):
     products = baker.make(
         "Product",
         _quantity=10,
+        price=10.0,
+        weight=1.5,
+        description="Default description",
         name=baker.seq("Product", start=1),
     )
     for product in products:
         product.subcategory.add(subcategories[0])  # добавляем связь после сохранения
     return products
 
+
 @pytest.fixture
 def products_set_2(subcategories):
     products = baker.make(
         "Product",
+        price=10.0,
+        weight=1.5,
+        description="Default description",
         _quantity=10,
         name=baker.seq("Product2", start=1),
     )
     for product in products:
-        product.subcategory.add(subcategories[1])  # добавляем связь после сохранения
+        product.subcategory.add(subcategories[1])
     return products
+
+
+@pytest.fixture
+def tags(products_set_1, products_set_2):
+    tags_list = baker.make("ProductTag", text=baker.seq("Tag", start=1), _quantity=3)
+    for product in products_set_2:
+        product.tag = tags_list[0]
+        product.save()
+
+    for product in products_set_1:
+        product.tag = tags_list[1]
+        product.save()
+
+    return tags_list
+
+
+@pytest.fixture
+def discounts_category_fixture():
+    return baker.make_recipe("shop.discount_category_recipe")
+
+
+@pytest.fixture
+def discount_subcategory_recipe():
+    return baker.make_recipe("shop.discount_subcategory_recipe")
+
+
+@pytest.fixture
+def discounts_product_fixture():
+    return baker.make_recipe("shop.discount_product_recipe")

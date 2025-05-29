@@ -145,6 +145,17 @@ class ProductForm(forms.ModelForm):
             },
         }
 
+    def clean_price(self):
+        price = self.cleaned_data.get("price")
+        if price is not None and price <= 0:
+            raise forms.ValidationError("Цена должна быть больше нуля.")
+        return price
+
+    def clean_weight(self):
+        weight = self.cleaned_data.get("weight")
+        if weight is not None and weight <= 0:
+            raise forms.ValidationError("Вес должен быть больше нуля.")
+        return weight
 
 
 class DiscountForm(forms.ModelForm):

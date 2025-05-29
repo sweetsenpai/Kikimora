@@ -1,18 +1,13 @@
 import logging
-from datetime import datetime, timedelta
+from decimal import Decimal
 
-import django.utils.timezone
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
     PermissionsMixin,
-    User,
 )
-from decimal import Decimal
 from django.core.validators import (
     MaxLengthValidator,
-    MaxValueValidator,
     MinValueValidator,
     RegexValidator,
 )
@@ -214,12 +209,20 @@ class Product(models.Model):
     name = models.CharField(max_length=200, help_text="Название товара", db_index=True)
     description = models.TextField(default=None, null=True)
 
-
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"),
-    validators=[MinValueValidator(Decimal("0.01"))]
-    ,help_text="Цена товара")
-    weight = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"),
-    validators=[MinValueValidator(Decimal("0.01"))],help_text="Вес товара в киллограммах")
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text="Цена товара",
+    )
+    weight = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text="Вес товара в киллограммах",
+    )
 
     subcategory = models.ManyToManyField(Subcategory, related_name="products")
     bonus = models.IntegerField(default=0)
@@ -280,7 +283,13 @@ class Discount(models.Model):
     discount_type = models.CharField(
         max_length=15, choices=DISCOUNT_TYPE_CHOICES, default="percentage"
     )
-    value = models.FloatField(help_text="Процент скидки или сумма скидки", default=0)
+    value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text="Процент скидки или сумма скидки",
+    )
     description = models.CharField(max_length=400, blank=True)
     start = models.DateTimeField(default=timezone.now)
     end = models.DateTimeField(default=timezone.now)
@@ -299,13 +308,6 @@ class Discount(models.Model):
 
     def __str__(self):
         return f"{self.discount_id} - {self.value} ({self.get_discount_type_display()})"
-
-    def apply_discount(self, price):
-        if self.discount_type == "percentage":
-            return round(price - (price * (self.value / 100)))
-        elif self.discount_type == "amount":
-            return max(0, price - self.value)
-        return price
 
 
 class PromoSystem(models.Model):

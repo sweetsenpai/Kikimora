@@ -3,7 +3,7 @@ import logging
 from abc import ABC
 
 from django.contrib import messages
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.views import LoginView
@@ -256,6 +256,7 @@ def toggle_visibility_product(request, product_id):
         return JsonResponse({"visibility": product.visibility})
     return JsonResponse({"error": "Invalid request"}, status=400)
 
+
 class ProductUpdateView(StaffCheckRequiredMixin, UpdateView):
     model = Product
     form_class = ProductForm
@@ -288,9 +289,7 @@ class ProductUpdateView(StaffCheckRequiredMixin, UpdateView):
 class AdminTagView(StaffCheckRequiredMixin, ListView):
     template_name = "master/tag/tags.html"
     context_object_name = "tags"
-
-    def get_queryset(self):
-        return ProductTag.objects.all()
+    queryset = ProductTag.objects.all()
 
 
 class AdminNewTag(StaffCheckRequiredMixin, CreateView):
@@ -302,11 +301,11 @@ class AdminNewTag(StaffCheckRequiredMixin, CreateView):
 class AdminDeleteTag(StaffCheckRequiredMixin, DeleteView):
     model = ProductTag
     success_url = reverse_lazy("tags")
+    slug_field = "tag_id"
+    slug_url_kwarg = "tag_id"
 
-    def get_object(self, queryset=None):
-        return get_object_or_404(ProductTag, tag_id=self.kwargs["tag_id"])
 
-
+# TODO тестим ниже
 class AdminDiscountListView(StaffCheckRequiredMixin, ListView):
     model = Discount
     template_name = "master/discount/discounts.html"

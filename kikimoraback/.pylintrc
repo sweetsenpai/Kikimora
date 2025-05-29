@@ -1,6 +1,11 @@
 [MASTER]
 ignore=migrations
+init-hook='import sys, os; sys.path.append("."); os.environ.setdefault("DJANGO_SETTINGS_MODULE", "kikimoraback.settings_dev"); import django; django.setup()'
 load-plugins=pylint_django
+
+[REPORTS]
+output-format=colorized
+
 
 [MESSAGES CONTROL]
 disable=
@@ -13,10 +18,10 @@ disable=
     too-many-instance-attributes,
     too-many-branches,
     too-many-statements,
-    duplicate-code,
+    duplicate-code
 
 [FORMAT]
-max-line-length=150
+max-line-length=100
 
 [VARIABLES]
 good-names=pk,id
