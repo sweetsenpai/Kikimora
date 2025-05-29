@@ -14,9 +14,7 @@ subcategory_recipe = Recipe(Subcategory, category=foreign_key(category_recipe))
 
 product_recipe = Recipe(Product)
 
-product_recipe_with_subs = product_recipe.extend(
-    subcategory=related(subcategory_recipe)
-)
+product_recipe_with_subs = product_recipe.extend(subcategory=related(subcategory_recipe))
 
 
 discount_category_recipe = Recipe(

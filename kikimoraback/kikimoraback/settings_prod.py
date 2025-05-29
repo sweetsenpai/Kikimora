@@ -216,21 +216,15 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 if not DEBUG:
     STATICFILES_DIRS = []
-    STATICFILES_STORAGE = (
-        "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
-    )
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "shop.CustomUser"
 
-CELERY_BROKER_URL = os.getenv(
-    "CELERY_BROKER", f"redis://:{REDIS_PASSWORD}@redis:6379/0"
-)
-CELERY_RESULT_BACKEND = os.environ.get(
-    "CELERY_BROKER", f"redis://:{REDIS_PASSWORD}@redis:6379/0"
-)
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER", f"redis://:{REDIS_PASSWORD}@redis:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_BROKER", f"redis://:{REDIS_PASSWORD}@redis:6379/0")
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 # Celery Beat
 CELERY_BROKER_HEARTBEAT = 60

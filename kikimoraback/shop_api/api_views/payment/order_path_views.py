@@ -94,16 +94,12 @@ class OrderPath(APIView):
 
         def check_cart_step(user_id, cart, check_cart_service):
             response = check_cart_service.check(user_id, cart)
-            if response.data.get("price_mismatches") or response.data.get(
-                "deleted_products"
-            ):
+            if response.data.get("price_mismatches") or response.data.get("deleted_products"):
                 return response, True
             return response, False
 
         step_actions = {
-            "check_cart_step": lambda: check_cart_step(
-                user_id, cart, check_cart_service
-            ),
+            "check_cart_step": lambda: check_cart_step(user_id, cart, check_cart_service),
             "delivery_step": lambda: (
                 DeliveryService(cart_service).calculate(
                     user_id=user_id,

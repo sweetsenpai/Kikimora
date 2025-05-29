@@ -12,6 +12,4 @@ class Command(BaseCommand):
         Здесь мы вызываем задачу Celery.
         """
         boot_cache()
-        self.stdout.write(
-            self.style.SUCCESS("Задача для инициализации кэша отправлена")
-        )
+        self.stdout.write(self.style.SUCCESS("Задача для инициализации кэша отправлена"))

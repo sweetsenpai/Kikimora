@@ -58,9 +58,7 @@ class ProductViewSet(viewsets.ViewSet):
         serializer = self.serializer_class(result_page, many=True, context=context)
         return paginator.get_paginated_response(serializer.data)
 
-    @action(
-        detail=False, methods=["get"], url_path="subcategory/(?P<subcategory_id>[^/.]+)"
-    )
+    @action(detail=False, methods=["get"], url_path="subcategory/(?P<subcategory_id>[^/.]+)")
     def by_subcategory(self, request, subcategory_slug=None):
         if not subcategory_slug.isdigit():
             subcategory = subcategory_cache().filter(permalink=subcategory_slug).first()

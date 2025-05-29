@@ -1,6 +1,7 @@
 import json
 import logging
 from abc import ABC
+from datetime import datetime
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login
@@ -92,12 +93,8 @@ class StaffListView(StaffCheckRequiredMixin, ListView):
         fio = request.POST.get("fio")
         phone = request.POST.get("phone")
         search_query = Q(email=email) | Q(phone=phone) | Q(user_fio=fio)
-        self.object_list = CustomUser.objects.filter(
-            search_query, is_staff=True
-        ).values()
-        return self.render_to_response(
-            self.get_context_data(object_list=self.object_list)
-        )
+        self.object_list = CustomUser.objects.filter(search_query, is_staff=True).values()
+        return self.render_to_response(self.get_context_data(object_list=self.object_list))
 
 
 class AdminCreateView(StaffCheckRequiredMixin, FormView):
@@ -134,9 +131,7 @@ class AdminCreateView(StaffCheckRequiredMixin, FormView):
             existing_user.is_staff = True
             existing_user.save()
 
-            new_admin_mail.delay(
-                "Ваш текущий пароль остается неизменным.", existing_user.email
-            )
+            new_admin_mail.delay("Ваш текущий пароль остается неизменным.", existing_user.email)
 
             return JsonResponse({"status": "success", "redirect_url": self.success_url})
         errors = {field: error_list[0] for field, error_list in form.errors.items()}
@@ -184,9 +179,7 @@ class AdminSubcategoryListView(StaffCheckRequiredMixin, ListView):
 
     def get_queryset(self):
         self.category = get_object_or_404(Category, pk=self.kwargs["category_id"])
-        return Subcategory.objects.filter(category=self.category).order_by(
-            "subcategory_id"
-        )
+        return Subcategory.objects.filter(category=self.category).order_by("subcategory_id")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -210,9 +203,7 @@ class AdminProdactListView(StaffCheckRequiredMixin, ListView):
     context_object_name = "products"
 
     def get_queryset(self):
-        self.subcategory = get_object_or_404(
-            Subcategory, pk=self.kwargs["subcategory_id"]
-        )
+        self.subcategory = get_object_or_404(Subcategory, pk=self.kwargs["subcategory_id"])
         photos_prefetch = Prefetch(
             "photos",
             queryset=ProductPhoto.objects.order_by("-is_main", "photo_id"),
@@ -236,9 +227,7 @@ class AdminProdactListView(StaffCheckRequiredMixin, ListView):
 
         name = request.POST.get("name")
         if not name:
-            products = Product.objects.filter(subcategory=self.subcategory).order_by(
-                "product_id"
-            )
+            products = Product.objects.filter(subcategory=self.subcategory).order_by("product_id")
         else:
             products = Product.objects.filter(name=name).order_by("product_id")
 
@@ -305,7 +294,6 @@ class AdminDeleteTag(StaffCheckRequiredMixin, DeleteView):
     slug_url_kwarg = "tag_id"
 
 
-# TODO тестим ниже
 class AdminDiscountListView(StaffCheckRequiredMixin, ListView):
     model = Discount
     template_name = "master/discount/discounts.html"
@@ -344,9 +332,6 @@ class AdminNewDiscount(StaffCheckRequiredMixin, FormView):
         discount.save()
         return super().form_valid(form)
 
-    def form_invalid(self, form):
-        return super().form_invalid(form)
-
 
 @user_passes_test(is_staff_or_superuser)
 def delete_discount(request, discount_id):
@@ -358,6 +343,7 @@ def delete_discount(request, discount_id):
     return render(request, template_name=template_name, context={"discount": discount})
 
 
+# TODO тестим ниже
 class AdminPromocodeListView(StaffCheckRequiredMixin, ListView):
     model = PromoSystem
     template_name = "master/promo/promocods.html"
@@ -382,9 +368,7 @@ class AdminNewPromo(StaffCheckRequiredMixin, FormView):
         else:
             form.instance.active = False
             promo = form.save()
-            promo.task_id_start = activate_promo.apply_async(
-                (promo.promo_id,), eta=promo.start
-            )
+            promo.task_id_start = activate_promo.apply_async((promo.promo_id,), eta=promo.start)
             promo.task_id_end = deactivate_expired_promo.apply_async(
                 (promo.promo_id,), eta=promo.end
             )
@@ -443,9 +427,7 @@ class AdminLimitTimeProductForm(StaffCheckRequiredMixin, FormView):
         return kwargs
 
     def form_valid(self, form):
-        form.instance.product_id = Product.objects.get(
-            product_id=self.kwargs["product_id"]
-        )
+        form.instance.product_id = Product.objects.get(product_id=self.kwargs["product_id"])
         limit_time_product = form.save()
         due_time = limit_time_product.due
         task = delete_limite_time_product.apply_async(

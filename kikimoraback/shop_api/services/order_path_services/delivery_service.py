@@ -74,9 +74,7 @@ class DeliveryService:
         try:
             yandex_data = yandex_response.json()
         except ValueError:
-            logger.error(
-                f"Некорректный JSON от API Яндекс. Статус: {yandex_response.status_code}"
-            )
+            logger.error(f"Некорректный JSON от API Яндекс. Статус: {yandex_response.status_code}")
             response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
             response.data = {
                 "error": "Сервис доставки временно недоступен. Перезагрузите страницу и попробуйте ещё раз."
@@ -100,18 +98,12 @@ class DeliveryService:
                 logger.debug("Запись данных доставки в mongo")
                 delivery_data["deliveryCost"] = price
                 logger.debug(f"Данные доставки записываемые в mongo:\n{delivery_data}")
-                self.cart_service.add_delivery(
-                    user_id, delivery_data, user_data, comment
-                )
+                self.cart_service.add_delivery(user_id, delivery_data, user_data, comment)
             return response
 
-        return self._handle_error(
-            yandex_response.status_code, yandex_data, address, response
-        )
+        return self._handle_error(yandex_response.status_code, yandex_data, address, response)
 
-    def _handle_error(
-        self, code: int, data: dict, address: str, response: Response
-    ) -> Response:
+    def _handle_error(self, code: int, data: dict, address: str, response: Response) -> Response:
         default_error = "Сейчас сервис доставки недоступен. Вы можете оформить доставку самостоятельно или обратиться в магазин."
 
         if code == 400:
@@ -125,9 +117,7 @@ class DeliveryService:
             response.status_code = status.HTTP_401_UNAUTHORIZED
             response.data = {"error": default_error}
         else:
-            logger.error(
-                f"Непредвиденная ошибка при расчете. Address: {address} Error: {data}"
-            )
+            logger.error(f"Непредвиденная ошибка при расчете. Address: {address} Error: {data}")
             response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
             response.data = {"error": default_error}
         return response

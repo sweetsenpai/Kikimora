@@ -18,9 +18,7 @@ class TestToggleVisibilityCategory:
         response = client.post(url)
 
         assert response.status_code == 200
-        updated_subcategory = Subcategory.objects.get(
-            subcategory_id=subcategory.subcategory_id
-        )
+        updated_subcategory = Subcategory.objects.get(subcategory_id=subcategory.subcategory_id)
         assert updated_subcategory.visibility != subcategory_visability_before
 
     def test_toggle_get_method_subcategory(self, client, admin_user, subcategories):
@@ -34,9 +32,7 @@ class TestToggleVisibilityCategory:
         response = client.get(url)
 
         assert response.status_code == 400
-        updated_subcategory = Subcategory.objects.get(
-            subcategory_id=subcategory.subcategory_id
-        )
+        updated_subcategory = Subcategory.objects.get(subcategory_id=subcategory.subcategory_id)
         assert updated_subcategory.visibility == subcategory_visability_before
 
     def test_toogle_non_existing_subcategory(self, client, admin_user, subcategories):
@@ -56,7 +52,5 @@ class TestToggleVisibilityCategory:
         response = client.post(url)
 
         assert response.status_code == 302
-        updated_subcategory = Subcategory.objects.get(
-            subcategory_id=subcategory.subcategory_id
-        )
+        updated_subcategory = Subcategory.objects.get(subcategory_id=subcategory.subcategory_id)
         assert updated_subcategory.visibility == subcategory_visability_before

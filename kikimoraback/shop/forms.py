@@ -26,9 +26,7 @@ class RegistrationForm(forms.ModelForm):
 
 class UserCreationForm(forms.ModelForm):
     password1 = forms.CharField(label="Password", widget=forms.PasswordInput)
-    password2 = forms.CharField(
-        label="Password confirmation", widget=forms.PasswordInput
-    )
+    password2 = forms.CharField(label="Password confirmation", widget=forms.PasswordInput)
 
     class Meta:
         model = CustomUser
@@ -94,9 +92,7 @@ class AdminCreationForm(forms.ModelForm):
         if not re.match(r"^\+?[1-9]\d{1,14}$", phone):
             raise ValidationError("Введите корректный номер телефона.")
         if CustomUser.objects.filter(phone=phone).exists():
-            raise ValidationError(
-                "Пользователь с таким номером телефона уже существует."
-            )
+            raise ValidationError("Пользователь с таким номером телефона уже существует.")
         return phone
 
 
@@ -110,9 +106,7 @@ class CategoryCreationForm(forms.ModelForm):
         if not name:
             raise ValidationError("Поле имя категории не может быть пустым")
         if Category.objects.filter(name=name).exists():
-            raise ValidationError(
-                "Категория с таким названием уже существует, зачем вам ещё одна?"
-            )
+            raise ValidationError("Категория с таким названием уже существует, зачем вам ещё одна?")
         return name
 
     def clean_text(self):
@@ -182,9 +176,7 @@ class DiscountForm(forms.ModelForm):
         end = cleaned_data.get("end")
         try:
             if discount_type == "percentage" and value > 100:
-                raise ValidationError(
-                    {"value": "Процент скидки не может быть больше 100!"}
-                )
+                raise ValidationError({"value": "Процент скидки не может быть больше 100!"})
         except TypeError:
             raise ValidationError({"value": "Размер скидки не может быть равен 0!"})
         if start >= end:
@@ -250,9 +242,7 @@ class LimiteTimeProductForm(forms.ModelForm):
             raise ValidationError({"ammount": "Поле количества не может быть пустым!"})
         try:
             if price <= 0:
-                raise ValidationError(
-                    {"price": "Поле цены не может быть меньше или равно нулю!"}
-                )
+                raise ValidationError({"price": "Поле цены не может быть меньше или равно нулю!"})
         except TypeError:
             raise ValidationError({"price": "Поле цены не может быть пустым!"})
 

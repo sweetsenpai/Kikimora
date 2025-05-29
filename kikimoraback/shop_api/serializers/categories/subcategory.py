@@ -10,9 +10,7 @@ class MenuSubcategorySerializer(serializers.ModelSerializer):
 
 
 class SubcategorySerializer(serializers.ModelSerializer):
-    products = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Product.objects.all()
-    )
+    products = serializers.PrimaryKeyRelatedField(many=True, queryset=Product.objects.all())
 
     class Meta:
         model = Subcategory

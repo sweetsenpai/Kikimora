@@ -113,9 +113,7 @@ def test_delivery_step_missing_address(
     user_id = str(uuid.uuid4())
     data = {"steps": ["delivery_step"], "deliveryData": {}}
 
-    request = request_factory.post(
-        "/order", data=json.dumps(data), content_type="application/json"
-    )
+    request = request_factory.post("/order", data=json.dumps(data), content_type="application/json")
     request.user = anonymous_user
     request.COOKIES = {"user_id": user_id}
 

@@ -13,7 +13,21 @@ class TestAdminDiscountListView:
         discount_subcategory_recipe,
     ):
         client.force_login(admin_user)
-        response = client.get(reverse(discounts))
+        response = client.get(reverse("discounts"))
 
         assert response.status_code == 200
-        assert len(responce.context["discount"]) == 3
+        assert len(response.context["discounts"]) == 3
+
+    def test_get_discount_view_non_admin(
+        self,
+        client,
+        regular_user,
+        discounts_product_fixture,
+        discounts_category_fixture,
+        discount_subcategory_recipe,
+    ):
+        client.force_login(regular_user)
+        response = client.get(reverse("discounts"))
+
+        assert response.status_code == 302
+        assert response.url == reverse("admin_login")

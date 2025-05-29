@@ -62,9 +62,7 @@ def test_bonus_deduction_failure(payment_service, mock_cart, monkeypatch):
         lambda *args, **kwargs: (_ for _ in ()).throw(Exception("fail")),
     )
 
-    response = payment_service.process_payment(
-        user_id="user-2", user_data={}, bonuses=100
-    )
+    response = payment_service.process_payment(user_id="user-2", user_data={}, bonuses=100)
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert "error" in response.data
@@ -73,9 +71,7 @@ def test_bonus_deduction_failure(payment_service, mock_cart, monkeypatch):
 def test_payment_gateway_returns_none(payment_service, mock_gateway):
     mock_gateway.send_payment_request.return_value = "{}"
 
-    response = payment_service.process_payment(
-        user_id="user-3", user_data={}, bonuses=0
-    )
+    response = payment_service.process_payment(user_id="user-3", user_data={}, bonuses=0)
 
     assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
     assert "error" in response.data

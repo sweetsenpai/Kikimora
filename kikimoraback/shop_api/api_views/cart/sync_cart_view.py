@@ -23,8 +23,6 @@ class SyncCart(APIView):
         cart = Cart()
 
         return Response(
-            data=cart.sync_cart_data(
-                user_id=user_data.user_id, front_cart_data=front_data
-            ),
+            data=cart.sync_cart_data(user_id=user_data.user_id, front_cart_data=front_data),
             status=status.HTTP_200_OK,
         )

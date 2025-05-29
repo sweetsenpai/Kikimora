@@ -13,13 +13,9 @@ class CheckCartService:
     def check(self, user_id: int | str, cart_data: dict) -> Response:
         logger.debug(f"Данные пришли в CheckCartService:\n{cart_data}")
         if not cart_data:
-            return Response(
-                {"error": "В корзине ничего нет"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "В корзине ничего нет"}, status=status.HTTP_400_BAD_REQUEST)
 
-        card_updated = self.cart_service.check_cart_data(
-            front_data=cart_data, user_id=user_id
-        )
+        card_updated = self.cart_service.check_cart_data(front_data=cart_data, user_id=user_id)
 
         self.cart_service.sync_cart_data(
             user_id=user_id,

@@ -26,9 +26,7 @@ class ProductApi(generics.RetrieveAPIView):
             else:
                 single_product = active_products_cache().get(permalink=product_slug)
         except Product.DoesNotExist:
-            logger.error(
-                f"Неудалось найти товаро по заданным параметрам.{product_slug}"
-            )
+            logger.error(f"Неудалось найти товаро по заданным параметрам.{product_slug}")
             raise Http404
         # Возвращаем объект продукта
         return single_product

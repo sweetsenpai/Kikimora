@@ -10,9 +10,7 @@ class TestToggleVisibilityCategory:
     def test_valid_toggle(self, client, admin_user, category):
         client.force_login(admin_user)
         category_visability_before = category.visibility
-        url = reverse(
-            "change_visability_category", kwargs={"category_id": category.category_id}
-        )
+        url = reverse("change_visability_category", kwargs={"category_id": category.category_id})
         response = client.post(url)
 
         assert response.status_code == 200
@@ -22,9 +20,7 @@ class TestToggleVisibilityCategory:
     def test_toggle_get_method(self, client, admin_user, category):
         client.force_login(admin_user)
         category_visability_before = category.visibility
-        url = reverse(
-            "change_visability_category", kwargs={"category_id": category.category_id}
-        )
+        url = reverse("change_visability_category", kwargs={"category_id": category.category_id})
         response = client.get(url)
 
         assert response.status_code == 400
@@ -42,9 +38,7 @@ class TestToggleVisibilityCategory:
     def test_toogle_category_by_not_admin(self, client, regular_user, category):
         client.force_login(regular_user)
         category_visability_before = category.visibility
-        url = reverse(
-            "change_visability_category", kwargs={"category_id": category.category_id}
-        )
+        url = reverse("change_visability_category", kwargs={"category_id": category.category_id})
         response = client.post(url)
 
         assert response.status_code == 302

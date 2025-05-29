@@ -21,9 +21,7 @@ urlpatterns = [
     ),
     # STAFF
     path("apanel/staff/", views_admin.StaffListView.as_view(), name="staff"),
-    path(
-        "apanel/staff/<int:admin_id>/", views_admin.admin_account, name="admin_account"
-    ),
+    path("apanel/staff/<int:admin_id>/", views_admin.admin_account, name="admin_account"),
     path(
         "apanel/staff/create_new_admin/",
         views_admin.AdminCreateView.as_view(),
@@ -94,9 +92,7 @@ urlpatterns = [
         views_admin.AdminNewPromo.as_view(),
         name="new_promo",
     ),
-    path(
-        "apanel/promocods/<int:promo_id>/", views_admin.delete_promo, name="promocods"
-    ),
+    path("apanel/promocods/<int:promo_id>/", views_admin.delete_promo, name="promocods"),
     # LIMITE TIME PRODUCTS
     path(
         "apanel/day_products",

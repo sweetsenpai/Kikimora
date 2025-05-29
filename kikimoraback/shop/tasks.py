@@ -53,9 +53,7 @@ def new_admin_mail(password, email):
         email_message.content_subtype = "html"
         email_message.send(fail_silently=False)
     except Exception as e:
-        logger.error(
-            f"Во время отправки письма новому администратору произошла ошибка.\nERROR:{e}"
-        )
+        logger.error(f"Во время отправки письма новому администратору произошла ошибка.\nERROR:{e}")
     return
 
 
@@ -282,14 +280,9 @@ def check_crm_changes(self):
                             timeout=10,
                         ).json()
                         bonus = (
-                            float(prod_data["variants"][0]["price_in_site_currency"])
-                            * 0.1
-                            if float(prod_data["variants"][0]["price_in_site_currency"])
-                            < 4000
-                            else float(
-                                prod_data["variants"][0]["price_in_site_currency"]
-                            )
-                            * 0.05
+                            float(prod_data["variants"][0]["price_in_site_currency"]) * 0.1
+                            if float(prod_data["variants"][0]["price_in_site_currency"]) < 4000
+                            else float(prod_data["variants"][0]["price_in_site_currency"]) * 0.05
                         )
                         weight = prod_data["variants"][0].get("weight")
                         if prod_data["variants"][0]["quantity"] == 0:
@@ -302,14 +295,10 @@ def check_crm_changes(self):
                             product_obj, created = Product.objects.update_or_create(
                                 product_id=prod_data["id"],
                                 defaults={
-                                    "name": re.sub(
-                                        r"\s*\(.*?\)\s*", "", prod_data["title"]
-                                    ),
+                                    "name": re.sub(r"\s*\(.*?\)\s*", "", prod_data["title"]),
                                     "description": prod_data["description"],
                                     "price": float(
-                                        prod_data["variants"][0][
-                                            "price_in_site_currency"
-                                        ]
+                                        prod_data["variants"][0]["price_in_site_currency"]
                                     ),
                                     "weight": weight,
                                     "bonus": round(bonus),
@@ -352,34 +341,28 @@ def check_crm_changes(self):
                                 product_obj.subcategory.add(subcategory)
                                 for image in prod_data["images"]:
                                     if image["external_id"]:
-                                        obj, created = (
-                                            ProductPhoto.objects.get_or_create(
-                                                photo_url=image["external_id"],
-                                                defaults={
-                                                    "product": product_obj,
-                                                    "is_main": (image["position"] == 1),
-                                                },
-                                            )
+                                        obj, created = ProductPhoto.objects.get_or_create(
+                                            photo_url=image["external_id"],
+                                            defaults={
+                                                "product": product_obj,
+                                                "is_main": (image["position"] == 1),
+                                            },
                                         )
                                     elif image["original_url"]:
-                                        obj, created = (
-                                            ProductPhoto.objects.get_or_create(
-                                                photo_url=image["original_url"],
-                                                defaults={
-                                                    "product": product_obj,
-                                                    "is_main": (image["position"] == 1),
-                                                },
-                                            )
+                                        obj, created = ProductPhoto.objects.get_or_create(
+                                            photo_url=image["original_url"],
+                                            defaults={
+                                                "product": product_obj,
+                                                "is_main": (image["position"] == 1),
+                                            },
                                         )
                                     if image["large_url"]:
-                                        obj, created = (
-                                            ProductPhotoMini.objects.get_or_create(
-                                                photo_url=image["large_url"],
-                                                defaults={
-                                                    "product": product_obj,
-                                                    "is_main": (image["position"] == 1),
-                                                },
-                                            )
+                                        obj, created = ProductPhotoMini.objects.get_or_create(
+                                            photo_url=image["large_url"],
+                                            defaults={
+                                                "product": product_obj,
+                                                "is_main": (image["position"] == 1),
+                                            },
                                         )
 
                         except Exception as e:
@@ -460,18 +443,14 @@ def process_payment_succeeded(self, payment_id):
     try:
         user_order = Order()
         if not user_order.ping():
-            logger.error(
-                f"Ошибка подключения к базе данных при обработке платежа {payment_id}."
-            )
+            logger.error(f"Ошибка подключения к базе данных при обработке платежа {payment_id}.")
             return
 
         user_order_data = user_order.get_order_by_payment(payment_id)
 
         # Начисление бонусов
         if user_order_data["add_bonuses"]:
-            UserBonusSystem.add_bonus(
-                user_order_data["customer"], user_order_data["add_bonuses"]
-            )
+            UserBonusSystem.add_bonus(user_order_data["customer"], user_order_data["add_bonuses"])
 
         # Отправка заказа в InSales
         insales_order_new = send_new_order(user_order_data)
@@ -580,9 +559,7 @@ def feedback_email(self, feedback_data):
         logger.error(
             f"Во время отправки обратной связи произошла непредвиденная ошибка.\nERROR: {e}"
         )
-        raise self.retry(
-            exc=e, countdown=2**self.request.retries
-        )  # Повторная попытка отправки
+        raise self.retry(exc=e, countdown=2**self.request.retries)  # Повторная попытка отправки
 
 
 @shared_task

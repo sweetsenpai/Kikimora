@@ -7,9 +7,7 @@ from shop.models import Product
 
 @pytest.mark.django_db
 class TestAdminProdactListView:
-    def test_get_productlist(
-        self, client, admin_user, products_set_1, subcategories, category
-    ):
+    def test_get_productlist(self, client, admin_user, products_set_1, subcategories, category):
         client.force_login(admin_user)
         url = reverse(
             "product_list",
@@ -27,9 +25,7 @@ class TestAdminProdactListView:
 
         assert list(response.context["products"]) == list(products)
 
-    def test_search_productlist(
-        self, client, admin_user, products_set_1, subcategories, category
-    ):
+    def test_search_productlist(self, client, admin_user, products_set_1, subcategories, category):
         client.force_login(admin_user)
         product = products_set_1[0]
         url = reverse(

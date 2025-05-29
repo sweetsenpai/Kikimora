@@ -13,18 +13,14 @@ def process_payment_succeeded(self, payment_id):
     try:
         user_order = Order()
         if not user_order.ping():
-            logger.error(
-                f"Ошибка подключения к базе данных при обработке платежа {payment_id}."
-            )
+            logger.error(f"Ошибка подключения к базе данных при обработке платежа {payment_id}.")
             return
 
         user_order_data = user_order.get_order_by_payment(payment_id)
 
         # Начисление бонусов
         if user_order_data["add_bonuses"]:
-            UserBonusSystem.add_bonus(
-                user_order_data["customer"], user_order_data["add_bonuses"]
-            )
+            UserBonusSystem.add_bonus(user_order_data["customer"], user_order_data["add_bonuses"])
 
         # Отправка заказа в InSales
         insales_order_new = send_new_order(user_order_data)

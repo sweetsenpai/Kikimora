@@ -35,9 +35,7 @@ urlpatterns = [
     ),
     # USER DATA
     path("api/v1/user/", UserDataView.as_view(), name="api-user-data"),
-    path(
-        "api/v1/user/<int:user_id>", UserDataView.as_view(), name="api-admin-user-data"
-    ),
+    path("api/v1/user/<int:user_id>", UserDataView.as_view(), name="api-admin-user-data"),
     path("api/v1/user/order_history", UsersOrder.as_view(), name="api-order-history"),
     # PRODUCTS
     path("api/v1/categories/", CategoryList.as_view(), name="category-list"),

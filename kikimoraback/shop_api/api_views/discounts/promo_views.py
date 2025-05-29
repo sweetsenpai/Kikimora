@@ -23,18 +23,14 @@ class PromoCode(APIView):
                 f"Ошибка применения промокода.\nPROMO: {promo}\nCART: {cart_data}\nERROR: {error}"
             )
             return Response(
-                {
-                    "error": "Сейчас невозможно использовать этот промокод. Попробуйте позже."
-                },
+                {"error": "Сейчас невозможно использовать этот промокод. Попробуйте позже."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         return response
 
     def apply_promo(self, cart_data, promo, user, promo_code):
         if not promo:
-            return Response(
-                {"error": "Промокод не существует."}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "Промокод не существует."}, status=status.HTTP_404_NOT_FOUND)
 
         if promo.one_time and not isinstance(user, AnonymousUser):
             return Response(
@@ -44,10 +40,7 @@ class PromoCode(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if (
-            promo.one_time
-            and promo.promocodeuseg_set.filter(user_id=user.user_id).exists()
-        ):
+        if promo.one_time and promo.promocodeuseg_set.filter(user_id=user.user_id).exists():
             return Response(
                 {"error": "Промокод уже использован."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -89,9 +82,7 @@ class PromoCode(APIView):
             )
 
         promo_metadata["type"] = "delivery"
-        promo_metadata["new_total"] = (
-            cart_data["total"] - cart_data["delivery_data"]["cost"]
-        )
+        promo_metadata["new_total"] = cart_data["total"] - cart_data["delivery_data"]["cost"]
         Cart().apply_promo(cart_data["customer"], promo_metadata)
         return Response(status=status.HTTP_200_OK, data={"freeDelivery": True})
 
@@ -120,6 +111,4 @@ class PromoCode(APIView):
         promo_metadata["new_total"] = new_total
         promo_metadata["discount_value"] = promo.procentage
         Cart().apply_promo(cart_data["customer"], promo_metadata)
-        return Response(
-            data={"percentage": promo.procentage}, status=status.HTTP_200_OK
-        )
+        return Response(data={"percentage": promo.procentage}, status=status.HTTP_200_OK)

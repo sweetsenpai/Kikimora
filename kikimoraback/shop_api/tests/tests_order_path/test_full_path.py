@@ -113,9 +113,7 @@ class TestOrderPath:
             {"payment_id": "123", "status": "success"}, status=200
         )
 
-        response = self.client.post(
-            "/api/v1/orderpath", self.base_payload(), format="json"
-        )
+        response = self.client.post("/api/v1/orderpath", self.base_payload(), format="json")
 
         assert response.status_code == 200
         assert response.data["status"] == "success"
