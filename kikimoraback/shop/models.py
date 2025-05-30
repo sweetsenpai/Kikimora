@@ -14,6 +14,8 @@ from django.core.validators import (
 from django.db import models
 from django.utils import timezone
 
+from celery.result import AsyncResult
+
 logger = logging.getLogger("shop")
 
 
@@ -319,14 +321,11 @@ class PromoSystem(models.Model):
         validators=[MinValueValidator(Decimal("0.01"))],
         help_text="Процент скидки или сумма скидки",
         blank=True,
-        null=True
+        null=True,
     )
     procentage = models.FloatField(blank=True, null=True)
-    # Ограничения на использование
-    usage_count = models.IntegerField(default=0)  # Количество использований
     one_time = models.BooleanField(default=False)  # Промокод на одноразовое использование
 
-    # Время действия промокода
     start = models.DateTimeField(default=timezone.now)
     end = models.DateTimeField()
     task_id_start = models.CharField(max_length=255, null=True, blank=True)
@@ -337,6 +336,13 @@ class PromoSystem(models.Model):
         # Проверка на активность промокода по дате
         now = timezone.now()
         return self.start <= now <= self.end
+
+    def delete(self, *args, **kwargs):
+        if self.task_id_start:
+            AsyncResult(self.task_id_start).revoke(terminate=True)
+        if self.task_id_end:
+            AsyncResult(self.task_id_end).revoke(terminate=True)
+        super().delete(*args, **kwargs)
 
 
 class PromoCodeUseg(models.Model):

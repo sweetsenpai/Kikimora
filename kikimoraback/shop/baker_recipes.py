@@ -1,10 +1,8 @@
-from itertools import product
-
 from django.utils import timezone
 
 from model_bakery.recipe import Recipe, foreign_key, related
 
-from shop.models import Category, Discount, Product, Subcategory, PromoSystem
+from shop.models import Category, Discount, Product, PromoSystem, Subcategory, LimitTimeProduct
 
 category_recipe = Recipe(
     Category,
@@ -51,7 +49,13 @@ discount_product_recipe = Recipe(
 promocode_recipe = Recipe(
     PromoSystem,
     promo_product=foreign_key(product_recipe_with_subs),
-    type='delivery',
+    type="delivery",
     start=timezone.now(),
     end=timezone.now() + timezone.timedelta(days=30),
+)
+
+limite_time_recipe = Recipe(
+    LimitTimeProduct,
+    product_id =foreign_key(product_recipe_with_subs),
+    due=timezone.now() + timezone.timedelta(days=30)
 )

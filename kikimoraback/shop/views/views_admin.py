@@ -308,6 +308,7 @@ class AdminDiscountListView(StaffCheckRequiredMixin, ListView):
         return context
 
 
+# TODO вынести логику id в модель
 class AdminNewDiscount(StaffCheckRequiredMixin, FormView):
     form_class = DiscountForm
     template_name = "master/discount/new_discount.html"
@@ -343,7 +344,6 @@ def delete_discount(request, discount_id):
     return render(request, template_name=template_name, context={"discount": discount})
 
 
-# TODO тестим ниже
 class AdminPromocodeListView(StaffCheckRequiredMixin, ListView):
     model = PromoSystem
     template_name = "master/promo/promocods.html"
@@ -353,6 +353,7 @@ class AdminPromocodeListView(StaffCheckRequiredMixin, ListView):
         return PromoSystem.objects.all().order_by("-promo_id")
 
 
+# TODO вынести логику работы с тасками в модель
 class AdminNewPromo(StaffCheckRequiredMixin, FormView):
     template_name = "master/promo/new_promocode.html"
     success_url = reverse_lazy("promocods")
@@ -379,18 +380,15 @@ class AdminNewPromo(StaffCheckRequiredMixin, FormView):
         return super().form_invalid(form)
 
 
+
 @user_passes_test(is_staff_or_superuser)
 def delete_promo(request, promo_id):
     template_name = "master/promo/old_promo.html"
     promo = get_object_or_404(PromoSystem, pk=promo_id)
     if request.method == "POST":
-        if promo.task_id_start:
-            AsyncResult(id=promo.task_id_start).revoke(terminate=True)
-        AsyncResult(id=promo.task_id_end).revoke(terminate=True)
         promo.delete()
         return redirect("promocods")
     return render(request, template_name=template_name, context={"promo": promo})
-
 
 class AdminLimitTimeProduct(StaffCheckRequiredMixin, ListView):
     template_name = "master/product/limit_time_products.html"
@@ -401,6 +399,8 @@ class AdminLimitTimeProduct(StaffCheckRequiredMixin, ListView):
         return LimitTimeProduct.objects.all().order_by("-limittimeproduct_id")
 
 
+# TODO вынести логику работы с task в модель
+# TODO тестим ниже
 class AdminLimitTimeProductForm(StaffCheckRequiredMixin, FormView):
     template_name = "master/product/limit_time_product_form.html"
     form_class = LimiteTimeProductForm

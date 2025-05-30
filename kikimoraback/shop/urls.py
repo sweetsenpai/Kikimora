@@ -92,7 +92,7 @@ urlpatterns = [
         views_admin.AdminNewPromo.as_view(),
         name="new_promo",
     ),
-    path("apanel/promocods/<int:promo_id>/", views_admin.delete_promo, name="promocods"),
+    path("apanel/promocods/<int:promo_id>/", views_admin.delete_promo, name="promocod_delete"),
     # LIMITE TIME PRODUCTS
     path(
         "apanel/day_products",

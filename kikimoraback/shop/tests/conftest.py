@@ -105,3 +105,12 @@ def discount_subcategory_recipe():
 @pytest.fixture
 def discounts_product_fixture():
     return baker.make_recipe("shop.discount_product_recipe")
+
+
+@pytest.fixture
+def promo_fixtures():
+    return baker.make_recipe("shop.promocode_recipe", _quantity=5)
+
+@pytest.fixture
+def limit_time_fixture():
+    return baker.make_recipe("shop.limite_time_recipe",  _quantity=5)
