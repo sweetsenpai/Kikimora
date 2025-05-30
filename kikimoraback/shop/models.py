@@ -312,8 +312,15 @@ class PromoSystem(models.Model):
     min_sum = models.FloatField(default=1, validators=[MinValueValidator(0)], blank=True, null=True)
 
     # Для фиксированной скидки или процента (если используется скидка)
-    # TODO перевести в DECIMAL
-    amount = models.FloatField(blank=True, null=True)
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text="Процент скидки или сумма скидки",
+        blank=True,
+        null=True
+    )
     procentage = models.FloatField(blank=True, null=True)
     # Ограничения на использование
     usage_count = models.IntegerField(default=0)  # Количество использований
