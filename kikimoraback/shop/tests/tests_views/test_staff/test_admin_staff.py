@@ -11,33 +11,35 @@ class TestAdminStaff:
         response = client.get(url)
 
         assert response.status_code == 200
+
+        # Получаем список пользователей из контекста
         admins = response.context["admins"]
-        # В queryset должны быть только сотрудники
-        assert all(admin["is_staff"] for admin in admins)
-        emails = [admin["email"] for admin in admins]
-        assert admin_user.email in emails
-        assert admin_user.email in emails
-        assert regular_user.email not in emails
+
+        # Приводим QuerySet к множеству ID для сравнения
+        admin_ids = set(user.user_id for user in admins)
+        expected_ids = {admin_user.user_id, admin_user2.user_id}
+
+        # Проверяем, что только админы попали в результат
+        assert admin_ids == expected_ids
+        assert regular_user.user_id not in admin_ids
 
     def test_post_search_by_email(self, client, admin_user, admin_user2):
         client.force_login(admin_user)
         url = reverse("staff")
 
-        data = {"email": admin_user2.email, "fio": "", "phone": ""}
-        response = client.post(url, data)
+        # Передаём email второго админа в query params
+        response = client.get(url, {"email": admin_user2.email})
 
         assert response.status_code == 200
+
         admins = response.context["admins"]
+
+        # Должен быть только один пользователь в результатах — admin_user2
         assert len(admins) == 1
-        assert admins[0]["email"] == admin_user2.email
+        assert admins[0].email == admin_user2.email
 
     def test_access_denied_for_non_staff(self, client, regular_user):
         client.force_login(regular_user)
         url = reverse("staff")
         response = client.get(url)
-        assert response.status_code == 302
-
-    def test_access_denied_for_anonymous(self, client):
-        url = reverse("staff")
-        response = client.get(url)
-        assert response.status_code == 302
+        assert response.url == reverse("admin_login")

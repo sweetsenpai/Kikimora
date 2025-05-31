@@ -1,3 +1,9 @@
-from .staff import AdminHomePageView, AdminLogin, StaffListView
+from .staff import AdminAccountView, AdminCreateView, AdminHomePageView, AdminLogin, StaffListView
 
-__all__ = ["AdminLogin", "AdminHomePageView","StaffListView"]
+__all__ = [
+    "AdminLogin",
+    "AdminHomePageView",
+    "StaffListView",
+    "AdminCreateView",
+    "AdminAccountView",
+]

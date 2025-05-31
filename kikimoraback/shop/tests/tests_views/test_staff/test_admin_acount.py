@@ -37,4 +37,4 @@ class TestAdminAccount:
         response = client.get(url)
 
         assert response.status_code == 302
-        assert response.url.startswith("/accounts/login")
+        assert response.url == reverse("admin_login")

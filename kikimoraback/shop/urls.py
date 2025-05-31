@@ -22,10 +22,10 @@ urlpatterns = [
     ),
     # STAFF
     path("apanel/staff/", StaffListView.as_view(), name="staff"),
-    path("apanel/staff/<int:admin_id>/", views_admin.admin_account, name="admin_account"),
+    path("apanel/staff/<int:admin_id>/", AdminAccountView.as_view(), name="admin_account"),
     path(
         "apanel/staff/create_new_admin/",
-        views_admin.AdminCreateView.as_view(),
+        AdminCreateView.as_view(),
         name="admin_create",
     ),
     # CATEGORY

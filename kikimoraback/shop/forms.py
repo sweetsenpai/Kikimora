@@ -2,6 +2,7 @@
 import re
 
 from django import forms
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, ReadOnlyPasswordHashField, ValidationError
 from django.contrib.auth.models import Group
 
@@ -23,7 +24,7 @@ class RegistrationForm(forms.ModelForm):
     password = forms.CharField(label="Password", widget=forms.PasswordInput)
 
     class Meta:
-        model = CustomUser
+        model = get_user_model()
         fields = ("email", "user_fio", "phone", "bd", "password")
 
     def save(self, commit=True):
@@ -40,7 +41,7 @@ class UserCreationForm(forms.ModelForm):
     password2 = forms.CharField(label="Password confirmation", widget=forms.PasswordInput)
 
     class Meta:
-        model = CustomUser
+        model = get_user_model()
         fields = (
             "email",
             "user_fio",
@@ -72,7 +73,7 @@ class UserChangeForm(forms.ModelForm):
     password = ReadOnlyPasswordHashField()
 
     class Meta:
-        model = CustomUser
+        model = get_user_model()
         fields = (
             "email",
             "user_fio",
@@ -89,21 +90,13 @@ class UserChangeForm(forms.ModelForm):
 
 class AdminCreationForm(forms.ModelForm):
     class Meta:
-        model = CustomUser
+        model = get_user_model()
         fields = ["email", "user_fio", "phone", "is_superuser"]
-
-    def clean_email(self):
-        email = self.cleaned_data.get("email")
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError("Пользователь с таким email уже существует.")
-        return email
 
     def clean_phone(self):
         phone = self.cleaned_data.get("phone")
         if not re.match(r"^\+?[1-9]\d{1,14}$", phone):
             raise ValidationError("Введите корректный номер телефона.")
-        if CustomUser.objects.filter(phone=phone).exists():
-            raise ValidationError("Пользователь с таким номером телефона уже существует.")
         return phone
 
 
