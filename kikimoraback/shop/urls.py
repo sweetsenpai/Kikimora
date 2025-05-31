@@ -8,12 +8,13 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
 )
 
-from .views import views_admin
+from .views_admin import *
+from .views_admin import views_admin
 
 urlpatterns = [
     # HOME
-    path("apanel/", views_admin.AdminHomePageView.as_view(), name="admin_home"),
-    path("apanel/login/", views_admin.AdminLogin.as_view(), name="admin_login"),
+    path("apanel/", AdminHomePageView.as_view(), name="admin_home"),
+    path("apanel/login/", AdminLogin.as_view(), name="admin_login"),
     path(
         "apanel/logout/",
         LogoutView.as_view(next_page="admin_login"),

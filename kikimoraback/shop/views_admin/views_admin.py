@@ -42,42 +42,10 @@ def is_staff_or_superuser(user):
 
 class StaffCheckRequiredMixin(UserPassesTestMixin):
     def test_func(self):
-        return self.request.user.is_authenticated and (
-            self.request.user.is_superuser or self.request.user.is_staff
-        )
+        return is_staff_or_superuser(self.request.user)
 
     def handle_no_permission(self):
         return redirect("admin_login")
-
-
-# TODO переписать под форму django
-class AdminLogin(LoginView):
-    template_name = "master/login.html"
-    redirect_authenticated_user = True
-
-    def post(self, request, *args, **kwargs):
-        email = request.POST.get("email")
-        password = request.POST.get("password")
-        remember_me = request.POST.get("remember_me", False)
-
-        user = authenticate(request, username=email, password=password)
-        if user is not None:
-            # Проверяем, является ли пользователь сотрудником или суперпользователем
-            if user.is_staff or user.is_superuser:
-                login(request, user)
-                if not remember_me:
-                    # Устанавливаем сессию на один день
-                    request.session.set_expiry(0)
-                return HttpResponseRedirect(reverse_lazy("admin_home"))
-            else:
-                messages.error(request, "У вас нет доступа к административной панели.")
-        else:
-            messages.error(request, "Неправильный email или пароль.")
-        return render(request, self.template_name)
-
-
-class AdminHomePageView(StaffCheckRequiredMixin, TemplateView):
-    template_name = "master/home.html"
 
 
 # TODO переписать под форму django
@@ -380,7 +348,6 @@ class AdminNewPromo(StaffCheckRequiredMixin, FormView):
         return super().form_invalid(form)
 
 
-
 @user_passes_test(is_staff_or_superuser)
 def delete_promo(request, promo_id):
     template_name = "master/promo/old_promo.html"
@@ -389,6 +356,7 @@ def delete_promo(request, promo_id):
         promo.delete()
         return redirect("promocods")
     return render(request, template_name=template_name, context={"promo": promo})
+
 
 class AdminLimitTimeProduct(StaffCheckRequiredMixin, ListView):
     template_name = "master/product/limit_time_products.html"

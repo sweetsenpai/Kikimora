@@ -2,10 +2,21 @@
 import re
 
 from django import forms
-from django.contrib.auth.forms import ReadOnlyPasswordHashField, ValidationError
+from django.contrib.auth.forms import AuthenticationForm, ReadOnlyPasswordHashField, ValidationError
 from django.contrib.auth.models import Group
 
 from .models import *
+
+
+class AdminLoginForm(AuthenticationForm):
+    remember_me = forms.BooleanField(required=False)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        user = self.get_user()
+        if user and not (user.is_staff or user.is_superuser):
+            raise forms.ValidationError("У вас нет доступа к административной панели.")
+        return cleaned_data
 
 
 class RegistrationForm(forms.ModelForm):

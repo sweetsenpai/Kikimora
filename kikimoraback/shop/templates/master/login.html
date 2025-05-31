@@ -119,39 +119,60 @@
     </svg>
 
 <main class="form-signin w-100 m-auto">
-  <form method="post">
+  <form method="post" novalidate>
     {% csrf_token %}
-    {% if messages  %}
-                <div id="errorContainer" class="alert alert-danger" role="alert">
-                    <ul>
-                {% for message in messages %}
-                        <li>{{ message }}</li>
+
+    {# Общие ошибки формы (например, неверный логин/пароль) #}
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger" role="alert">
+            <ul>
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
                 {% endfor %}
-    {% endif %}
             </ul>
+        </div>
+    {% endif %}
+
     <img class="d-block mx-auto mb-3" src="{% static 'images/browse-svgrepo-com.svg' %}" alt="" width="70">
     <h1 style="text-align:center" class="h3 mb-3 fw-normal">Вход</h1>
 
-    <div class="form-floating">
-      <input type="email" name="email" class="form-control" id="floatingInput" placeholder="name@example.com">
-      <label for="floatingInput">Email</label>
+    <div class="form-floating mb-3">
+        <input type="email" name="username" class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+               id="floatingInput" placeholder="name@example.com" value="{{ form.username.value|default:'' }}">
+        <label for="floatingInput">Email</label>
+        {% if form.username.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.username.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
     </div>
-    <div class="form-floating">
-      <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="Password">
-      <label for="floatingPassword">Пароль</label>
+
+    <div class="form-floating mb-3">
+        <input type="password" name="password" class="form-control {% if form.password.errors %}is-invalid{% endif %}"
+               id="floatingPassword" placeholder="Password">
+        <label for="floatingPassword">Пароль</label>
+        {% if form.password.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.password.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
     </div>
 
     <div class="form-check text-start my-3">
-      <input name="remember_me" class="form-check-input" type="checkbox" value="remember-me" id="flexCheckDefault">
-      <label class="form-check-label" for="flexCheckDefault">
-        Remember me
-      </label>
+        <input name="remember_me" class="form-check-input" type="checkbox" value="remember-me" id="flexCheckDefault">
+        <label class="form-check-label" for="flexCheckDefault">
+            Запомнить меня
+        </label>
     </div>
-    <button class="btn btn-primary w-100 py-2" type="submit">Sign in</button>
-    <p class="mt-5 mb-3 text-body-secondary" style="text-align:center">&copy; 2024-2026</p>
-  </form>
+
+    <button class="btn btn-primary w-100 py-2" type="submit">Войти</button>
+    <p class="mt-5 mb-3 text-body-secondary text-center">&copy; 2024–2026</p>
+</form>
 </main>
 <script src="{% static 'JS/bootstrap.bundle.min.js' %}"></script>
-
     </body>
 </html>

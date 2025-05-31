@@ -2,7 +2,7 @@ from django.utils import timezone
 
 from model_bakery.recipe import Recipe, foreign_key, related
 
-from shop.models import Category, Discount, Product, PromoSystem, Subcategory, LimitTimeProduct
+from shop.models import Category, Discount, LimitTimeProduct, Product, PromoSystem, Subcategory
 
 category_recipe = Recipe(
     Category,
@@ -56,6 +56,6 @@ promocode_recipe = Recipe(
 
 limite_time_recipe = Recipe(
     LimitTimeProduct,
-    product_id =foreign_key(product_recipe_with_subs),
-    due=timezone.now() + timezone.timedelta(days=30)
+    product_id=foreign_key(product_recipe_with_subs),
+    due=timezone.now() + timezone.timedelta(days=30),
 )

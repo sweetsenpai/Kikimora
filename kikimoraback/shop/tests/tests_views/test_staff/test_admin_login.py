@@ -11,30 +11,29 @@ class TestAdminLogin:
         response = client.post(
             reverse("admin_login"),
             {
-                "email": admin_user.email,
+                "username": admin_user.email,
                 "password": "password123",
             },
         )
-        assert response.status_code == 302
         assert response.url == reverse("admin_home")
+        assert response.wsgi_request.user.is_authenticated
+        assert response.wsgi_request.user == admin_user
 
     def test_regular_user_login_denied(self, client, regular_user):
         response = client.post(
             reverse("admin_login"),
             {
-                "email": regular_user.email,
+                "username": regular_user.email,
                 "password": "password123",
             },
         )
         assert response.status_code == 200
-        messages = [m.message for m in get_messages(response.wsgi_request)]
-        assert "У вас нет доступа к административной панели." in messages
+        assert not response.wsgi_request.user.is_authenticated
 
     def test_login_with_invalid_credentials(self, client, admin_user):
         response = client.post(
             reverse("admin_login"),
-            {"email": admin_user.email, "password": "not_a_password"},
+            {"username": admin_user.email, "password": "not_a_password"},
         )
         assert response.status_code == 200
-        messages = [m.message for m in get_messages(response.wsgi_request)]
-        assert "Неправильный email или пароль." in messages
+        assert not response.wsgi_request.user.is_authenticated
