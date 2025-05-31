@@ -2,35 +2,37 @@
 {% block title %} Сотрудники {% endblock %}
 {% block active8 %} active {% endblock active8 %}
 {% block content %}
-  <h1 style="margin-top:-5%;margin-bottom:3%;">Сотрудники</h1>
-    <form method="get" class="mb-3">
+  <h1>Сотрудники</h1>
+
+  <form method="get">
+  {% csrf_token %}
   <div class="input-group mb-3">
-     {{ filter.form.user_fio }}
+    {{ filter.form.user_fio }}
     {{ filter.form.email }}
     {{ filter.form.phone }}
+
     <div class="input-group-append">
-      <button type="submit" class="btn btn-primary" style="margin-left:5px; margin-right:5px;">Найти</button>
+      <button type="submit" style="margin-left:5px; margin-right:5px;" class="btn btn-primary">Найти</button>
     </div>
     <div class="input-group-append">
-      <button onclick="window.location='/apanel/staff/create_new_admin/';" type="button" class="btn btn-success">Добавить</button>
+      <a href="{% url 'admin_create' %}" class="btn btn-success">Добавить</a>
     </div>
   </div>
 </form>
 
-      <div class="table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">ФИО</th>
-                <th scope="col">Email</th>
-                <th scope="col">Телефон</th>
-              </tr>
-            </thead>
-            <tbody>
-            {% for admin in admins %}
-              <tr onclick="window.location='/apanel/staff/{{ admin.user_id }}/';" >
-                <th scope="row">{{ admin.user_id }}</th>
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>ФИО</th>
+        <th>Email</th>
+        <th>Телефон</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for admin in admins %}
+        <tr onclick="window.location='/apanel/staff/{{ admin.user_id }}/';" >
+          <th scope="row">{{ admin.user_id }}</th>
                 {% if admin.is_superuser %}
                   <td>{{ admin.user_fio }}<svg style="color:green" class="bi pe-none" width="24" height="24" role="img" aria-label="Dashboard"><use xlink:href="#cool"/></svg></td>
                 {% else %}
@@ -38,10 +40,12 @@
                 {% endif %}
                 <td>{{ admin.email }}</td>
                 <td>{{ admin.phone }}</td>
-              </tr>
-
-            {% endfor %}
-            </tbody>
-          </table>
-      </div>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="4">Сотрудники не найдены</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 {% endblock %}

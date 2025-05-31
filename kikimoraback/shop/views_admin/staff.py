@@ -49,16 +49,7 @@ class AdminHomePageView(StaffCheckRequiredMixin, TemplateView):
     template_name = "master/home.html"
 
 
-# TODO переписать под форму django
 class StaffListView(StaffCheckRequiredMixin, FilterView):
-    template_name = "master/admin/staff.html"
-    context_object_name = "admins"
+    template_name = 'master/admin/staff.html'
+    context_object_name = 'admins'
     filterset_class = StaffFilter
-    queryset = get_user_model().objects.filter(is_staff=True).order_by('user_id')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # filterset - это объект фильтра, он содержит форму
-        context['filter'] = context.get('filterset')
-        return context
-

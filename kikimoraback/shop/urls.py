@@ -21,7 +21,7 @@ urlpatterns = [
         name="admin_logout",
     ),
     # STAFF
-    path("apanel/staff/", views_admin.StaffListView.as_view(), name="staff"),
+    path("apanel/staff/", StaffListView.as_view(), name="staff"),
     path("apanel/staff/<int:admin_id>/", views_admin.admin_account, name="admin_account"),
     path(
         "apanel/staff/create_new_admin/",
