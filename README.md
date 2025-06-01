@@ -33,9 +33,6 @@ kikimoraback/
 ## 🔧 Установка и запуск
 
 ```bash
-git clone https://github.com/yourname/kikimora.git
-cd kikimora
-cp .env.example .env  # создать файл окружения
 docker-compose -f docker-compose.dev.yml up --build
 ```
 
@@ -61,7 +58,8 @@ docker-compose -f docker-compose.test.yml up --build
 ## 📊 Мониторинг
 
 - `/apanel/metrics/` — точка сбора метрик для Prometheus
-- Grafana и Sentry настраиваются через Docker
+- `Grafana` и `Sentry` настраиваются через Docker
+- `flower` - мониторинг `Celery`
 
 ## 🛠 TODO
 
