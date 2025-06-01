@@ -48,48 +48,6 @@ class StaffCheckRequiredMixin(UserPassesTestMixin):
         return redirect("admin_login")
 
 
-class AdminCategoryView(StaffCheckRequiredMixin, ListView):
-    template_name = "master/product/category.html"
-    context_object_name = "categories"
-    form_class = CategoryCreationForm
-    queryset = Category.objects.all().order_by("category_id")
-
-
-@user_passes_test(is_staff_or_superuser)
-def toggle_visibility_category(request, category_id):
-    if request.method == "POST":
-        category = get_object_or_404(Category, pk=category_id)
-        category.visibility = not category.visibility
-        category.save()
-        return JsonResponse({"visibility": category.visibility})
-    return JsonResponse({"error": "Invalid request"}, status=400)
-
-
-class AdminSubcategoryListView(StaffCheckRequiredMixin, ListView):
-    model = Subcategory
-    template_name = "master/product/subcategory.html"
-    context_object_name = "subcategories"
-
-    def get_queryset(self):
-        self.category = get_object_or_404(Category, pk=self.kwargs["category_id"])
-        return Subcategory.objects.filter(category=self.category).order_by("subcategory_id")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["category"] = self.category
-        return context
-
-
-@user_passes_test(is_staff_or_superuser)
-def toggle_visibility_subcat(request, subcategory_id):
-    if request.method == "POST":
-        subcategory = get_object_or_404(Subcategory, pk=subcategory_id)
-        subcategory.visibility = not subcategory.visibility
-        subcategory.save()
-        return JsonResponse({"visibility": subcategory.visibility})
-    return JsonResponse({"error": "Invalid request"}, status=400)
-
-
 class AdminProdactListView(StaffCheckRequiredMixin, ListView):
     model = Product
     template_name = "master/product/products.html"

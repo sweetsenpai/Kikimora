@@ -31,23 +31,23 @@ urlpatterns = [
     # CATEGORY
     path(
         "apanel/categories/",
-        views_admin.AdminCategoryView.as_view(),
+        AdminCategoryView.as_view(),
         name="admin_category_view",
     ),
     path(
         "api/v1/change_visability_category/<int:category_id>/",
-        views_admin.toggle_visibility_category,
+        toggle_visibility_category,
         name="change_visability_category",
     ),
     # SUBCATEGORY
     path(
         "apanel/category/<int:category_id>/subcategories/",
-        views_admin.AdminSubcategoryListView.as_view(),
+        AdminSubcategoryListView.as_view(),
         name="subcategory_list",
     ),
     path(
         "api/v1/change_visibility_subcat/<int:subcategory_id>/",
-        views_admin.toggle_visibility_subcat,
+        toggle_visibility_subcat,
         name="change_visibility_subcat",
     ),
     # PRODUCT

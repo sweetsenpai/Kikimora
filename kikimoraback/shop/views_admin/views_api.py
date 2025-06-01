@@ -65,7 +65,6 @@ class DeleteDayProduct(APIView):
             day_product = LimitTimeProduct.objects.get(pk=limittimeproduct_id)
             if day_product.task_id:
                 AsyncResult(id=day_product.task_id).revoke(terminate=True)
-                print(f"Задача удалена! info:{day_product.task_id}")
             day_product.delete()
             return Response({"status": "success"}, status=status.HTTP_200_OK)
         except LimitTimeProduct.DoesNotExist:
