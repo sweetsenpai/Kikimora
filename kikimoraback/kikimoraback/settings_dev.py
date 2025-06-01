@@ -13,88 +13,29 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
-import sentry_sdk
+
 from celery.schedules import crontab
 from dotenv import load_dotenv
+
+from .settings_prod import *
 
 load_dotenv()
 
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("DJANGO_KEY")
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = ["http://localhost:3000/"]
 
+INSTALLED_APPS += ["debug_toolbar"]
 
-# Application definition
-
-INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "shop.apps.ShopConfig",
-    "shop_api.apps.ShopApiConfig",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "corsheaders",
-    "django.contrib.staticfiles",
-    "rest_framework",
-    "django_celery_beat",
-    "debug_toolbar",
-]
-
-INTERNAL_IPS = ["127.0.0.1", "localhost", "172.17.0.1", "172.18.0.1"]
-
-MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
-]
+MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-]  # замените на адрес вашего фронтенда
+]
 
 
 CORS_ALLOW_CREDENTIALS = True
-
-ROOT_URLCONF = "kikimoraback.urls"
-
-TEMPLATES = [
-    {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, "templates")],
-        "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-            ],
-        },
-    },
-]
-
-APPEND_SLASH = True
-
-# WSGI_APPLICATION = 'kikimoraback.wsgi.application'
 
 
 # Database
@@ -124,35 +65,6 @@ CACHES = {
     }
 }
 
-
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = os.getenv("EMAIL_HOST")
-EMAIL_USE_TLS = False
-EMAIL_USE_SSL = True
-EMAIL_PORT = os.getenv("EMAIL_PORT")
-EMAIL_HOST_USER = os.getenv("EMAIL")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASSWORD")
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
-]
-
-
 DEBUG_TOOLBAR_PANELS = [
     "debug_toolbar.panels.versions.VersionsPanel",
     "debug_toolbar.panels.timer.TimerPanel",
@@ -168,55 +80,14 @@ DEBUG_TOOLBAR_PANELS = [
     "debug_toolbar.panels.redirects.RedirectsPanel",
 ]
 
-
-PASSWORD_HASHERS = [
-    "django.contrib.auth.hashers.Argon2PasswordHasher",
-    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
-    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
-    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
-    "django.contrib.auth.hashers.ScryptPasswordHasher",
-]
-
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    "PAGE_SIZE": 9,
-}
-
-
-JWT_COOKIE_SETTINGS = {
-    "ACCESS_TOKEN_COOKIE": "access_token",
-    "REFRESH_TOKEN_COOKIE": "refresh_token",
-}
-
-SIMPLE_JWT = {
-    "USER_ID_FIELD": "user_id",
-    "USER_ID_CLAIM": "user_id",
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=5),
-    "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
-}
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
-
-LANGUAGE_CODE = "ru-ru"
-
-TIME_ZONE = "Europe/Moscow"
-CELERY_TIMEZONE = TIME_ZONE
-USE_I18N = True
-
-USE_TZ = True
-
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
+WHITENOISE_AUTOREFRESH = True
+WHITENOISE_USE_FINDERS = True
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -225,17 +96,8 @@ AUTH_USER_MODEL = "shop.CustomUser"
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-# Celery Beat
-CELERY_BROKER_HEARTBEAT = 60
-CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
-sentry_sdk.init(
-    dsn=os.environ.get("SENTRY_DNS"),
-    # Add data like request headers and IP for users,
-    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
-    send_default_pii=True,
-)
+PROMETHEUS_EXPORT_MIGRATIONS = False
 
 LOGGING = {
     "version": 1,

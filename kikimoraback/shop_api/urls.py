@@ -1,6 +1,11 @@
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import path
 
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -30,9 +35,7 @@ urlpatterns = [
     ),
     # USER DATA
     path("api/v1/user/", UserDataView.as_view(), name="api-user-data"),
-    path(
-        "api/v1/user/<int:user_id>", UserDataView.as_view(), name="api-admin-user-data"
-    ),
+    path("api/v1/user/<int:user_id>", UserDataView.as_view(), name="api-admin-user-data"),
     path("api/v1/user/order_history", UsersOrder.as_view(), name="api-order-history"),
     # PRODUCTS
     path("api/v1/categories/", CategoryList.as_view(), name="category-list"),
@@ -77,4 +80,20 @@ urlpatterns = [
     path("api/v1/orderpath", OrderPath.as_view(), name="order-path"),
     path("api/v1/yookassa/test", TestWebhook.as_view(), name="webhook"),
     path("api/v1/feedback", FeedBackApi.as_view(), name="feedback"),
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "api/schema/swagger-ui/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
+    path(
+        "api/schema/redoc/",
+        SpectacularRedocView.as_view(url_name="schema"),
+        name="redoc",
+    ),
+    path(
+        "api/docs/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
 ]

@@ -98,9 +98,7 @@ class OrderPipeline(APIView):
         payment_view = Payment()
         request._full_data = request.data.copy()  # Копируем данные запроса
         request._full_data["cart"] = cart_data  # Добавляем данные корзины в запрос
-        request._full_data["delivery"] = (
-            delivery_data  # Добавляем данные доставки в запрос
-        )
+        request._full_data["delivery"] = delivery_data  # Добавляем данные доставки в запрос
         response = payment_view.post(request)
         if response.status_code != status.HTTP_302_FOUND:
             return {"error": response.data.get("error", "Ошибка оформления платежа.")}

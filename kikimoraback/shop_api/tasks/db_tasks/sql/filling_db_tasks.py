@@ -8,7 +8,6 @@ from django.template.loader import render_to_string
 import httpx
 from celery import shared_task
 
-
 from ..cache_tasks.cache_prices_tasks import update_price_cache
 
 logger = logging.getLogger(__name__)
@@ -73,14 +72,9 @@ def check_crm_changes(self):
                             timeout=10,
                         ).json()
                         bonus = (
-                            float(prod_data["variants"][0]["price_in_site_currency"])
-                            * 0.1
-                            if float(prod_data["variants"][0]["price_in_site_currency"])
-                            < 4000
-                            else float(
-                                prod_data["variants"][0]["price_in_site_currency"]
-                            )
-                            * 0.05
+                            float(prod_data["variants"][0]["price_in_site_currency"]) * 0.1
+                            if float(prod_data["variants"][0]["price_in_site_currency"]) < 4000
+                            else float(prod_data["variants"][0]["price_in_site_currency"]) * 0.05
                         )
                         weight = prod_data["variants"][0].get("weight")
                         if prod_data["variants"][0]["quantity"] == 0:
@@ -93,14 +87,10 @@ def check_crm_changes(self):
                             product_obj, created = Product.objects.update_or_create(
                                 product_id=prod_data["id"],
                                 defaults={
-                                    "name": re.sub(
-                                        r"\s*\(.*?\)\s*", "", prod_data["title"]
-                                    ),
+                                    "name": re.sub(r"\s*\(.*?\)\s*", "", prod_data["title"]),
                                     "description": prod_data["description"],
                                     "price": float(
-                                        prod_data["variants"][0][
-                                            "price_in_site_currency"
-                                        ]
+                                        prod_data["variants"][0]["price_in_site_currency"]
                                     ),
                                     "weight": weight,
                                     "bonus": round(bonus),
@@ -143,34 +133,28 @@ def check_crm_changes(self):
                                 product_obj.subcategory.add(subcategory)
                                 for image in prod_data["images"]:
                                     if image["external_id"]:
-                                        obj, created = (
-                                            ProductPhoto.objects.get_or_create(
-                                                photo_url=image["external_id"],
-                                                defaults={
-                                                    "product": product_obj,
-                                                    "is_main": (image["position"] == 1),
-                                                },
-                                            )
+                                        obj, created = ProductPhoto.objects.get_or_create(
+                                            photo_url=image["external_id"],
+                                            defaults={
+                                                "product": product_obj,
+                                                "is_main": (image["position"] == 1),
+                                            },
                                         )
                                     elif image["original_url"]:
-                                        obj, created = (
-                                            ProductPhoto.objects.get_or_create(
-                                                photo_url=image["original_url"],
-                                                defaults={
-                                                    "product": product_obj,
-                                                    "is_main": (image["position"] == 1),
-                                                },
-                                            )
+                                        obj, created = ProductPhoto.objects.get_or_create(
+                                            photo_url=image["original_url"],
+                                            defaults={
+                                                "product": product_obj,
+                                                "is_main": (image["position"] == 1),
+                                            },
                                         )
                                     if image["large_url"]:
-                                        obj, created = (
-                                            ProductPhotoMini.objects.get_or_create(
-                                                photo_url=image["large_url"],
-                                                defaults={
-                                                    "product": product_obj,
-                                                    "is_main": (image["position"] == 1),
-                                                },
-                                            )
+                                        obj, created = ProductPhotoMini.objects.get_or_create(
+                                            photo_url=image["large_url"],
+                                            defaults={
+                                                "product": product_obj,
+                                                "is_main": (image["position"] == 1),
+                                            },
                                         )
 
                         except Exception as e:

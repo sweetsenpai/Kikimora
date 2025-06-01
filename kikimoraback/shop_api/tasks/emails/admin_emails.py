@@ -38,9 +38,7 @@ def new_admin_mail(password, email):
         email_message.content_subtype = "html"
         email_message.send(fail_silently=False)
     except Exception as e:
-        logger.error(
-            f"Во время отправки письма новому администратору произошла ошибка.\nERROR:{e}"
-        )
+        logger.error(f"Во время отправки письма новому администратору произошла ошибка.\nERROR:{e}")
     return
 
 
@@ -109,6 +107,4 @@ def feedback_email(self, feedback_data):
         logger.error(
             f"Во время отправки обратной связи произошла непредвиденная ошибка.\nERROR: {e}"
         )
-        raise self.retry(
-            exc=e, countdown=2**self.request.retries
-        )  # Повторная попытка отправки
+        raise self.retry(exc=e, countdown=2**self.request.retries)  # Повторная попытка отправки

@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
+
 import sentry_sdk
 from celery.schedules import crontab
 from dotenv import load_dotenv
@@ -37,7 +38,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "82.146.57.177",
-    'django',
+    "django",
 ]
 CSRF_TRUSTED_ORIGINS = ["http://82.146.57.177"]
 
@@ -45,7 +46,6 @@ CSRF_TRUSTED_ORIGINS = ["http://82.146.57.177"]
 # Application definition
 
 INSTALLED_APPS = [
-
     "django.contrib.admin",
     "django.contrib.auth",
     "django_prometheus",
@@ -57,21 +57,24 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "django_celery_beat",
+    "drf_spectacular",
+    "django_filters",
 ]
 
 INTERNAL_IPS = ["127.0.0.1", "localhost", "172.17.0.1", "172.18.0.1"]
 
 MIDDLEWARE = [
-    'django_prometheus.middleware.PrometheusBeforeMiddleware',
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'django_prometheus.middleware.PrometheusAfterMiddleware',
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 CORS_ALLOWED_ORIGINS = ["http://82.146.57.177"]
 
@@ -98,6 +101,12 @@ TEMPLATES = [
 APPEND_SLASH = True
 
 WSGI_APPLICATION = "kikimoraback.wsgi.application"
+
+PROMETHEUS_METRICS = {
+    "django.http_requests_total_by_view_method_total": True,
+    "django.http_request_duration_seconds": True,
+}
+PROMETHEUS_EXPORT_MIGRATIONS = True
 
 
 # Database
@@ -167,7 +176,15 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "PAGE_SIZE": 9,
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Kikimora API",
+    "DESCRIPTION": "API для магазина Кикимора.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
 
 SIMPLE_JWT = {
@@ -200,9 +217,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 if not DEBUG:
     STATICFILES_DIRS = []
-    STATICFILES_STORAGE = (
-        "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
-    )
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -216,12 +231,13 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_BROKER_HEARTBEAT = 60
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
-sentry_sdk.init(
-    dsn=os.environ.get("SENTRY_DNS"),
-    # Add data like request headers and IP for users,
-    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
-    send_default_pii=True,
-)
+if not DEBUG:
+    sentry_sdk.init(
+        dsn=os.environ.get("SENTRY_DNS"),
+        # Add data like request headers and IP for users,
+        # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+        send_default_pii=True,
+    )
 
 LOGGING = {
     "version": 1,

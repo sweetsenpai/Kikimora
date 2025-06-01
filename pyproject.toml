@@ -1,5 +1,5 @@
 [tool.black]
-line-length = 88
+line-length = 100
 target-version = ["py39"]
 include = '\.pyi?$'
 exclude = '''
@@ -13,13 +13,13 @@ exclude = '''
 
 [tool.isort]
 profile = "black"
-line_length = 88
+line_length = 100
 multi_line_output = 3
 include_trailing_comma = true
 force_grid_wrap = 0
 combine_as_imports = true
 
-known_first_party = ["shop", "shop_api"]
+known_first_party = ["shop", "shop_api", "kikimoraback"]
 known_django = ["django"]
 known_drf = ["rest_framework"]
 
@@ -34,3 +34,4 @@ sections = [
 ]
 default_section = "THIRDPARTY"
 skip = ["migrations", ".venv"]
+

@@ -75,9 +75,7 @@ class PaymentYookassa:
             # То мы первый товар добавляем в чек с измененой ценой,
             # а оставшиеся его экземпляры добавляем как обычные товары
             if max_price_product["quantity"] > 1:
-                items.append(
-                    create_item(max_price_product, 0, max_price_product["quantity"] - 1)
-                )
+                items.append(create_item(max_price_product, 0, max_price_product["quantity"] - 1))
             # Добавляем остальные товары без учета бонусов
             for product in cart["products"]:
                 if product != max_price_product:
@@ -98,9 +96,7 @@ class PaymentYookassa:
                     # Для последнего товара распределяем бонусы равномерно,
                     # чтобы избежать ошибки когда при большом числе товаров
                     # цена товара становиться отрицательной
-                    items.append(
-                        create_item(product, remaining_bonuses / product["quantity"])
-                    )
+                    items.append(create_item(product, remaining_bonuses / product["quantity"]))
         # Добавляем доставку
         items.append(
             {

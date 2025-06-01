@@ -2,17 +2,29 @@
 import re
 
 from django import forms
-from django.contrib.auth.forms import ReadOnlyPasswordHashField, ValidationError
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import AuthenticationForm, ReadOnlyPasswordHashField, ValidationError
 from django.contrib.auth.models import Group
 
 from .models import *
+
+
+class AdminLoginForm(AuthenticationForm):
+    remember_me = forms.BooleanField(required=False)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        user = self.get_user()
+        if user and not (user.is_staff or user.is_superuser):
+            raise forms.ValidationError("У вас нет доступа к административной панели.")
+        return cleaned_data
 
 
 class RegistrationForm(forms.ModelForm):
     password = forms.CharField(label="Password", widget=forms.PasswordInput)
 
     class Meta:
-        model = CustomUser
+        model = get_user_model()
         fields = ("email", "user_fio", "phone", "bd", "password")
 
     def save(self, commit=True):
@@ -26,12 +38,10 @@ class RegistrationForm(forms.ModelForm):
 
 class UserCreationForm(forms.ModelForm):
     password1 = forms.CharField(label="Password", widget=forms.PasswordInput)
-    password2 = forms.CharField(
-        label="Password confirmation", widget=forms.PasswordInput
-    )
+    password2 = forms.CharField(label="Password confirmation", widget=forms.PasswordInput)
 
     class Meta:
-        model = CustomUser
+        model = get_user_model()
         fields = (
             "email",
             "user_fio",
@@ -63,7 +73,7 @@ class UserChangeForm(forms.ModelForm):
     password = ReadOnlyPasswordHashField()
 
     class Meta:
-        model = CustomUser
+        model = get_user_model()
         fields = (
             "email",
             "user_fio",
@@ -80,23 +90,13 @@ class UserChangeForm(forms.ModelForm):
 
 class AdminCreationForm(forms.ModelForm):
     class Meta:
-        model = CustomUser
+        model = get_user_model()
         fields = ["email", "user_fio", "phone", "is_superuser"]
-
-    def clean_email(self):
-        email = self.cleaned_data.get("email")
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError("Пользователь с таким email уже существует.")
-        return email
 
     def clean_phone(self):
         phone = self.cleaned_data.get("phone")
         if not re.match(r"^\+?[1-9]\d{1,14}$", phone):
             raise ValidationError("Введите корректный номер телефона.")
-        if CustomUser.objects.filter(phone=phone).exists():
-            raise ValidationError(
-                "Пользователь с таким номером телефона уже существует."
-            )
         return phone
 
 
@@ -110,9 +110,7 @@ class CategoryCreationForm(forms.ModelForm):
         if not name:
             raise ValidationError("Поле имя категории не может быть пустым")
         if Category.objects.filter(name=name).exists():
-            raise ValidationError(
-                "Категория с таким названием уже существует, зачем вам ещё одна?"
-            )
+            raise ValidationError("Категория с таким названием уже существует, зачем вам ещё одна?")
         return name
 
     def clean_text(self):
@@ -121,17 +119,16 @@ class CategoryCreationForm(forms.ModelForm):
 
 
 class ProductForm(forms.ModelForm):
+    tag = forms.ModelChoiceField(
+        queryset=ProductTag.objects.all(),
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        label="Тег",
+    )
+
     class Meta:
         model = Product
         fields = ("name", "description", "price", "weight", "bonus", "tag")
-
-        tag = forms.ModelChoiceField(
-            queryset=ProductTag.objects.all(),
-            required=False,
-            widget=forms.Select(attrs={"class": "form-select"}),
-            label="Тег",
-        )
-
         error_messages = {
             "weight": {
                 "required": "Поле вес не может быть пустым!",
@@ -145,6 +142,18 @@ class ProductForm(forms.ModelForm):
                 "required": "Поле названия не может быть пустым!",
             },
         }
+
+    def clean_price(self):
+        price = self.cleaned_data.get("price")
+        if price is not None and price <= 0:
+            raise forms.ValidationError("Цена должна быть больше нуля.")
+        return price
+
+    def clean_weight(self):
+        weight = self.cleaned_data.get("weight")
+        if weight is not None and weight <= 0:
+            raise forms.ValidationError("Вес должен быть больше нуля.")
+        return weight
 
 
 class DiscountForm(forms.ModelForm):
@@ -171,9 +180,7 @@ class DiscountForm(forms.ModelForm):
         end = cleaned_data.get("end")
         try:
             if discount_type == "percentage" and value > 100:
-                raise ValidationError(
-                    {"value": "Процент скидки не может быть больше 100!"}
-                )
+                raise ValidationError({"value": "Процент скидки не может быть больше 100!"})
         except TypeError:
             raise ValidationError({"value": "Размер скидки не может быть равен 0!"})
         if start >= end:
@@ -239,9 +246,7 @@ class LimiteTimeProductForm(forms.ModelForm):
             raise ValidationError({"ammount": "Поле количества не может быть пустым!"})
         try:
             if price <= 0:
-                raise ValidationError(
-                    {"price": "Поле цены не может быть меньше или равно нулю!"}
-                )
+                raise ValidationError({"price": "Поле цены не может быть меньше или равно нулю!"})
         except TypeError:
             raise ValidationError({"price": "Поле цены не может быть пустым!"})
 

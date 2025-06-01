@@ -1,61 +1,60 @@
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import path
-from django_prometheus import exports
 
+from django_prometheus import exports
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
     TokenVerifyView,
 )
 
-from .views import views_admin
+from .views_admin import *
+from .views_admin import views_admin
 
 urlpatterns = [
     # HOME
-    path("apanel/", views_admin.AdminHomePageView.as_view(), name="admin_home"),
-    path("apanel/login/", views_admin.AdminLogin.as_view(), name="admin_login"),
+    path("apanel/", AdminHomePageView.as_view(), name="admin_home"),
+    path("apanel/login/", AdminLogin.as_view(), name="admin_login"),
     path(
         "apanel/logout/",
         LogoutView.as_view(next_page="admin_login"),
         name="admin_logout",
     ),
     # STAFF
-    path("apanel/staff/", views_admin.StaffListView.as_view(), name="staff"),
-    path(
-        "apanel/staff/<int:admin_id>/", views_admin.admin_account, name="admin_account"
-    ),
+    path("apanel/staff/", StaffListView.as_view(), name="staff"),
+    path("apanel/staff/<int:admin_id>/", AdminAccountView.as_view(), name="admin_account"),
     path(
         "apanel/staff/create_new_admin/",
-        views_admin.AdminCreateView.as_view(),
+        AdminCreateView.as_view(),
         name="admin_create",
     ),
     # CATEGORY
     path(
         "apanel/categories/",
-        views_admin.AdminCategoryView.as_view(),
+        AdminCategoryView.as_view(),
         name="admin_category_view",
     ),
     path(
         "api/v1/change_visability_category/<int:category_id>/",
-        views_admin.toggle_visibility_category,
+        toggle_visibility_category,
         name="change_visability_category",
     ),
     # SUBCATEGORY
     path(
         "apanel/category/<int:category_id>/subcategories/",
-        views_admin.AdminSubcategoryListView.as_view(),
+        AdminSubcategoryListView.as_view(),
         name="subcategory_list",
     ),
     path(
         "api/v1/change_visibility_subcat/<int:subcategory_id>/",
-        views_admin.toggle_visibility_subcat,
+        toggle_visibility_subcat,
         name="change_visibility_subcat",
     ),
     # PRODUCT
     path(
         "apanel/category/<int:category_id>/subcategories/<int:subcategory_id>/",
         views_admin.AdminProdactListView.as_view(),
-        name="prodact_list",
+        name="product_list",
     ),
     path(
         "api/v1/change_visibility_product/<int:product_id>/",
@@ -94,9 +93,7 @@ urlpatterns = [
         views_admin.AdminNewPromo.as_view(),
         name="new_promo",
     ),
-    path(
-        "apanel/promocods/<int:promo_id>/", views_admin.delete_promo, name="promocods"
-    ),
+    path("apanel/promocods/<int:promo_id>/", views_admin.delete_promo, name="promocod_delete"),
     # LIMITE TIME PRODUCTS
     path(
         "apanel/day_products",
@@ -115,5 +112,5 @@ urlpatterns = [
         views_admin.AdminDeleteTag.as_view(),
         name="delete_tag",
     ),
-    path("apanel/metrics/", exports.ExportToDjangoView, name='prometheus-metrics')
+    path("apanel/metrics/", exports.ExportToDjangoView, name="prometheus-metrics"),
 ]

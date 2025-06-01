@@ -1,14 +1,18 @@
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from celery.result import AsyncResult
 
 from shop.models import LimitTimeProduct
 from shop.services.caches import get_limit_product_cash
 from shop_api.serializers import LimitTimeProductSerializer
 
+
 class LimitProduct(generics.ListAPIView):
-    queryset = get_limit_product_cash()
+    def get_queryset(self):
+        return get_limit_product_cash()
+
     serializer_class = LimitTimeProductSerializer
 
 

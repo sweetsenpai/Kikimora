@@ -32,9 +32,7 @@ def update_related_products(sender, instance, **kwargs):
     """
     Обновляет товары, если изменилось поле 'visibility' у подкатегории.
     """
-    if (
-        instance.pk
-    ):  # Проверяем, что объект уже существует (не создаётся, а обновляется)
+    if instance.pk:  # Проверяем, что объект уже существует (не создаётся, а обновляется)
         try:
             old_instance = Subcategory.objects.get(pk=instance.pk)
         except Subcategory.DoesNotExist:
@@ -43,9 +41,7 @@ def update_related_products(sender, instance, **kwargs):
         # Проверяем, изменилось ли поле visibility
         if old_instance.visibility != instance.visibility:
             # Обновляем связанные товары
-            Product.objects.filter(subcategory=instance).update(
-                visibility=instance.visibility
-            )
+            Product.objects.filter(subcategory=instance).update(visibility=instance.visibility)
 
 
 @receiver([post_save, post_delete])

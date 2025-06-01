@@ -1,7 +1,16 @@
-from rest_framework import generics
+import logging
 
+from django.http import Http404
+
+from rest_framework import generics, status
+from rest_framework.response import Response
+
+from shop.models import Product
 from shop.services.caches import active_products_cache
+from shop.tasks import update_price_cache
 from shop_api.serializers import ProductSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class ProductApi(generics.RetrieveAPIView):
@@ -17,10 +26,8 @@ class ProductApi(generics.RetrieveAPIView):
             else:
                 single_product = active_products_cache().get(permalink=product_slug)
         except Product.DoesNotExist:
-            logger.error(
-                f"Неудалось найти товаро по заданным параметрам.{product_slug}"
-            )
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            logger.error(f"Неудалось найти товаро по заданным параметрам.{product_slug}")
+            raise Http404
         # Возвращаем объект продукта
         return single_product
 

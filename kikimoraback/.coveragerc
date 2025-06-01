@@ -1,0 +1,14 @@
+[run]
+source = kikimoraback
+omit =
+    */migrations/*
+    */tests/*
+    manage.py
+    wsgi.py
+    asgi.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __str__
+    if __name__ == .__main__.:

@@ -41,9 +41,7 @@ def active_products_cache(subcategory_id: int = None, invalidate=False) -> Query
     Returns:
         QuerySet: Список товаров.
     """
-    cache_key = (
-        f"products_subcategory_{subcategory_id}" if subcategory_id else "products"
-    )
+    cache_key = f"products_subcategory_{subcategory_id}" if subcategory_id else "products"
 
     # Если кеширование не сбрасывается и кеш есть – возвращаем данные
     if not invalidate:
@@ -70,11 +68,9 @@ def get_discounted_product_data(invalidate=False):
         if dp_data is not None:
             return dp_data
 
-    all_prices = cache.get("all_products_prices")
+    all_prices = cache.get("all_products_prices") or {"discounts_map": {}}
     products_with_discounts_ids = [
-        product_id
-        for product_id, discount in all_prices["discounts_map"].items()
-        if discount
+        product_id for product_id, discount in all_prices["discounts_map"].items() if discount
     ]
 
     dp_data = active_products_cache().filter(product_id__in=products_with_discounts_ids)

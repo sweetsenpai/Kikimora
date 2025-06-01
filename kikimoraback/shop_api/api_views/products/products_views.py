@@ -1,6 +1,9 @@
+from django.core.cache import cache
+
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 
 from shop.services.caches import (
     active_products_cache,
@@ -11,7 +14,7 @@ from shop_api.serializers import ProductCardSerializer, ProductSearchSerializer
 from shop_api.tasks.db_tasks.cache_tasks.cache_prices_tasks import update_price_cache
 
 
-def sort_producst(products_set, query_params: str):
+def sort_products(products_set, query_params: str):
     """
     Функция для сортировки товаров по цене или весу, по возрастанию или убыванию.
     Args:
@@ -41,11 +44,11 @@ class ProductViewSet(viewsets.ViewSet):
         cached_data = update_price_cache()
         products = active_products_cache()
         sort_by = request.query_params.get("sort_by", None)
+
         if sort_by:
-            products = sort_producst(products, query_params=sort_by)
+            products = sort_products(products, query_params=sort_by)
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(products, request)
-
         context = {
             "price_map": cached_data["price_map"],
             "discounts_map": cached_data["discounts_map"],
@@ -55,9 +58,7 @@ class ProductViewSet(viewsets.ViewSet):
         serializer = self.serializer_class(result_page, many=True, context=context)
         return paginator.get_paginated_response(serializer.data)
 
-    @action(
-        detail=False, methods=["get"], url_path="subcategory/(?P<subcategory_id>[^/.]+)"
-    )
+    @action(detail=False, methods=["get"], url_path="subcategory/(?P<subcategory_id>[^/.]+)")
     def by_subcategory(self, request, subcategory_slug=None):
         if not subcategory_slug.isdigit():
             subcategory = subcategory_cache().filter(permalink=subcategory_slug).first()
@@ -68,7 +69,7 @@ class ProductViewSet(viewsets.ViewSet):
         products = active_products_cache(subcategory_id)
         sort_by = request.query_params.get("sort_by", None)
         if sort_by:
-            products = sort_producst(products, sort_by)
+            products = sort_products(products, sort_by)
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(products, request)
         context = {

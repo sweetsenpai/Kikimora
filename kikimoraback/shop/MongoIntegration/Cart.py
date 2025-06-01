@@ -39,14 +39,10 @@ class Cart:
                 }
             )
         else:
-            logger.warning(
-                f"Пользователь с id {user_id}, уже находится в mongodb['cart']."
-            )
+            logger.warning(f"Пользователь с id {user_id}, уже находится в mongodb['cart'].")
 
     def add_unregistered_mark(self, user_id):
-        self.cart_collection.update_one(
-            {"customer": user_id}, {"$set": {"unregistered": True}}
-        )
+        self.cart_collection.update_one({"customer": user_id}, {"$set": {"unregistered": True}})
 
     def sync_cart_data(self, user_id, front_cart_data):
         back_user_data = self.get_cart_data(user_id)
@@ -100,9 +96,7 @@ class Cart:
         updated_cart = {"products": []}
 
         if not front_data:
-            logger.warning(
-                f"Корзина пользователя с id {user_id} пришла пустой от фронтенда."
-            )
+            logger.warning(f"Корзина пользователя с id {user_id} пришла пустой от фронтенда.")
             return None
 
         # Получаем кэшированные данные о ценах, скидках и фотографиях
@@ -172,9 +166,7 @@ class Cart:
                         "delivery_data.street": delivery_data["street"],
                         "delivery_data.building": delivery_data["houseNumber"],
                         "delivery_data.apartment": delivery_data["appartmentNumber"],
-                        "delivery_data.date": datetime.strptime(
-                            delivery_data["date"], "%Y-%m-%d"
-                        ),
+                        "delivery_data.date": datetime.strptime(delivery_data["date"], "%Y-%m-%d"),
                         "delivery_data.time": delivery_data["time"],
                         "delivery_data.cost": (
                             delivery_data["deliveryCost"] + 1000
@@ -202,13 +194,9 @@ class Cart:
                 {
                     "$set": {
                         "delivery_data.method": "Самовывоз",
-                        "delivery_data.date": datetime.strptime(
-                            delivery_data["date"], "%Y-%m-%d"
-                        ),
+                        "delivery_data.date": datetime.strptime(delivery_data["date"], "%Y-%m-%d"),
                         "delivery_data.time": delivery_data["time"],
-                        "delivery_data.cost": (
-                            1000 if delivery_data["time"] == "custom" else 0
-                        ),
+                        "delivery_data.cost": (1000 if delivery_data["time"] == "custom" else 0),
                         "customer_data.fio": customer_data["fio"],
                         "customer_data.phone": customer_data["phone"],
                         "customer_data.email": customer_data["email"],

@@ -8,6 +8,7 @@ from .discounts.discounts_views import (
 )
 from .discounts.limit_time_views import DeleteDayProduct, LimitProduct
 from .discounts.promo_views import PromoCode
+from .payment.order_path_views import OrderPath
 from .payment.yookassa_views import TestWebhook, yookassa_webhook
 from .products.products_views import ProductViewSet
 from .products.single_product_view import ProductApi
@@ -16,8 +17,6 @@ from .users.feedback_view import FeedBackApi
 from .users.login_view import Login
 from .users.register_view import RegisterUserView
 from .users.user_view import UserDataView, UsersOrder
-from .payment.order_path_views import OrderPath
-
 
 __all__ = [
     "Login",

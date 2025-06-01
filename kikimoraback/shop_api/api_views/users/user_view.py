@@ -8,9 +8,10 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from shop.models import CustomUser
-from shop_api.services.authentication import CookieJWTAuthentication
-from shop_api.serializers.auth.user import UserDataSerializer
 from shop.MongoIntegration.Order import Order
+from shop_api.serializers.auth.user import UserDataSerializer
+from shop_api.services.authentication import CookieJWTAuthentication
+
 logger = logging.getLogger("shop")
 
 
@@ -39,9 +40,7 @@ class UserDataView(APIView):
         new_password = request.data.get("new_password")
         old_password = request.data.get("old_password")
         if not user.is_staff and user.user_id != user_id:
-            return Response(
-                {"error": "У вас нет прав для изменения этих данных."}, status=403
-            )
+            return Response({"error": "У вас нет прав для изменения этих данных."}, status=403)
 
         try:
             user_data = CustomUser.objects.get(user_id=user_id)
@@ -72,9 +71,7 @@ class UsersOrder(APIView):
         try:
             user = request.user
             if not user:
-                return Response(
-                    {"error: Пользователь ненайден"}, status=status.HTTP_404_NOT_FOUND
-                )
+                return Response({"error: Пользователь ненайден"}, status=status.HTTP_404_NOT_FOUND)
             orders = Order().get_users_orders(user.user_id)
             return Response(status=status.HTTP_200_OK, data={"orders": orders})
         except Exception as e:

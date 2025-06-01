@@ -23,9 +23,7 @@ def calculate_prices(products):
 
     # Собираем все связанные с товаром данные за 1 запрос
     products = products.prefetch_related(
-        Prefetch(
-            "discount_set", queryset=get_discount_cash(), to_attr="active_discounts"
-        ),
+        Prefetch("discount_set", queryset=get_discount_cash(), to_attr="active_discounts"),
         Prefetch(
             "subcategory__discount_set",  # Скидки подкатегорий
             queryset=get_discount_cash(),
@@ -56,10 +54,7 @@ def calculate_prices(products):
         final_price = product.price
         applied_discounts = []
 
-        if (
-            hasattr(product, "active_limittimeproduct")
-            and product.active_limittimeproduct
-        ):
+        if hasattr(product, "active_limittimeproduct") and product.active_limittimeproduct:
             offer = product.active_limittimeproduct[0]
 
             final_price = offer.price
