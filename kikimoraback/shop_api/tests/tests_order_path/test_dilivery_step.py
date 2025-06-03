@@ -66,7 +66,7 @@ def test_delivery_step_success(
     delivery_data = {"address": "ул. Тестовая, д.1"}
     data = {"steps": ["delivery_step"], "deliveryData": delivery_data}
 
-    request = request_factory.post("/order", data, content_type="application/json")
+    request = request_factory.post("/order", data, content_type="application/json", timeout=10)
     request.user = anonymous_user
     request.COOKIES = {"user_id": user_id}
 
@@ -90,6 +90,7 @@ def test_delivery_step_success(
                 {"fullname": "Санкт-Петербург, ул. Тестовая, д.1"},
             ]
         },
+        timeout=10,
     )
 
 
