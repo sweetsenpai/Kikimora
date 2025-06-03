@@ -71,17 +71,18 @@ class AdminSubcategoryListView(StaffCheckRequiredMixin, ListView):
         get_context_data(**kwargs): Добавляет объект категории в контекст шаблона.
     """
 
+    model = Subcategory
     template_name = "master/product/subcategory.html"
     context_object_name = "subcategories"
-    queryset = Subcategory.objects.all()
-    # def get_queryset(self):
-    #     self.category = get_object_or_404(Category, pk=self.kwargs["category_id"])
-    #     return Subcategory.objects.filter(category=self.category).order_by("subcategory_id")
-    #
-    # def get_context_data(self, **kwargs):
-    #     context = super().get_context_data(**kwargs)
-    #     context["category"] = self.category
-    #     return context
+
+    def get_queryset(self):
+        self.category = get_object_or_404(Category, pk=self.kwargs["category_id"])
+        return Subcategory.objects.filter(category=self.category).order_by("subcategory_id")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["category"] = self.category
+        return context
 
 
 @user_passes_test(is_staff_or_superuser)
