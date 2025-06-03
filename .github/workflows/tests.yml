@@ -30,7 +30,7 @@ jobs:
 
     - name: Build and run pytest container
       run: |
-        docker-compose -f infrastructure/docker-compose.test.yml up --build
+        docker-compose -f infrastructure/docker-compose.test.yml run --rm pytest
         
     - name: Coveralls
       uses: coverallsapp/github-action@v2
