@@ -28,7 +28,7 @@ jobs:
           pip install black isort
 
       - name: Run isort check
-        run: isort --check-only /kikimoraback
+        run: isort --check-only kikimoraback
 
       - name: Run black check
-        run: black --check /kikimoraback
+        run: black --check kikimoraback
