@@ -265,6 +265,7 @@ LOGGING = {
             "formatter": "verbose",
             "maxBytes": 1024 * 1024 * 5,
             "backupCount": 3,
+            "delay": True,
         },
         "error_file": {
             "class": "logging.handlers.RotatingFileHandler",
@@ -273,6 +274,7 @@ LOGGING = {
             "formatter": "verbose",
             "maxBytes": 1024 * 1024 * 5,
             "backupCount": 3,
+            "delay": True,
         },
         "critical_file": {
             "class": "logging.handlers.RotatingFileHandler",
@@ -281,6 +283,7 @@ LOGGING = {
             "formatter": "verbose",
             "maxBytes": 1024 * 1024 * 5,
             "backupCount": 3,
+            "delay": True,
         },
     },
     "root": {

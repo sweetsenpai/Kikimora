@@ -172,3 +172,6 @@ cython_debug/
 # Deploy fiels
 deploy.sh
 /kikimoraback/staticfiles/admin/js/actions.js
+
+/kikimoraback/shop/static/
+/kikimoraback/logs/
