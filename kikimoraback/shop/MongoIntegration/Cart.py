@@ -1,12 +1,9 @@
 import logging
-from datetime import datetime
-
 from pymongo import ASCENDING
-
 from ..MongoIntegration.db_connection import MongoDBClient
 from ..services.caches import active_products_cache
 from ..tasks import update_price_cache
-
+from datetime import datetime 
 logger = logging.getLogger("shop")
 
 
