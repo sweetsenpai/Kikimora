@@ -1,8 +1,8 @@
 services:
   django:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ..
+      dockerfile: infrastructure/Dockerfile.dev
     container_name: django
     ports:
       - "8000:8000"
@@ -27,7 +27,7 @@ services:
 
   celery:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile.dev
     command: celery -A kikimoraback worker -l INFO -E  -c 4
     environment:
@@ -46,7 +46,7 @@ services:
 
   celery-beat:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile.dev
     command: celery -A kikimoraback beat -l INFO
     volumes:
@@ -66,7 +66,7 @@ services:
 
   flower:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile.dev
     container_name: flower
     ports:

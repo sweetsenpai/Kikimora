@@ -1,8 +1,8 @@
 services:
   django:
     build:
-      context: .
-      dockerfile: Dockerfile.test
+      context: ..
+      dockerfile: infrastructure/Dockerfile.test
     container_name: django
     ports:
       - "8000:8000"
