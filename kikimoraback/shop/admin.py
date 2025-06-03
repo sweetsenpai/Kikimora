@@ -4,14 +4,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.core.mail import send_mail
 
 from .forms import UserChangeForm, UserCreationForm
-from .models import (
-    Category,
-    CustomUser,
-    Discount,
-    Product,
-    UserAddress,
-    UserBonusSystem,
-)
+from .models import Category, CustomUser, Discount, Product, UserAddress, UserBonusSystem
 
 
 class AccountAdmin(BaseUserAdmin):

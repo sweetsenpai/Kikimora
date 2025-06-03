@@ -8,27 +8,40 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shop', '0040_alter_discount_end_alter_discount_start_producttag'),
+        ("shop", "0040_alter_discount_end_alter_discount_start_producttag"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='producttag',
-            name='product_id',
+            model_name="producttag",
+            name="product_id",
         ),
         migrations.AddField(
-            model_name='product',
-            name='tag',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='shop.producttag'),
+            model_name="product",
+            name="tag",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="shop.producttag",
+            ),
         ),
         migrations.AlterField(
-            model_name='discount',
-            name='end',
-            field=models.DateTimeField(default=datetime.datetime(2025, 2, 28, 10, 34, 9, 478545, tzinfo=datetime.timezone.utc)),
+            model_name="discount",
+            name="end",
+            field=models.DateTimeField(
+                default=datetime.datetime(
+                    2025, 2, 28, 10, 34, 9, 478545, tzinfo=datetime.timezone.utc
+                )
+            ),
         ),
         migrations.AlterField(
-            model_name='discount',
-            name='start',
-            field=models.DateTimeField(default=datetime.datetime(2025, 2, 28, 10, 34, 9, 478531, tzinfo=datetime.timezone.utc)),
+            model_name="discount",
+            name="start",
+            field=models.DateTimeField(
+                default=datetime.datetime(
+                    2025, 2, 28, 10, 34, 9, 478531, tzinfo=datetime.timezone.utc
+                )
+            ),
         ),
     ]

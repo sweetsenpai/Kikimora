@@ -35,17 +35,8 @@ class UserBehavior(TaskSet):
             cookies=self.cookies,
         )
 
-        print(f"Статус-код ответа: {response.status_code}")
-        print(f"Тело ответа: {response.text}")
-
 
 class WebsiteUser(HttpUser):
     tasks = [UserBehavior]
     wait_time = between(0, 1)
     host = "http://127.0.0.1:8000/"
-
-
-if __name__ == "__main__":
-    import os
-
-    os.system("locust -f locustfile.py")

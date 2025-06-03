@@ -7,18 +7,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shop', '0007_alter_discount_end_alter_discount_start'),
+        ("shop", "0007_alter_discount_end_alter_discount_start"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='discount',
-            name='end',
-            field=models.DateTimeField(default=datetime.datetime(2025, 2, 18, 12, 42, 3, 667190, tzinfo=datetime.timezone.utc)),
+            model_name="discount",
+            name="end",
+            field=models.DateTimeField(
+                default=datetime.datetime(
+                    2025, 2, 18, 12, 42, 3, 667190, tzinfo=datetime.timezone.utc
+                )
+            ),
         ),
         migrations.AlterField(
-            model_name='discount',
-            name='start',
-            field=models.DateTimeField(default=datetime.datetime(2025, 2, 18, 12, 42, 3, 667178, tzinfo=datetime.timezone.utc)),
+            model_name="discount",
+            name="start",
+            field=models.DateTimeField(
+                default=datetime.datetime(
+                    2025, 2, 18, 12, 42, 3, 667178, tzinfo=datetime.timezone.utc
+                )
+            ),
         ),
     ]

@@ -7,23 +7,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shop', '0034_alter_discount_end_alter_discount_start_and_more'),
+        ("shop", "0034_alter_discount_end_alter_discount_start_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='discount',
-            name='end',
-            field=models.DateTimeField(default=datetime.datetime(2025, 2, 21, 12, 1, 23, 301442, tzinfo=datetime.timezone.utc)),
+            model_name="discount",
+            name="end",
+            field=models.DateTimeField(
+                default=datetime.datetime(
+                    2025, 2, 21, 12, 1, 23, 301442, tzinfo=datetime.timezone.utc
+                )
+            ),
         ),
         migrations.AlterField(
-            model_name='discount',
-            name='start',
-            field=models.DateTimeField(default=datetime.datetime(2025, 2, 21, 12, 1, 23, 301427, tzinfo=datetime.timezone.utc)),
+            model_name="discount",
+            name="start",
+            field=models.DateTimeField(
+                default=datetime.datetime(
+                    2025, 2, 21, 12, 1, 23, 301427, tzinfo=datetime.timezone.utc
+                )
+            ),
         ),
         migrations.AlterField(
-            model_name='subcategory',
-            name='text',
-            field=models.TextField(blank=True, help_text='Описание подкатегории', null=True),
+            model_name="subcategory",
+            name="text",
+            field=models.TextField(blank=True, help_text="Описание подкатегории", null=True),
         ),
     ]

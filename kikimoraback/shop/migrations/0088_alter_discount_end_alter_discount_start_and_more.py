@@ -8,28 +8,56 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shop', '0087_alter_discount_end_alter_discount_start'),
+        ("shop", "0087_alter_discount_end_alter_discount_start"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='discount',
-            name='end',
-            field=models.DateTimeField(default=datetime.datetime(2025, 3, 20, 14, 1, 57, 899079, tzinfo=datetime.timezone.utc)),
+            model_name="discount",
+            name="end",
+            field=models.DateTimeField(
+                default=datetime.datetime(
+                    2025, 3, 20, 14, 1, 57, 899079, tzinfo=datetime.timezone.utc
+                )
+            ),
         ),
         migrations.AlterField(
-            model_name='discount',
-            name='start',
-            field=models.DateTimeField(default=datetime.datetime(2025, 3, 20, 14, 1, 57, 899067, tzinfo=datetime.timezone.utc)),
+            model_name="discount",
+            name="start",
+            field=models.DateTimeField(
+                default=datetime.datetime(
+                    2025, 3, 20, 14, 1, 57, 899067, tzinfo=datetime.timezone.utc
+                )
+            ),
         ),
         migrations.CreateModel(
-            name='ProductPhotoMini',
+            name="ProductPhotoMini",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('photo_url', models.CharField(help_text='URL фотографии', max_length=200)),
-                ('is_main', models.BooleanField(default=False, help_text='Является ли эта фотография основной', null=True)),
-                ('photo_description', models.CharField(help_text='описание фотографии', max_length=200, null=True)),
-                ('product', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='mini_photos', to='shop.product')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("photo_url", models.CharField(help_text="URL фотографии", max_length=200)),
+                (
+                    "is_main",
+                    models.BooleanField(
+                        default=False, help_text="Является ли эта фотография основной", null=True
+                    ),
+                ),
+                (
+                    "photo_description",
+                    models.CharField(help_text="описание фотографии", max_length=200, null=True),
+                ),
+                (
+                    "product",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="mini_photos",
+                        to="shop.product",
+                    ),
+                ),
             ],
         ),
     ]

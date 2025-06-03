@@ -6,15 +6,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from yookassa.domain.common import SecurityHelper
-from yookassa.domain.notification import (
-    WebhookNotificationEventType,
-    WebhookNotificationFactory,
-)
+from yookassa.domain.notification import WebhookNotificationEventType, WebhookNotificationFactory
 
 from shop_api.tasks.payment_tasks.payment_canceled_tasks import process_payment_canceled
-from shop_api.tasks.payment_tasks.payment_succeeded_tasks import (
-    process_payment_succeeded,
-)
+from shop_api.tasks.payment_tasks.payment_succeeded_tasks import process_payment_succeeded
 
 logger = logging.getLogger("shop")
 logger.setLevel(logging.DEBUG)

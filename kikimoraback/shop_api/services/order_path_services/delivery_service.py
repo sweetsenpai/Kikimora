@@ -62,6 +62,7 @@ class DeliveryService:
                 "https://b2b.taxi.yandex.net/b2b/cargo/integration/v2/check-price",
                 headers=self.headers,
                 json=payload,
+                timeout=10,
             )
         except requests.RequestException as e:
             logger.critical(f"Ошибка при запросе к API Яндекс: {e}")

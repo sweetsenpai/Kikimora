@@ -75,13 +75,13 @@ def feedback_email(self, feedback_data):
                     <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
                     <footer style="text-align: center; color: #888; font-size: 14px;">
                         <p>С уважением, команда мастерской "Кикимора"</p>
-                        <p>Контакты: 
-                            <a href="mailto:{os.getenv("KIKIMORA_EMAIL")}" style="color: #4CAF50; text-decoration: none;">{os.getenv("KIKIMORA_EMAIL")}</a> | 
+                        <p>Контакты:
+                            <a href="mailto:{os.getenv("KIKIMORA_EMAIL")}" style="color: #4CAF50; text-decoration: none;">{os.getenv("KIKIMORA_EMAIL")}</a> |
                             Телефон: <a href="tel:{os.getenv("KIKIMORA_PHONE_RAW")}" style="color: #4CAF50; text-decoration: none;">{os.getenv("KIKIMORA_PHONE")}</a>
                         </p>
                         <p>Адрес: {os.getenv("KIKIMORA_ADDRESS")}</p>
-                        <p>Следите за нами: 
-                            <a href="{os.getenv("KIKIMORA_VK")}" style="color: #4CAF50; text-decoration: none;">ВКонтакте</a> | 
+                        <p>Следите за нами:
+                            <a href="{os.getenv("KIKIMORA_VK")}" style="color: #4CAF50; text-decoration: none;">ВКонтакте</a> |
                             <a href="{os.getenv("KIKIMORA_INSTAGRAM")}" style="color: #4CAF50; text-decoration: none;">Instagram</a>
                         </p>
                     </footer>

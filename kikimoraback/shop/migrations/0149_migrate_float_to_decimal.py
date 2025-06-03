@@ -5,12 +5,12 @@ from decimal import Decimal
 
 
 def forwards(apps, schema_editor):
-    Product = apps.get_model('shop', 'Product')
+    Product = apps.get_model("shop", "Product")
     for product in Product.objects.all():
         # Переводим float в decimal через str → избегаем проблем с точностью
         product.price_decimal = Decimal(str(product.price))
         product.weight_decimal = Decimal(str(product.weight))
-        product.save(update_fields=['price_decimal', 'weight_decimal'])
+        product.save(update_fields=["price_decimal", "weight_decimal"])
 
 
 class Migration(migrations.Migration):

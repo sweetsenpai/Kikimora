@@ -91,7 +91,7 @@ def send_new_order(data):
     }
 
     base_url = os.getenv("INSALES_URL") + "orders.json"
-    response = requests.post(base_url, json=order_request)
+    response = requests.post(base_url, json=order_request, timeout=10)
     if response.status_code == 201:
         return response.json()["number"]
     else:
