@@ -23,7 +23,8 @@ load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -260,7 +261,7 @@ LOGGING = {
         },
         "info_file": {
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": "/logs/info.log",  # Абсолютный путь внутри контейнера
+            "filename": str(LOG_DIR / "info.log"),  # Абсолютный путь внутри контейнера
             "level": "INFO",
             "formatter": "verbose",
             "maxBytes": 1024 * 1024 * 5,
@@ -269,7 +270,7 @@ LOGGING = {
         },
         "error_file": {
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": "/logs/error.log",
+            "filename": str(LOG_DIR / "error.log"),
             "level": "ERROR",
             "formatter": "verbose",
             "maxBytes": 1024 * 1024 * 5,
@@ -278,7 +279,7 @@ LOGGING = {
         },
         "critical_file": {
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": "/logs/critical.log",
+            "filename": str(LOG_DIR / "critical.log"),
             "level": "CRITICAL",
             "formatter": "verbose",
             "maxBytes": 1024 * 1024 * 5,
