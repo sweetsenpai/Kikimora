@@ -1,0 +1,36 @@
+name: Run Pytest with Docker
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./kikimoraback
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+
+    - name: Install Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
+
+    - name: Build and run pytest container
+      run: |
+        docker-compose -f infrastructure/docker-compose.test.yml run --rm pytest
+        
+    - name: Coveralls
+      uses: coverallsapp/github-action@v2
