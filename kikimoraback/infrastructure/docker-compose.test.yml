@@ -13,7 +13,7 @@ services:
       pytest --import-mode=importlib shop/tests/tests_views/test_category_and_subcategory
       "
     volumes:
-      - .:/kikimoraback
+      - ../:/kikimoraback
     environment:
       - DJANGO_SETTINGS_MODULE=kikimoraback.settings_test
       - DEBUG=0

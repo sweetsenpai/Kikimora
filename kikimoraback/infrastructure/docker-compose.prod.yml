@@ -11,6 +11,7 @@ services:
       - /var/www/kikimora/static:/kikimoraback/static
       - /var/www/kikimora/media:/kikimoraback/media
       - /logs:/logs
+      - ../:/kikimoraback
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - CELERY_BROKER=redis://:${REDIS_PASSWORD}@redis:6379/0
@@ -25,7 +26,7 @@ services:
   celery:
     build:
       context: ..
-      dockerfile: Dockerfile.prod
+      dockerfile: infrastructure/Dockerfile.prod
 
     command: celery -A kikimoraback worker -l INFO -E  -c 4
     environment:
@@ -46,7 +47,7 @@ services:
   celery-beat:
     build:
       context: ..
-      dockerfile: Dockerfile.prod
+      dockerfile: infrastructure/Dockerfile.prod
     command: celery -A kikimoraback beat --loglevel=info
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
@@ -71,7 +72,7 @@ services:
   flower:
     build:
       context: ..
-      dockerfile: Dockerfile.prod
+      dockerfile: infrastructure/Dockerfile.prod
     container_name: flower
     ports:
       - "5555:5555"
@@ -107,7 +108,7 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
-      - "7000:3000"  # Порт для интерфейса Grafana
+      - "7000:3000"
     volumes:
       - grafana-storage:/var/lib/grafana
     depends_on:
