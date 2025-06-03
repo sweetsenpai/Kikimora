@@ -17,6 +17,7 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=kikimoraback.settings_test
       - DEBUG=0
+      - DJANGO_KEY=test-secret-key-1234567890
     depends_on:
       testdb:
         condition: service_healthy
