@@ -25,7 +25,9 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install -r kikimoraback/requirements.txt
+        run: |
+          cd kikimoraback
+          pip install -r requirements.txt
 
       - name: Run pylint
         run: pylint .
