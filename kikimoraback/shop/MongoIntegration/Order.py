@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import os
+import uuid
 from collections import defaultdict
 
 from bson import json_util
@@ -34,10 +35,9 @@ class Order:
         self.order_collection.insert_one(cart_data)
         return
 
+    @staticmethod
     def get_neworder_num(self, user_id):
-        hash_string = f"{user_id}-{datetime.datetime.now()}"
-        order_hash = hashlib.md5(hash_string.encode()).hexdigest()
-        return int(str(int(order_hash, 16))[-6:])
+        return uuid.uuid4().int % 10**6
 
     def get_users_orders(self, user_id):
         """

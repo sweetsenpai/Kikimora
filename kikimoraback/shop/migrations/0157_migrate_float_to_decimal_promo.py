@@ -3,11 +3,13 @@
 from django.db import migrations
 from decimal import Decimal
 
+
 def forwards(apps, schema_editor):
-    PromoSystem = apps.get_model('shop', 'PromoSystem')
+    PromoSystem = apps.get_model("shop", "PromoSystem")
     for promo in PromoSystem.objects.all():
         promo.amount_decimal = Decimal(str(promo.amount))
         promo.save(update_fields=["amount_decimal"])
+
 
 class Migration(migrations.Migration):
 
@@ -15,4 +17,6 @@ class Migration(migrations.Migration):
         ("shop", "0156_promosystem_amount_decimal"),
     ]
 
-    operations = [ migrations.RunPython(forwards),]
+    operations = [
+        migrations.RunPython(forwards),
+    ]

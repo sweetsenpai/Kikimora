@@ -1,8 +1,8 @@
 services:
   django:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ..
+      dockerfile: infrastructure/Dockerfile.dev
     container_name: django
     ports:
       - "8000:8000"
@@ -15,7 +15,7 @@ services:
       python manage.py runserver 0.0.0.0:8000
       "
     volumes:
-      - .:/kikimoraback
+      - ../:/kikimoraback
     environment:
       - DJANGO_SETTINGS_MODULE=kikimoraback.settings_dev
       - DEBUG=1
@@ -27,13 +27,13 @@ services:
 
   celery:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ..
+      dockerfile: infrastructure/Dockerfile.dev
     command: celery -A kikimoraback worker -l INFO -E  -c 4
     environment:
       - DJANGO_SETTINGS_MODULE=kikimoraback.settings_dev
     volumes:
-      - .:/kikimoraback
+      - ../:/kikimoraback
     depends_on:
       redis:
         condition: service_healthy
@@ -46,11 +46,11 @@ services:
 
   celery-beat:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ..
+      dockerfile: infrastructure/Dockerfile.dev
     command: celery -A kikimoraback beat -l INFO
     volumes:
-      - .:/kikimoraback
+      - ../:/kikimoraback
     depends_on:
       redis:
         condition: service_healthy
@@ -66,8 +66,8 @@ services:
 
   flower:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ..
+      dockerfile: infrastructure/Dockerfile.dev
     container_name: flower
     ports:
       - "5555:5555"

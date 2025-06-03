@@ -34,4 +34,3 @@ sections = [
 ]
 default_section = "THIRDPARTY"
 skip = ["migrations", ".venv"]
-

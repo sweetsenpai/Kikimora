@@ -3,8 +3,9 @@
 from django.db import migrations
 from decimal import Decimal
 
+
 def forwards(apps, schema_editor):
-    Discount = apps.get_model('shop', 'Discount')
+    Discount = apps.get_model("shop", "Discount")
     for discount in Discount.objects.all():
         discount.value_decimal = Decimal(str(discount.value))
         discount.save(update_fields=["value_decimal"])

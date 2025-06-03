@@ -71,8 +71,8 @@ def new_order_email(order_data):
                     <p>С уважением, команда мастерской "Кикимора"</p>
                     <p>Контакты: <a href="mailto:{os.getenv("KIKIMORA_EMAIL")}" style="color: #4CAF50; text-decoration: none;">{os.getenv("KIKIMORA_EMAIL")}</a> | Телефон: <a href="tel:{os.getenv("KIKIMORA_PHONE_RAW")}" style="color: #4CAF50; text-decoration: none;">{os.getenv("KIKIMORA_PHONE")}</a></p>
                     <p>Адрес: {os.getenv("KIKIMORA_ADDRESS")}</p>
-                    <p>Следите за нами: 
-                        <a href="{os.getenv("KIKIMORA_VK")}" style="color: #4CAF50; text-decoration: none;">ВКонтакте</a> | 
+                    <p>Следите за нами:
+                        <a href="{os.getenv("KIKIMORA_VK")}" style="color: #4CAF50; text-decoration: none;">ВКонтакте</a> |
                         <a href="{os.getenv("KIKIMORA_INSTAGRAM")}" style="color: #4CAF50; text-decoration: none;">Instagram</a>
                     </p>
                 </footer>

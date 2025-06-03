@@ -11,10 +11,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /kikimoraback
 
 # Копируем и устанавливаем Python-зависимости
-COPY requirements.txt .
+COPY ../requirements.txt .
 
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Копируем весь проект (исключая ненужные файлы через .dockerignore)
-COPY . .
+COPY .. .
