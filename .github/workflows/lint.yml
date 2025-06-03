@@ -13,7 +13,9 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: ./kikimoraback
     steps:
       - uses: actions/checkout@v3
 
@@ -23,17 +25,13 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        working-directory: kikimoraback
         run: pip install -r requirements.txt
 
       - name: Run pylint
-        working-directory: kikimoraback
         run: pylint .
 
       - name: Run mypy
-        working-directory: kikimoraback
         run: mypy .
 
       - name: Run flake8
-        working-directory: kikimoraback
         run: flake8 .
